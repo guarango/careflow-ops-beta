@@ -14,7 +14,10 @@ import {
   ChevronRight,
   Menu,
   X,
-  Activity
+  Activity,
+  Target,
+  CalendarDays,
+  Tag
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,11 +26,14 @@ const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
   { label: "Staff", icon: Users, path: "/staff" },
   { label: "Clients", icon: Heart, path: "/clients" },
+  { label: "Schedule", icon: CalendarDays, path: "/schedule" },
+  { label: "Client Goals", icon: Target, path: "/goals" },
   { label: "Session Notes", icon: FileText, path: "/session-notes" },
   { label: "Incidents", icon: AlertTriangle, path: "/incidents" },
   { label: "eMAR", icon: Pill, path: "/emar" },
   { label: "Timecards", icon: Clock, path: "/timecards" },
   { label: "Compliance", icon: Shield, path: "/compliance" },
+  { label: "Service Codes", icon: Tag, path: "/service-codes" },
   { label: "Billing", icon: DollarSign, path: "/billing" },
 ];
 
@@ -81,7 +87,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -90,7 +96,7 @@ export default function Sidebar() {
                 to={item.path}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/20"
                     : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
