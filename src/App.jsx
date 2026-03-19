@@ -5,12 +5,21 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-// Add page imports here
+
+import AppLayout from './components/layout/AppLayout';
+import Dashboard from './pages/Dashboard';
+import Staff from './pages/Staff';
+import Clients from './pages/Clients';
+import SessionNotes from './pages/SessionNotes';
+import Incidents from './pages/Incidents';
+import EMAR from './pages/EMAR';
+import Timecards from './pages/Timecards';
+import Compliance from './pages/Compliance';
+import Billing from './pages/Billing';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
@@ -19,29 +28,34 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
       navigateToLogin();
       return null;
     }
   }
 
-  // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      <Route element={<AppLayout />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/staff" element={<Staff />} />
+        <Route path="/clients" element={<Clients />} />
+        <Route path="/session-notes" element={<SessionNotes />} />
+        <Route path="/incidents" element={<Incidents />} />
+        <Route path="/emar" element={<EMAR />} />
+        <Route path="/timecards" element={<Timecards />} />
+        <Route path="/compliance" element={<Compliance />} />
+        <Route path="/billing" element={<Billing />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
 };
 
-
 function App() {
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
