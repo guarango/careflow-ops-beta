@@ -16,6 +16,9 @@ import EMAR from './pages/EMAR';
 import Timecards from './pages/Timecards';
 import Compliance from './pages/Compliance';
 import Billing from './pages/Billing';
+import Goals from './pages/Goals';
+import Schedule from './pages/Schedule';
+import ServiceCodes from './pages/ServiceCodes';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -49,6 +52,9 @@ const AuthenticatedApp = () => {
         <Route path="/timecards" element={<Timecards />} />
         <Route path="/compliance" element={<Compliance />} />
         <Route path="/billing" element={<Billing />} />
+        <Route path="/goals" element={<Goals />} />
+        <Route path="/schedule" element={<Schedule />} />
+        <Route path="/service-codes" element={<ServiceCodes />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

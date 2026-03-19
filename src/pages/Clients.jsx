@@ -17,8 +17,9 @@ import { Heart, Plus, Search } from "lucide-react";
 const serviceTypes = ["Residential", "Day Program", "Community Living", "Respite", "Supported Employment"];
 const genders = ["Male", "Female", "Non-binary", "Other"];
 const clientStatuses = ["Active", "Inactive", "Discharged"];
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-const emptyClient = { first_name: "", last_name: "", date_of_birth: "", gender: "", diagnosis: "", guardian_name: "", guardian_phone: "", address: "", insurance_id: "", insurance_provider: "", service_type: "", status: "Active", notes: "" };
+const emptyClient = { first_name: "", last_name: "", date_of_birth: "", gender: "", diagnosis: "", guardian_name: "", guardian_phone: "", address: "", insurance_id: "", insurance_provider: "", service_type: "", service_code_id: "", service_code: "", schedule_days: [], schedule_start_time: "", schedule_end_time: "", status: "Active", notes: "" };
 
 export default function Clients() {
   const [showDialog, setShowDialog] = useState(false);
@@ -30,6 +31,11 @@ export default function Clients() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: () => base44.entities.Client.list(),
+  });
+
+  const { data: serviceCodes = [] } = useQuery({
+    queryKey: ["service-codes"],
+    queryFn: () => base44.entities.ServiceCode.list(),
   });
 
   const createMutation = useMutation({
@@ -132,6 +138,38 @@ export default function Clients() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{clientStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
+            </div>
+            <div className="col-span-2">
+              <Label>Service Code</Label>
+              <Select value={form.service_code_id} onValueChange={(v) => {
+                const code = serviceCodes.find(sc => sc.id === v);
+                setForm({...form, service_code_id: v, service_code: code?.code || ""});
+              }}>
+                <SelectTrigger><SelectValue placeholder="Link service code" /></SelectTrigger>
+                <SelectContent>{serviceCodes.map(sc => <SelectItem key={sc.id} value={sc.id}><span className="font-mono">{sc.code}</span> — {sc.description} (${sc.rate}/{sc.rate_type === "Hourly" ? "hr" : sc.rate_type === "Daily" ? "day" : "unit"})</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Schedule Start Time</Label>
+              <Input type="time" value={form.schedule_start_time} onChange={(e) => setForm({...form, schedule_start_time: e.target.value})} />
+            </div>
+            <div>
+              <Label>Schedule End Time</Label>
+              <Input type="time" value={form.schedule_end_time} onChange={(e) => setForm({...form, schedule_end_time: e.target.value})} />
+            </div>
+            <div className="col-span-2">
+              <Label className="mb-2 block">Days Needing Service</Label>
+              <div className="flex flex-wrap gap-2">
+                {DAYS.map(day => (
+                  <button key={day} type="button"
+                    onClick={() => {
+                      const days = form.schedule_days || [];
+                      setForm({...form, schedule_days: days.includes(day) ? days.filter(d => d !== day) : [...days, day]});
+                    }}
+                    className={`text-xs px-3 py-1.5 rounded-md border font-medium transition-colors ${(form.schedule_days || []).includes(day) ? "bg-primary text-primary-foreground border-primary" : "bg-muted text-muted-foreground border-border hover:border-primary"}`}
+                  >{day.slice(0, 3)}</button>
+                ))}
+              </div>
             </div>
             <div className="col-span-2"><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} rows={3} /></div>
           </div>
