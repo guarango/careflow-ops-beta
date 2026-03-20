@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { User, Briefcase, Shield, Award, Plus, Trash2 } from "lucide-react";
+import { User, Briefcase, Shield, Award, Plus, Trash2, Paperclip, ExternalLink, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 const CONTRACT_AREAS = ["DSPD", "DCFS", "Private Pay", "Licensed Program", "Foster Care"];
 const CERT_NAMES = ["CPR/First Aid", "Medication Administration", "CPI / Crisis Prevention", "HIPAA", "Mandated Reporter", "Abuse & Neglect", "Driver's License", "Other"];
