@@ -4,24 +4,32 @@ import { base44 } from "@/api/base44Client";
 import PageHeader from "@/components/shared/PageHeader";
 import StatusBadge from "@/components/shared/StatusBadge";
 import EmptyState from "@/components/shared/EmptyState";
+import StaffProfileDialog from "@/components/staff/StaffProfileDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Plus, Search, Phone, Mail } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, Plus, Search, Phone, Mail, AlertTriangle } from "lucide-react";
 
-const roles = ["DSP", "Nurse", "QIDP", "Supervisor", "Admin", "Behavioral Specialist", "Other"];
-const statuses = ["Active", "On Leave", "Inactive"];
+const emptyStaff = {
+  first_name: "", last_name: "", email: "", phone: "", role: "DSP", status: "Active",
+  staff_type: "Regular", hire_date: "", notes: "", certifications: [], references: [],
+  contract_areas: []
+};
 
-const emptyStaff = { first_name: "", last_name: "", email: "", phone: "", role: "DSP", status: "Active", hire_date: "", notes: "" };
+function complianceAlerts(s) {
+  const alerts = [];
+  if (!s.background_check_status || s.background_check_status === "Expired") alerts.push("BG Check");
+  if (!s.i9_verified) alerts.push("I-9");
+  if (!s.drug_screen_status || s.drug_screen_status === "Expired") alerts.push("Drug Screen");
+  if (!s.tb_test_result || s.tb_test_result === "Pending") alerts.push("TB Test");
+  return alerts;
+}
 
 export default function Staff() {
   const [showDialog, setShowDialog] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
-  const [form, setForm] = useState(emptyStaff);
   const [search, setSearch] = useState("");
 
   const queryClient = useQueryClient();
@@ -32,25 +40,20 @@ export default function Staff() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.StaffMember.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["staff"] }); closeDialog(); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["staff"] }); setShowDialog(false); setEditingStaff(null); },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.StaffMember.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["staff"] }); closeDialog(); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["staff"] }); setShowDialog(false); setEditingStaff(null); },
   });
 
-  const closeDialog = () => { setShowDialog(false); setEditingStaff(null); setForm(emptyStaff); };
+  const openNew = () => { setEditingStaff({ ...emptyStaff }); setShowDialog(true); };
+  const openEdit = (s) => { setEditingStaff(s); setShowDialog(true); };
 
-  const openNew = () => { setForm(emptyStaff); setEditingStaff(null); setShowDialog(true); };
-  const openEdit = (s) => { setForm(s); setEditingStaff(s); setShowDialog(true); };
-
-  const handleSave = () => {
-    if (editingStaff) {
-      updateMutation.mutate({ id: editingStaff.id, data: form });
-    } else {
-      createMutation.mutate(form);
-    }
+  const handleSave = (formData) => {
+    if (formData.id) updateMutation.mutate({ id: formData.id, data: formData });
+    else createMutation.mutate(formData);
   };
 
   const filtered = staff.filter(s =>
@@ -90,65 +93,58 @@ export default function Staff() {
                   <TableHead>Name</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead className="hidden md:table-cell">Contact</TableHead>
-                  <TableHead className="hidden md:table-cell">Hire Date</TableHead>
+                  <TableHead className="hidden md:table-cell">Type</TableHead>
+                  <TableHead className="hidden md:table-cell">Compliance</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((s) => (
-                  <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(s)}>
-                    <TableCell className="font-medium">{s.first_name} {s.last_name}</TableCell>
-                    <TableCell>{s.role}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="flex flex-col gap-0.5">
-                        {s.email && <span className="text-xs flex items-center gap-1"><Mail className="w-3 h-3" />{s.email}</span>}
-                        {s.phone && <span className="text-xs flex items-center gap-1"><Phone className="w-3 h-3" />{s.phone}</span>}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm">{s.hire_date || "—"}</TableCell>
-                    <TableCell><StatusBadge status={s.status || "Active"} /></TableCell>
-                  </TableRow>
-                ))}
+                {filtered.map((s) => {
+                  const alerts = complianceAlerts(s);
+                  return (
+                    <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(s)}>
+                      <TableCell className="font-medium">{s.first_name} {s.last_name}</TableCell>
+                      <TableCell className="text-sm">{s.role}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="flex flex-col gap-0.5">
+                          {s.email && <span className="text-xs flex items-center gap-1"><Mail className="w-3 h-3" />{s.email}</span>}
+                          {s.phone && <span className="text-xs flex items-center gap-1"><Phone className="w-3 h-3" />{s.phone}</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {s.staff_type === "Probationary" ? (
+                          <Badge variant="outline" className="text-[10px] border-chart-4/30 bg-chart-4/10 text-chart-4">Probationary</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">{s.employment_type || "—"}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {alerts.length > 0 ? (
+                          <div className="flex items-center gap-1">
+                            <AlertTriangle className="w-3.5 h-3.5 text-chart-4" />
+                            <span className="text-xs text-chart-4">{alerts.length} missing</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-accent">✓ Complete</span>
+                        )}
+                      </TableCell>
+                      <TableCell><StatusBadge status={s.status || "Active"} /></TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
         </Card>
       )}
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingStaff ? "Edit Staff Member" : "Add Staff Member"}</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
-            <div><Label>First Name *</Label><Input value={form.first_name} onChange={(e) => setForm({...form, first_name: e.target.value})} /></div>
-            <div><Label>Last Name *</Label><Input value={form.last_name} onChange={(e) => setForm({...form, last_name: e.target.value})} /></div>
-            <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} /></div>
-            <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} /></div>
-            <div>
-              <Label>Role *</Label>
-              <Select value={form.role} onValueChange={(v) => setForm({...form, role: v})}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{roles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({...form, status: v})}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="col-span-2"><Label>Hire Date</Label><Input type="date" value={form.hire_date} onChange={(e) => setForm({...form, hire_date: e.target.value})} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!form.first_name || !form.last_name}>
-              {editingStaff ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {showDialog && editingStaff && (
+        <StaffProfileDialog
+          staff={editingStaff}
+          onSave={handleSave}
+          onClose={() => { setShowDialog(false); setEditingStaff(null); }}
+        />
+      )}
     </div>
   );
 }

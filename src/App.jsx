@@ -19,6 +19,7 @@ import Billing from './pages/Billing';
 import Goals from './pages/Goals';
 import Schedule from './pages/Schedule';
 import ServiceCodes from './pages/ServiceCodes';
+import UserManagement from './pages/UserManagement';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -55,6 +56,7 @@ const AuthenticatedApp = () => {
         <Route path="/goals" element={<Goals />} />
         <Route path="/schedule" element={<Schedule />} />
         <Route path="/service-codes" element={<ServiceCodes />} />
+        <Route path="/users" element={<UserManagement />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

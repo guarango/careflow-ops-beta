@@ -17,7 +17,8 @@ import {
   Activity,
   Target,
   CalendarDays,
-  Tag
+  Tag,
+  UserCog
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ const navItems = [
   { label: "Compliance", icon: Shield, path: "/compliance" },
   { label: "Service Codes", icon: Tag, path: "/service-codes" },
   { label: "Billing", icon: DollarSign, path: "/billing" },
+  { label: "User Management", icon: UserCog, path: "/users" },
 ];
 
 export default function Sidebar() {
