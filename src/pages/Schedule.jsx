@@ -307,26 +307,47 @@ export default function Schedule() {
               </Select>
             </div>
 
-            {form.client_id && (
-              <div>
-                <Label>Service Code</Label>
-                <Select value={form.service_code_id} onValueChange={handleServiceCodeSelect}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select service code" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {serviceCodes.filter(sc => sc.active).map(sc => (
-                      <SelectItem key={sc.id} value={sc.id}>
-                        <span className="font-mono">{sc.code}</span> — {sc.description} (${sc.rate}/{sc.rate_type === "Hourly" ? "hr" : sc.rate_type === "Daily" ? "day" : "unit"})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.service_code && (
-                  <p className="text-xs text-muted-foreground mt-1">Rate: <span className="font-semibold text-foreground">${form.rate} {form.rate_type}</span></p>
-                )}
-              </div>
-            )}
+            {form.client_id && (() => {
+              const client = clients.find(c => c.id === form.client_id);
+              const enrollments = client?.service_enrollments || [];
+              // Legacy support: single flat service
+              const hasEnrollments = enrollments.length > 0;
+              return (
+                <div>
+                  <Label>Service *</Label>
+                  {hasEnrollments ? (
+                    <Select value={form._enrollment_index?.toString() || ""} onValueChange={handleEnrollmentSelect}>
+                      <SelectTrigger><SelectValue placeholder="Select which service this shift is for" /></SelectTrigger>
+                      <SelectContent>
+                        {enrollments.map((e, i) => (
+                          <SelectItem key={i} value={i.toString()}>
+                            {e.service_type || "Service"}{e.service_code ? ` — ${e.service_code}` : ""}{e.rate ? ` ($${e.rate}/${e.rate_type === "Hourly" ? "hr" : "day"})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Select value={form.service_code_id} onValueChange={handleServiceCodeSelect}>
+                      <SelectTrigger><SelectValue placeholder="Select service code" /></SelectTrigger>
+                      <SelectContent>
+                        {serviceCodes.filter(sc => sc.active).map(sc => (
+                          <SelectItem key={sc.id} value={sc.id}>
+                            <span className="font-mono">{sc.code}</span> — {sc.description} (${sc.rate}/{sc.rate_type === "Hourly" ? "hr" : "day"})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {form.service_type && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <span className="font-medium text-foreground">{form.service_type}</span>
+                      {form.service_code && <span> · <span className="font-mono text-primary">{form.service_code}</span></span>}
+                      {form.rate > 0 && <span> · <span className="font-semibold">${form.rate}/{form.rate_type === "Hourly" ? "hr" : "day"}</span></span>}
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
 
             <div>
               <Label>Staff *</Label>
