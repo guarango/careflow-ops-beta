@@ -242,44 +242,50 @@ export default function Schedule() {
             ) : (
               activeClients.map(client => {
                 const clientShifts = shifts.filter(s => s.client_id === client.id && s.status === "Scheduled");
-                const code = serviceCodes.find(sc => sc.id === client.service_code_id);
+                const enrollments = client.service_enrollments?.length > 0
+                  ? client.service_enrollments
+                  : client.service_type ? [{ service_type: client.service_type, service_code: client.service_code, schedule_days: client.schedule_days || [] }] : [];
+
                 return (
                   <Card key={client.id}>
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm">{client.first_name} {client.last_name}</CardTitle>
-                        <Button size="sm" variant="outline" onClick={() => { setForm({ ...emptyShift, client_id: client.id, client_name: `${client.first_name} ${client.last_name}`, service_code_id: code?.id || "", service_code: code?.code || client.service_code || "", service_type: code?.service_type || client.service_type || "", rate_type: code?.rate_type || "Hourly", rate: code?.rate || 0 }); setShowDialog(true); }}>
+                        <Button size="sm" variant="outline" onClick={() => { setForm({ ...emptyShift, client_id: client.id, client_name: `${client.first_name} ${client.last_name}` }); setShowDialog(true); }}>
                           <Plus className="w-3.5 h-3.5 mr-1" />Schedule Shift
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="pb-3">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
-                        <div><span className="text-muted-foreground">Service Type: </span><span className="font-medium">{client.service_type || "—"}</span></div>
-                        <div><span className="text-muted-foreground">Service Code: </span><span className="font-mono font-medium text-primary">{code?.code || client.service_code || "—"}</span></div>
-                        <div><span className="text-muted-foreground">Rate: </span><span className="font-medium">{code ? `$${code.rate}/${code.rate_type === "Hourly" ? "hr" : code.rate_type === "Daily" ? "day" : "unit"}` : "—"}</span></div>
-                        <div><span className="text-muted-foreground">Needed Days: </span><span className="font-medium">{client.schedule_days?.join(", ") || "Not set"}</span></div>
-                      </div>
-                      {client.schedule_days?.length > 0 && (
-                        <div className="flex gap-1 flex-wrap mb-2">
-                          {DAYS.map(day => {
-                            const needed = client.schedule_days?.includes(day);
-                            const covered = clientShifts.some(s => {
-                              if (!s.date) return false;
-                              return format(parseISO(s.date), "EEEE") === day;
-                            });
-                            if (!needed) return null;
-                            return (
-                              <span key={day} className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${covered ? "bg-accent/15 text-accent border-accent/20" : "bg-destructive/10 text-destructive border-destructive/20"}`}>
-                                {day.slice(0, 3)} {covered ? "✓" : "!"}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {clientShifts.length > 0 && (
-                        <p className="text-xs text-muted-foreground">{clientShifts.length} upcoming shift(s) scheduled</p>
-                      )}
+                    <CardContent className="pb-3 space-y-3">
+                      {enrollments.length === 0 && <p className="text-xs text-muted-foreground">No services enrolled.</p>}
+                      {enrollments.map((enroll, ei) => {
+                        const code = serviceCodes.find(sc => sc.id === enroll.service_code_id);
+                        const serviceShifts = clientShifts.filter(s => s.service_type === enroll.service_type);
+                        return (
+                          <div key={ei} className="border border-border rounded-md p-3 space-y-2">
+                            <div className="flex items-center gap-3 flex-wrap text-xs">
+                              <span className="font-semibold">{enroll.service_type || "—"}</span>
+                              {(code?.code || enroll.service_code) && <span className="font-mono text-primary">{code?.code || enroll.service_code}</span>}
+                              {(code?.rate || enroll.rate) > 0 && <span className="text-muted-foreground">${code?.rate || enroll.rate}/{(code?.rate_type || enroll.rate_type) === "Hourly" ? "hr" : "day"}</span>}
+                              {enroll.schedule_start_time && <span className="text-muted-foreground">{enroll.schedule_start_time}–{enroll.schedule_end_time}</span>}
+                              <span className="text-muted-foreground ml-auto">{serviceShifts.length} shift(s) scheduled</span>
+                            </div>
+                            {enroll.schedule_days?.length > 0 && (
+                              <div className="flex gap-1 flex-wrap">
+                                {DAYS.map(day => {
+                                  if (!enroll.schedule_days?.includes(day)) return null;
+                                  const covered = serviceShifts.some(s => s.date && format(parseISO(s.date), "EEEE") === day);
+                                  return (
+                                    <span key={day} className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${covered ? "bg-accent/15 text-accent border-accent/20" : "bg-destructive/10 text-destructive border-destructive/20"}`}>
+                                      {day.slice(0, 3)} {covered ? "✓" : "!"}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </CardContent>
                   </Card>
                 );
