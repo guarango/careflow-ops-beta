@@ -330,8 +330,27 @@ export default function StaffProfileDialog({ staff, onSave, onClose }) {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex items-end">
-                      <Button variant="ghost" size="sm" className="text-destructive h-8" onClick={() => removeCert(i)}><Trash2 className="w-3.5 h-3.5 mr-1" />Remove</Button>
+                    <div className="col-span-2 flex items-center gap-3">
+                      <div className="flex-1">
+                        <Label className="text-xs">Document</Label>
+                        {cert.doc_url ? (
+                          <div className="flex items-center gap-2 mt-1">
+                            <a href={cert.doc_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary flex items-center gap-1 hover:underline">
+                              <Paperclip className="w-3 h-3" />View Document<ExternalLink className="w-3 h-3" />
+                            </a>
+                            <Button variant="ghost" size="sm" className="h-6 text-xs text-muted-foreground px-1" onClick={() => updateCert(i, "doc_url", "")}>Remove</Button>
+                          </div>
+                        ) : (
+                          <label className="mt-1 flex items-center gap-2 cursor-pointer">
+                            <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                              onChange={e => e.target.files?.[0] && handleCertUpload(i, e.target.files[0])} />
+                            <span className="text-xs text-muted-foreground border border-dashed border-border rounded-md px-3 py-1.5 hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5">
+                              {uploadingIndex === i ? <><Loader2 className="w-3 h-3 animate-spin" />Uploading...</> : <><Paperclip className="w-3 h-3" />Upload file</>}
+                            </span>
+                          </label>
+                        )}
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-destructive h-8 self-end" onClick={() => removeCert(i)}><Trash2 className="w-3.5 h-3.5 mr-1" />Remove</Button>
                     </div>
                   </div>
                 ))}
