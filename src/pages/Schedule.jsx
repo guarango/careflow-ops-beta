@@ -116,16 +116,37 @@ export default function Schedule() {
 
   const handleClientSelect = (clientId) => {
     const client = clients.find(c => c.id === clientId);
-    const code = serviceCodes.find(sc => sc.id === client?.service_code_id);
+    // Clear service selection — user must pick which enrollment
     setForm({
       ...form,
       client_id: clientId,
       client_name: client ? `${client.first_name} ${client.last_name}` : "",
-      service_code_id: code?.id || client?.service_code_id || "",
-      service_code: code?.code || client?.service_code || "",
-      service_type: code?.service_type || client?.service_type || "",
-      rate_type: code?.rate_type || "Hourly",
-      rate: code?.rate || 0,
+      service_code_id: "",
+      service_code: "",
+      service_type: "",
+      rate_type: "Hourly",
+      rate: 0,
+      _enrollment_index: null,
+    });
+  };
+
+  const handleEnrollmentSelect = (idx) => {
+    const client = clients.find(c => c.id === form.client_id);
+    const enrollments = client?.service_enrollments || [];
+    const enroll = enrollments[parseInt(idx)];
+    if (!enroll) return;
+    const code = serviceCodes.find(sc => sc.id === enroll.service_code_id);
+    setForm({
+      ...form,
+      _enrollment_index: idx,
+      service_code_id: enroll.service_code_id || "",
+      service_code: enroll.service_code || code?.code || "",
+      service_type: enroll.service_type || "",
+      rate_type: enroll.rate_type || code?.rate_type || "Hourly",
+      rate: enroll.rate || code?.rate || 0,
+      // Pre-fill times from enrollment schedule
+      start_time: form.start_time || enroll.schedule_start_time || "",
+      end_time: form.end_time || enroll.schedule_end_time || "",
     });
   };
 
