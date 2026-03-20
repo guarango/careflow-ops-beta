@@ -39,8 +39,17 @@ export default function StaffProfileDialog({ staff, onSave, onClose }) {
     set("references", refs);
   };
 
+  const [uploadingIndex, setUploadingIndex] = useState(null);
+
   const addCert = () => {
-    set("certifications", [...(form.certifications || []), { name: "", issue_date: "", expiry_date: "", status: "Current" }]);
+    set("certifications", [...(form.certifications || []), { name: "", issue_date: "", expiry_date: "", status: "Current", doc_url: "" }]);
+  };
+
+  const handleCertUpload = async (i, file) => {
+    setUploadingIndex(i);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    updateCert(i, "doc_url", file_url);
+    setUploadingIndex(null);
   };
   const updateCert = (i, field, val) => {
     const certs = [...(form.certifications || [])];
