@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle, Clock, Eye, Send, FileQuestion } from "lucide-react";
 import DocumentReviewPanel from "./DocumentReviewPanel";
 import RequestDocumentModal from "./RequestDocumentModal";
+import StaffRequestsPanel from "./StaffRequestsPanel";
 
 const STATUS_CONFIG = {
   Current: { color: "bg-green-100 text-green-700 border-green-200", icon: CheckCircle2 },
