@@ -73,7 +73,17 @@ export default function Incidents() {
 
   return (
     <div>
-      <PageHeader title="Incident Reports" subtitle={`${incidents.length} reports`} action={<Button onClick={openNew} className="bg-destructive hover:bg-destructive/90"><Plus className="w-4 h-4 mr-2" />Report Incident</Button>} />
+      <PageHeader
+    title="Incident Reports"
+    subtitle={isDSP ? "Your submitted reports" : `${incidents.length} reports`}
+    action={<Button onClick={openNew} className="bg-destructive hover:bg-destructive/90"><Plus className="w-4 h-4 mr-2" />Report Incident</Button>}
+  />
+  {isDSP && (
+    <div className="flex items-center gap-2 mb-4 bg-chart-4/10 border border-chart-4/20 rounded-lg px-4 py-2.5 text-sm text-chart-4">
+      <Lock className="w-4 h-4 flex-shrink-0" />
+      <span>Incidents you submit will be sent to your supervisor for review. You cannot change the status of a submitted report.</span>
+    </div>
+  )}
 
       <Card className="mb-6">
         <CardContent className="py-3">
