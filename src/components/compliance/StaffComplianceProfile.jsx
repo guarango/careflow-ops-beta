@@ -131,6 +131,8 @@ export default function StaffComplianceProfile({ staffMember, compliance, onBack
         />
       )}
 
+      <StaffRequestsPanel staffMember={staffMember} />
+
       {showRequestAll && (
         <RequestDocumentModal
           staffMember={staffMember}
