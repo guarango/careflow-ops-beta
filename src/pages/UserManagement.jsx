@@ -14,9 +14,9 @@ import { UserCog, Plus, Mail, ShieldCheck, Users, Briefcase } from "lucide-react
 import { useToast } from "@/components/ui/use-toast";
 
 const ROLE_CONFIG = {
-  admin: { label: "Admin", color: "bg-destructive/10 text-destructive border-destructive/20", icon: ShieldCheck, description: "Full access to all features including user management and settings." },
-  hr: { label: "HR", color: "bg-primary/10 text-primary border-primary/20", icon: Briefcase, description: "Access to staff records, compliance documents, timecards, and billing." },
-  dsp: { label: "DSP", color: "bg-accent/10 text-accent border-accent/20", icon: Users, description: "Access to client records, session notes, incidents, and eMAR." },
+  admin: { label: "Admin", color: "bg-destructive/10 text-destructive border-destructive/20", icon: ShieldCheck, description: "Full access: all pages, billing, service codes, user management, can approve timecards, incidents & session notes." },
+  hr: { label: "HR", color: "bg-primary/10 text-primary border-primary/20", icon: Briefcase, description: "Staff & compliance management, client records, schedules, timecards approval, incident review. No billing or service codes." },
+  dsp: { label: "DSP", color: "bg-accent/10 text-accent border-accent/20", icon: Users, description: "Direct support: can submit incidents (go to review), timecards, session notes, eMAR, and view schedule. No admin access." },
 };
 
 export default function UserManagement() {
