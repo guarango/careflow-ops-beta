@@ -119,6 +119,16 @@ export default function Sidebar() {
           })}
         </nav>
 
+        {/* User info */}
+        {!collapsed && user && (
+          <div className="px-4 py-3 border-t border-sidebar-border">
+            <p className="text-xs font-medium text-sidebar-accent-foreground truncate">{user.full_name || user.email}</p>
+            <span className={cn("text-[10px] px-1.5 py-0.5 rounded border font-semibold mt-0.5 inline-block", getRoleBadgeColor(role))}>
+              {getRoleLabel(role)}
+            </span>
+          </div>
+        )}
+
         {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
