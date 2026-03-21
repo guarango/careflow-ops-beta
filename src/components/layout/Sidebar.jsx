@@ -46,6 +46,9 @@ export default function Sidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { canAccessPath, role } = useRole();
+  const { user } = useAuth();
+  const visibleNav = navItems.filter(item => canAccessPath(item.path));
 
   return (
     <>
@@ -93,7 +96,7 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
-          {navItems.map((item) => {
+          {visibleNav.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
