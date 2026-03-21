@@ -22,6 +22,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useRole } from "@/hooks/useRole";
+import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
+import { useAuth } from "@/lib/AuthContext";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
