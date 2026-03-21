@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,12 +12,29 @@ import { REQUIRED_DOCS, CLINICAL_EXTRA_DOCS } from "./complianceUtils";
 const ALL_DOC_TYPES = [...REQUIRED_DOCS, ...CLINICAL_EXTRA_DOCS, "Other"];
 
 export default function RequestDocumentModal({ staffMember, defaultDocName, missingDocs, onClose }) {
-  const [docType, setDocType] = useState(defaultDocName || (missingDocs ? "Multiple" : ""));
+  const [docType, setDocType] = useState(defaultDocName || "");
   const [message, setMessage] = useState("");
+  const queryClient = useQueryClient();
+
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.DocumentRequest.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["document-requests"] });
+      onClose();
+    },
+  });
 
   const handleSend = () => {
-    // In a real app, this would send a notification or email
-    onClose();
+    const docs = missingDocs || (docType ? [docType] : []);
+    docs.forEach(doc => {
+      createMutation.mutate({
+        staff_id: staffMember.id,
+        staff_name: `${staffMember.first_name} ${staffMember.last_name}`,
+        document_type: doc,
+        message,
+        status: "Pending",
+      });
+    });
   };
 
   const isReminder = !defaultDocName && !missingDocs;
@@ -61,7 +80,9 @@ export default function RequestDocumentModal({ staffMember, defaultDocName, miss
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSend} className="gap-1"><Send className="w-4 h-4" /> Send Request</Button>
+          <Button onClick={handleSend} disabled={!missingDocs && !docType} className="gap-1">
+            <Send className="w-4 h-4" /> Send Request
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
