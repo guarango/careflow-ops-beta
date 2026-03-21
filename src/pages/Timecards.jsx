@@ -12,12 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Clock, Plus, Search, CheckCircle, XCircle } from "lucide-react";
+import { useRole } from "@/hooks/useRole";
 
 const tcStatuses = ["Pending", "Approved", "Rejected"];
 
 const emptyTC = { staff_id: "", staff_name: "", date: "", clock_in: "", clock_out: "", total_hours: 0, break_minutes: 0, status: "Pending", notes: "" };
 
 export default function Timecards() {
+  const { can } = useRole();
   const [showDialog, setShowDialog] = useState(false);
   const [form, setForm] = useState(emptyTC);
   const [search, setSearch] = useState("");
@@ -107,7 +109,7 @@ export default function Timecards() {
                     <TableCell className="font-semibold">{t.total_hours ? `${t.total_hours}h` : "—"}</TableCell>
                     <TableCell><StatusBadge status={t.status} /></TableCell>
                     <TableCell>
-                      {t.status === "Pending" && (
+                      {can("approveTimecards") && t.status === "Pending" && (
                         <div className="flex gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-accent" onClick={() => updateMutation.mutate({ id: t.id, data: { status: "Approved" } })}>
                             <CheckCircle className="w-4 h-4" />
