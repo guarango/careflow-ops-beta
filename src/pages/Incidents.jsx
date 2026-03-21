@@ -156,13 +156,22 @@ export default function Incidents() {
             <div className="col-span-2"><Label>Actions Taken</Label><Textarea value={form.actions_taken} onChange={(e) => setForm({...form, actions_taken: e.target.value})} rows={2} /></div>
             <div><Label>Reported By</Label><Input value={form.reported_by_name} onChange={(e) => setForm({...form, reported_by_name: e.target.value})} /></div>
             <div><Label>Witnesses</Label><Input value={form.witnesses} onChange={(e) => setForm({...form, witnesses: e.target.value})} /></div>
-            <div>
-              <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({...form, status: v})}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{incidentStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+            {can("changeIncidentStatus") ? (
+              <div>
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => setForm({...form, status: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{incidentStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div>
+                <Label>Status</Label>
+                <div className="flex h-9 items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">
+                  Under Review (set by supervisor)
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-2 pt-6">
               <Checkbox checked={form.follow_up_required} onCheckedChange={(v) => setForm({...form, follow_up_required: v})} />
               <Label>Follow-up Required</Label>
