@@ -23,6 +23,7 @@ const incidentStatuses = ["Open", "Under Review", "Resolved", "Closed"];
 const emptyIncident = { client_id: "", client_name: "", reported_by_name: "", date: "", time: "", type: "", severity: "", description: "", actions_taken: "", witnesses: "", follow_up_required: false, follow_up_notes: "", status: "Open" };
 
 export default function Incidents() {
+  const { can, isDSP, role } = useRole();
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyIncident);
@@ -54,8 +55,11 @@ export default function Incidents() {
   const openEdit = (i) => { setForm(i); setEditing(i); setShowDialog(true); };
 
   const handleSave = () => {
-    if (editing) updateMutation.mutate({ id: editing.id, data: form });
-    else createMutation.mutate(form);
+    const data = { ...form };
+    // DSPs always submit as "Pending Review" — they cannot set status
+    if (isDSP && !editing) data.status = "Under Review";
+    if (editing) updateMutation.mutate({ id: editing.id, data });
+    else createMutation.mutate(data);
   };
 
   const handleClientSelect = (clientId) => {
