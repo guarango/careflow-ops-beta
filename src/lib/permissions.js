@@ -28,6 +28,7 @@ export const NAV_ACCESS = {
   "/service-codes": ["admin"],
   "/billing": ["admin"],
   "/users": ["admin"],
+  "/role-preview": ["admin"],
 };
 
 // Feature-level permissions

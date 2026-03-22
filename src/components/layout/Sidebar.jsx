@@ -42,6 +42,7 @@ const navItems = [
   { label: "Payroll", icon: TrendingUp, path: "/payroll" },
   { label: "Billing", icon: DollarSign, path: "/billing" },
   { label: "User Management", icon: UserCog, path: "/users" },
+  { label: "Role Preview", icon: Eye, path: "/role-preview" },
 ];
 
 export default function Sidebar() {
