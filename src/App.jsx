@@ -21,6 +21,7 @@ import Schedule from './pages/Schedule';
 import ServiceCodes from './pages/ServiceCodes';
 import UserManagement from './pages/UserManagement';
 import Payroll from './pages/Payroll';
+import RolePreview from './pages/RolePreview';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
