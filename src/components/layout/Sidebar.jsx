@@ -38,6 +38,7 @@ const navItems = [
   { label: "Timecards", icon: Clock, path: "/timecards" },
   { label: "Compliance", icon: Shield, path: "/compliance" },
   { label: "Service Codes", icon: Tag, path: "/service-codes" },
+  { label: "Payroll", icon: TrendingUp, path: "/payroll" },
   { label: "Billing", icon: DollarSign, path: "/billing" },
   { label: "User Management", icon: UserCog, path: "/users" },
 ];
