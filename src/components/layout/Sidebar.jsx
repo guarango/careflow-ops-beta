@@ -18,7 +18,8 @@ import {
   Target,
   CalendarDays,
   Tag,
-  UserCog
+  UserCog,
+  TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
