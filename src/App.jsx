@@ -20,6 +20,7 @@ import Goals from './pages/Goals';
 import Schedule from './pages/Schedule';
 import ServiceCodes from './pages/ServiceCodes';
 import UserManagement from './pages/UserManagement';
+import Payroll from './pages/Payroll';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
