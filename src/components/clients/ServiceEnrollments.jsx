@@ -3,30 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Info } from "lucide-react";
 
 const SERVICE_TYPES = ["Residential", "Day Program", "Community Living", "Respite", "Supported Employment"];
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const RATE_TYPES = ["Hourly", "Daily", "Per Unit", "Monthly"];
 
 const emptyEnrollment = {
-  service_type: "",
-  service_code_id: "",
-  service_code: "",
-  rate: 0,
-  rate_type: "Hourly",
-  schedule_days: [],
-  schedule_start_time: "",
-  schedule_end_time: "",
+  service_type: "", service_code_id: "", service_code: "",
+  rate: 0, rate_type: "Hourly",
+  schedule_days: [], schedule_start_time: "", schedule_end_time: "",
 };
 
 export default function ServiceEnrollments({ enrollments = [], onChange, serviceCodes = [] }) {
   const add = () => onChange([...enrollments, { ...emptyEnrollment }]);
-
-  const update = (i, field, value) => {
-    const updated = enrollments.map((e, idx) => idx === i ? { ...e, [field]: value } : e);
-    onChange(updated);
-  };
-
+  const update = (i, field, value) => onChange(enrollments.map((e, idx) => idx === i ? { ...e, [field]: value } : e));
   const remove = (i) => onChange(enrollments.filter((_, idx) => idx !== i));
 
   const toggleDay = (i, day) => {
@@ -36,15 +27,17 @@ export default function ServiceEnrollments({ enrollments = [], onChange, service
 
   const selectCode = (i, codeId) => {
     const code = serviceCodes.find(sc => sc.id === codeId);
-    const updated = enrollments.map((e, idx) => idx === i ? {
+    onChange(enrollments.map((e, idx) => idx === i ? {
       ...e,
       service_code_id: codeId,
       service_code: code?.code || "",
-      rate: code?.rate || 0,
-      rate_type: code?.rate_type || "Hourly",
+      // Auto-fill rate from code but keep as overrideable
+      rate: e.rate || code?.rate || 0,
+      rate_type: e.rate_type || code?.rate_type || "Hourly",
       service_type: e.service_type || code?.service_type || "",
-    } : e);
-    onChange(updated);
+      _default_rate: code?.rate,
+      _default_rate_type: code?.rate_type,
+    } : e));
   };
 
   return (
@@ -62,59 +55,104 @@ export default function ServiceEnrollments({ enrollments = [], onChange, service
         </p>
       )}
 
-      {enrollments.map((enroll, i) => (
-        <div key={i} className="border border-border rounded-lg p-4 space-y-3 bg-muted/30">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Service {i + 1}</span>
-            <Button type="button" variant="ghost" size="sm" className="text-destructive h-7 px-2" onClick={() => remove(i)}>
-              <Trash2 className="w-3.5 h-3.5 mr-1" />Remove
-            </Button>
-          </div>
+      {enrollments.map((enroll, i) => {
+        const linkedCode = serviceCodes.find(sc => sc.id === enroll.service_code_id);
+        const defaultRate = linkedCode?.rate;
+        const isCustomRate = defaultRate !== undefined && enroll.rate !== defaultRate;
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Service Type</Label>
-              <Select value={enroll.service_type} onValueChange={v => update(i, "service_type", v)}>
-                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{SERVICE_TYPES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
+        return (
+          <div key={i} className="border border-border rounded-lg p-4 space-y-3 bg-muted/30">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Service {i + 1}</span>
+              <Button type="button" variant="ghost" size="sm" className="text-destructive h-7 px-2" onClick={() => remove(i)}>
+                <Trash2 className="w-3.5 h-3.5 mr-1" />Remove
+              </Button>
             </div>
-            <div>
-              <Label className="text-xs">Service Code</Label>
-              <Select value={enroll.service_code_id} onValueChange={v => selectCode(i, v)}>
-                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Link code" /></SelectTrigger>
-                <SelectContent>
-                  {serviceCodes.map(sc => (
-                    <SelectItem key={sc.id} value={sc.id}>
-                      <span className="font-mono">{sc.code}</span> — ${sc.rate}/{sc.rate_type === "Hourly" ? "hr" : sc.rate_type === "Daily" ? "day" : "unit"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Start Time</Label>
-              <Input type="time" value={enroll.schedule_start_time} onChange={e => update(i, "schedule_start_time", e.target.value)} className="h-8 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs">End Time</Label>
-              <Input type="time" value={enroll.schedule_end_time} onChange={e => update(i, "schedule_end_time", e.target.value)} className="h-8 text-sm" />
-            </div>
-          </div>
 
-          <div>
-            <Label className="text-xs mb-1.5 block">Days Needing Service</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {DAYS.map(day => (
-                <button key={day} type="button" onClick={() => toggleDay(i, day)}
-                  className={`text-xs px-2.5 py-1 rounded-md border font-medium transition-colors ${(enroll.schedule_days || []).includes(day) ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground border-border hover:border-primary"}`}>
-                  {day.slice(0, 3)}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Service Type</Label>
+                <Select value={enroll.service_type} onValueChange={v => update(i, "service_type", v)}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>{SERVICE_TYPES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Service Code</Label>
+                <Select value={enroll.service_code_id} onValueChange={v => selectCode(i, v)}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Link code" /></SelectTrigger>
+                  <SelectContent>
+                    {serviceCodes.map(sc => (
+                      <SelectItem key={sc.id} value={sc.id}>
+                        <span className="font-mono">{sc.code}</span> — ${sc.rate}/{sc.rate_type === "Hourly" ? "hr" : sc.rate_type === "Daily" ? "day" : "unit"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Custom rate override */}
+              <div className="col-span-2">
+                <div className="flex items-center gap-1 mb-1">
+                  <Label className="text-xs">Rate (per {enroll.rate_type === "Hourly" ? "hour" : enroll.rate_type === "Daily" ? "day" : "unit"})</Label>
+                  {defaultRate !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">· default from code: ${defaultRate}</span>
+                  )}
+                  {isCustomRate && (
+                    <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5 ml-1">
+                      <Info className="w-3 h-3" />custom rate
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    value={enroll.rate || ""}
+                    onChange={e => update(i, "rate", parseFloat(e.target.value) || 0)}
+                    className="h-8 text-sm"
+                    placeholder={defaultRate !== undefined ? `Default: $${defaultRate}` : "0.00"}
+                    step="0.01"
+                    min="0"
+                  />
+                  <Select value={enroll.rate_type || "Hourly"} onValueChange={v => update(i, "rate_type", v)}>
+                    <SelectTrigger className="h-8 text-sm w-32"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {RATE_TYPES.map(rt => <SelectItem key={rt} value={rt}>{rt}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {isCustomRate && (
+                    <Button type="button" variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground"
+                      onClick={() => { update(i, "rate", linkedCode.rate); update(i, "rate_type", linkedCode.rate_type); }}>
+                      Reset
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs">Start Time</Label>
+                <Input type="time" value={enroll.schedule_start_time} onChange={e => update(i, "schedule_start_time", e.target.value)} className="h-8 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">End Time</Label>
+                <Input type="time" value={enroll.schedule_end_time} onChange={e => update(i, "schedule_end_time", e.target.value)} className="h-8 text-sm" />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs mb-1.5 block">Days Needing Service</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {DAYS.map(day => (
+                  <button key={day} type="button" onClick={() => toggleDay(i, day)}
+                    className={`text-xs px-2.5 py-1 rounded-md border font-medium transition-colors ${(enroll.schedule_days || []).includes(day) ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground border-border hover:border-primary"}`}>
+                    {day.slice(0, 3)}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
