@@ -1,32 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Users,
-  Heart,
-  FileText,
-  AlertTriangle,
-  Pill,
-  Clock,
-  Shield,
-  DollarSign,
-  ChevronLeft,
-  ChevronRight,
-  Menu,
-  X,
-  Activity,
-  Target,
-  CalendarDays,
-  Tag,
-  UserCog,
-  TrendingUp,
-  Eye
+  LayoutDashboard, Users, Heart, FileText, AlertTriangle,
+  Pill, Clock, Shield, DollarSign, ChevronLeft, ChevronRight,
+  Menu, X, Activity, Target, CalendarDays, Tag, UserCog,
+  TrendingUp, Eye, Check, ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRole } from "@/hooks/useRole";
-import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
+import { useRolePreview } from "@/lib/RolePreviewContext";
 import { useAuth } from "@/lib/AuthContext";
+import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
@@ -46,13 +31,40 @@ const navItems = [
   { label: "Role Preview", icon: Eye, path: "/role-preview" },
 ];
 
+const ROLE_VIEWS = [
+  { value: "admin", label: "Admin", userName: "Cole Morley" },
+  { value: "hr", label: "HR Manager", userName: "Sandra Lee" },
+  { value: "dsp", label: "DSP / Field Staff", userName: "James Williams" },
+];
+
 export default function Sidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { canAccessPath, role } = useRole();
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  const { canAccessPath, role, realRole } = useRole();
+  const { previewRole, setPreviewRole } = useRolePreview();
   const { user } = useAuth();
+
   const visibleNav = navItems.filter(item => canAccessPath(item.path));
+
+  // Displayed user info based on active role
+  const activeView = ROLE_VIEWS.find(v => v.value === role) || ROLE_VIEWS[0];
+
+  // Close menu on outside click
+  useEffect(() => {
+    function handleClick(e) {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileMenuOpen(false);
+      }
+    }
+    if (profileMenuOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [profileMenuOpen]);
+
+  const isAdmin = realRole === "admin";
 
   return (
     <>
@@ -123,20 +135,77 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* User info */}
-        {!collapsed && user && (
-          <div className="px-4 py-3 border-t border-sidebar-border">
-            <p className="text-xs font-medium text-sidebar-accent-foreground truncate">{user.full_name || user.email}</p>
-            <span className={cn("text-[10px] px-1.5 py-0.5 rounded border font-semibold mt-0.5 inline-block", getRoleBadgeColor(role))}>
-              {getRoleLabel(role)}
-            </span>
+        {/* User profile + role switcher */}
+        {!collapsed && (
+          <div ref={profileRef} className="relative border-t border-sidebar-border">
+            {/* Popup menu */}
+            {profileMenuOpen && isAdmin && (
+              <div className="absolute bottom-full left-3 right-3 mb-1 rounded-xl border border-sidebar-border bg-[hsl(215,26%,18%)] shadow-2xl overflow-hidden z-50">
+                <p className="text-[10px] text-sidebar-foreground/50 uppercase tracking-widest px-3 pt-3 pb-2 font-semibold">Switch view</p>
+                {ROLE_VIEWS.map(v => {
+                  const isActive = role === v.value;
+                  return (
+                    <button
+                      key={v.value}
+                      onClick={() => {
+                        setPreviewRole(v.value === realRole ? null : v.value);
+                        setProfileMenuOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors",
+                        isActive
+                          ? "bg-sidebar-primary/20 text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
+                    >
+                      <span className="w-4 flex-shrink-0">
+                        {isActive && <Check className="w-3.5 h-3.5 text-sidebar-primary" />}
+                      </span>
+                      <span className="flex-1 text-left">{v.label}</span>
+                    </button>
+                  );
+                })}
+                <div className="h-2" />
+              </div>
+            )}
+
+            {/* Profile row */}
+            <button
+              onClick={() => isAdmin && setProfileMenuOpen(p => !p)}
+              className={cn(
+                "w-full flex items-center gap-3 px-4 py-3 transition-colors",
+                isAdmin ? "hover:bg-sidebar-accent/60 cursor-pointer" : "cursor-default"
+              )}
+            >
+              <div className="w-7 h-7 rounded-full bg-sidebar-primary/30 flex items-center justify-center flex-shrink-0 text-xs font-bold text-sidebar-primary-foreground">
+                {activeView.userName.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-xs font-medium text-sidebar-accent-foreground truncate">{activeView.userName}</p>
+                <span className={cn("text-[10px] px-1.5 py-0.5 rounded border font-semibold mt-0.5 inline-block", getRoleBadgeColor(role))}>
+                  {activeView.label}
+                </span>
+              </div>
+              {isAdmin && (
+                <ChevronUp className={cn("w-3.5 h-3.5 text-sidebar-foreground/40 transition-transform flex-shrink-0", !profileMenuOpen && "rotate-180")} />
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Collapsed user avatar */}
+        {collapsed && (
+          <div className="flex justify-center py-3 border-t border-sidebar-border">
+            <div className="w-7 h-7 rounded-full bg-sidebar-primary/30 flex items-center justify-center text-xs font-bold text-sidebar-primary-foreground">
+              {activeView.userName.charAt(0)}
+            </div>
           </div>
         )}
 
         {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex items-center justify-center h-12 border-t border-sidebar-border text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
+          className="hidden lg:flex items-center justify-center h-10 border-t border-sidebar-border text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
