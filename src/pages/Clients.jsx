@@ -15,6 +15,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Plus, Search } from "lucide-react";
+import { useAssignedClients } from "@/hooks/useAssignedClients";
+import { useRole } from "@/hooks/useRole";
+import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
+import AssignedStaffSection from "@/components/clients/AssignedStaffSection";
 
 const genders = ["Male", "Female", "Non-binary", "Other"];
 const clientStatuses = ["Active", "Inactive", "Discharged"];
@@ -28,6 +32,8 @@ const emptyClient = {
 };
 
 export default function Clients() {
+  const { isAdmin } = useRole();
+  const { isDSPMode, assignedClientIds } = useAssignedClients();
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyClient);
@@ -85,7 +91,12 @@ export default function Clients() {
     else createMutation.mutate(form);
   };
 
-  const filtered = clients.filter(c =>
+  // DSP mode: only show assigned clients
+  const visibleClients = isDSPMode
+    ? clients.filter(c => assignedClientIds.includes(c.id))
+    : clients;
+
+  const filtered = visibleClients.filter(c =>
     `${c.first_name} ${c.last_name} ${c.diagnosis}`.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -98,9 +109,11 @@ export default function Clients() {
     return `${enrollments.length} services`;
   };
 
+  if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
+
   return (
     <div>
-      <PageHeader title="Client Records" subtitle={`${clients.length} clients`} action={<Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Client</Button>} />
+      <PageHeader title="Client Records" subtitle={`${visibleClients.length} clients`} action={!isDSPMode && <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Client</Button>} />
 
       <Card className="mb-6">
         <CardContent className="py-3">
@@ -112,7 +125,7 @@ export default function Clients() {
       </Card>
 
       {filtered.length === 0 && !isLoading ? (
-        <EmptyState icon={Heart} title="No clients" description="Add your first client to get started." action={<Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Client</Button>} />
+        <EmptyState icon={Heart} title="No clients" description={isDSPMode ? "No assigned clients match your search." : "Add your first client to get started."} action={!isDSPMode && <Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Client</Button>} />
       ) : (
         <Card>
           <div className="overflow-x-auto">
