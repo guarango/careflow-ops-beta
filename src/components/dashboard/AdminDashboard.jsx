@@ -1,0 +1,175 @@
+import React from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { format } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Heart, Users, AlertTriangle, Shield, UserPlus, UserCheck,
+  FileWarning, Clock, DollarSign, FileText, ArrowRight
+} from "lucide-react";
+
+function StatCard({ label, value, sub, subColor = "text-muted-foreground", icon: Icon, iconColor = "text-primary" }) {
+  return (
+    <div className="bg-muted/50 rounded-xl p-5">
+      <div className="flex items-start justify-between mb-3">
+        <span className="text-sm text-muted-foreground font-medium">{label}</span>
+        <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center shadow-sm">
+          <Icon className={`w-4 h-4 ${iconColor}`} />
+        </div>
+      </div>
+      <div className="text-3xl font-bold text-foreground">{value}</div>
+      <div className={`text-xs mt-1 ${subColor}`}>{sub}</div>
+    </div>
+  );
+}
+
+function Pill({ color, label }) {
+  const colors = {
+    red: "bg-red-100 text-red-700",
+    amber: "bg-amber-100 text-amber-700",
+    blue: "bg-blue-100 text-blue-700",
+    green: "bg-green-100 text-green-700",
+    gray: "bg-gray-100 text-gray-600",
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colors[color] || colors.gray}`}>
+      {label}
+    </span>
+  );
+}
+
+const ALERTS = [
+  { color: "red", badge: "Expired", title: "State Operating License", meta: "Organization · Expired 2025-12-31", note: "Renew immediately" },
+  { color: "amber", badge: "Expiring soon", title: "CPR Certification", meta: "Maria Johnson · Expires 2026-04-15", note: "23 days" },
+  { color: "amber", badge: "Expiring soon", title: "ISP", meta: "Michael Anderson · Expires 2026-03-20", note: "Past due" },
+  { color: "blue", badge: "Pending", title: "Incident report", meta: "James Williams · Submitted 3/21", note: "Awaiting supervisor sign-off" },
+];
+
+const VISITS = [
+  { time: "8:00 AM", client: "Michael Anderson", staff: "James Williams", service: "Personal care", duration: "3 hrs", status: "Active", statusColor: "green" },
+  { time: "9:30 AM", client: "Sarah Chen", staff: "Maria Johnson", service: "Community support", duration: "2 hrs", status: "Scheduled", statusColor: "blue" },
+  { time: "1:00 PM", client: "David Park", staff: "Unassigned", service: "Respite", duration: "4 hrs", status: "No staff", statusColor: "amber" },
+  { time: "2:00 PM", client: "Lisa Torres", staff: "James Williams", service: "Day program", duration: "2 hrs", status: "Scheduled", statusColor: "blue" },
+];
+
+const QUICK_ACTIONS = [
+  { label: "+ Add client", path: "/clients" },
+  { label: "+ Add staff", path: "/staff" },
+  { label: "Log incident", path: "/incidents" },
+  { label: "Review timecards", path: "/timecards" },
+  { label: "Billing overview", path: "/billing" },
+  { label: "Compliance docs", path: "/compliance" },
+];
+
+export default function AdminDashboard({ user }) {
+  const { data: staff = [] } = useQuery({ queryKey: ["staff"], queryFn: () => base44.entities.StaffMember.list() });
+  const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: () => base44.entities.Client.list() });
+  const { data: incidents = [] } = useQuery({ queryKey: ["incidents"], queryFn: () => base44.entities.IncidentReport.list("-created_date", 5) });
+  const { data: compliance = [] } = useQuery({ queryKey: ["compliance"], queryFn: () => base44.entities.ComplianceDocument.list() });
+
+  const activeClients = clients.filter(c => c.status === "Active").length;
+  const openIncidents = incidents.filter(i => i.status === "Open" || i.status === "Under Review").length;
+  const expiringDocs = compliance.filter(d => d.status === "Expiring Soon" || d.status === "Expired").length;
+
+  const firstName = user?.full_name?.split(" ")[0] || "there";
+  const today = format(new Date(), "EEEE, MMMM d, yyyy");
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
+  return (
+    <div className="space-y-6">
+      {/* Greeting */}
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">{greeting}, {firstName}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{today} · <span className="text-destructive font-medium">3 items need your attention</span></p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Active clients" value={activeClients || 24} sub="2 new this month" icon={Heart} />
+        <StatCard label="Staff on shift today" value={11} sub="of 18 scheduled" icon={Users} />
+        <StatCard label="Open incidents" value={openIncidents || 3} sub="1 requires report" subColor="text-destructive" iconColor="text-destructive" icon={AlertTriangle} />
+        <StatCard label="Compliance alerts" value={expiringDocs || 5} sub="2 expiring this week" subColor="text-amber-600" iconColor="text-amber-500" icon={Shield} />
+      </div>
+
+      {/* Alerts + Quick actions */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold">Alerts requiring action</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {ALERTS.map((a, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <div className="pt-0.5"><Pill color={a.color} label={a.badge} /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">{a.title}</p>
+                  <p className="text-xs text-muted-foreground">{a.meta}</p>
+                </div>
+                <span className={`text-xs font-medium whitespace-nowrap ${a.color === "red" ? "text-destructive" : a.color === "amber" ? "text-amber-600" : "text-blue-600"}`}>{a.note}</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold">Quick actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2">
+              {QUICK_ACTIONS.map((a) => (
+                <Link key={a.path} to={a.path}>
+                  <Button variant="outline" size="sm" className="w-full justify-start text-xs h-9">{a.label}</Button>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Today's visits + Billing snapshot */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold">Today's visits</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {VISITS.map((v, i) => (
+              <div key={i} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
+                <span className="text-xs font-mono text-muted-foreground w-16 flex-shrink-0">{v.time}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{v.client}</p>
+                  <p className="text-xs text-muted-foreground truncate">{v.staff} · {v.service} · {v.duration}</p>
+                </div>
+                <Pill color={v.statusColor} label={v.status} />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Billing snapshot — March</CardTitle>
+            <Link to="/billing"><Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-7">View <ArrowRight className="w-3 h-3 ml-1" /></Button></Link>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[
+              { label: "Billed this month", value: "$18,420", color: "text-foreground" },
+              { label: "Pending claims", value: "$4,210", color: "text-amber-600" },
+              { label: "Paid / remitted", value: "$14,210", color: "text-green-600" },
+              { label: "Timecards pending approval", value: "7", color: "text-destructive" },
+            ].map((row, i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <span className="text-sm text-muted-foreground">{row.label}</span>
+                <span className={`text-sm font-bold ${row.color}`}>{row.value}</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
