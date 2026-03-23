@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarDays, Plus, Users, Clock, Calendar, Filter } from "lucide-react";
+import { useAssignedClients } from "@/hooks/useAssignedClients";
+import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import { startOfWeek, addDays, format, isSameDay, parseISO } from "date-fns";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -28,6 +30,7 @@ function calcHours(start, end) {
 }
 
 export default function Schedule() {
+  const { isDSPMode, assignedClientIds } = useAssignedClients();
   const [tab, setTab] = useState("week");
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selectedDay, setSelectedDay] = useState(new Date());
@@ -78,8 +81,9 @@ export default function Schedule() {
     updateShiftMutation.mutate({ id: shift.id, data: updates });
   };
 
-  // Apply filters to all shifts
+  // Apply filters to all shifts (DSP sees only their assigned clients)
   const filteredShifts = shifts.filter(s => {
+    if (isDSPMode && !assignedClientIds.includes(s.client_id)) return false;
     if (filterStaff !== "all" && s.staff_id !== filterStaff) return false;
     if (filterCode !== "all" && s.service_code !== filterCode && s.service_code_id !== filterCode) return false;
     return true;
@@ -87,10 +91,13 @@ export default function Schedule() {
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const weekShifts = filteredShifts.filter(s => s.date && weekDays.some(wd => isSameDay(parseISO(s.date), wd)));
-  const activeClients = clients.filter(c => c.status === "Active");
+  const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;
+  const activeClients = visibleClients.filter(c => c.status === "Active");
   const uniqueCodes = [...new Set(shifts.map(s => s.service_code).filter(Boolean))];
 
   const openAddShift = (date) => { setDialogDate(date || ""); setShowDialog(true); };
+
+  if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
 
   return (
     <div>
