@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pill, Plus, Search } from "lucide-react";
+import { useAssignedClients } from "@/hooks/useAssignedClients";
+import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 
 const routes = ["Oral", "Topical", "Injection", "Inhaled", "Sublingual", "Other"];
 const frequencies = ["Once daily", "Twice daily", "Three times daily", "Four times daily", "As needed", "Weekly", "Other"];
@@ -24,6 +26,7 @@ const emptyMed = { client_id: "", client_name: "", medication_name: "", dosage: 
 const emptyLog = { medication_id: "", client_id: "", client_name: "", medication_name: "", administered_by_name: "", date: "", time: "", status: "Administered", notes: "" };
 
 export default function EMAR() {
+  const { isDSPMode, assignedClientIds } = useAssignedClients();
   const [tab, setTab] = useState("medications");
   const [showMedDialog, setShowMedDialog] = useState(false);
   const [showLogDialog, setShowLogDialog] = useState(false);
@@ -74,13 +77,19 @@ export default function EMAR() {
     setShowLogDialog(true);
   };
 
-  const filteredMeds = medications.filter(m =>
+  const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;
+  const visibleMeds = isDSPMode ? medications.filter(m => assignedClientIds.includes(m.client_id)) : medications;
+  const visibleLogs = isDSPMode ? logs.filter(l => assignedClientIds.includes(l.client_id)) : logs;
+
+  const filteredMeds = visibleMeds.filter(m =>
     `${m.client_name} ${m.medication_name}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  const filteredLogs = logs.filter(l =>
+  const filteredLogs = visibleLogs.filter(l =>
     `${l.client_name} ${l.medication_name}`.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
 
   return (
     <div>
@@ -193,7 +202,7 @@ export default function EMAR() {
               <Label>Client *</Label>
               <Select value={medForm.client_id} onValueChange={handleMedClientSelect}>
                 <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
+                <SelectContent>{visibleClients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Medication Name *</Label><Input value={medForm.medication_name} onChange={(e) => setMedForm({...medForm, medication_name: e.target.value})} /></div>
@@ -243,7 +252,7 @@ export default function EMAR() {
                 setLogForm({ ...logForm, medication_id: v, client_id: med?.client_id, client_name: med?.client_name, medication_name: med?.medication_name });
               }}>
                 <SelectTrigger><SelectValue placeholder="Select medication" /></SelectTrigger>
-                <SelectContent>{medications.filter(m => m.status === "Active").map(m => <SelectItem key={m.id} value={m.id}>{m.client_name} — {m.medication_name}</SelectItem>)}</SelectContent>
+                <SelectContent>{visibleMeds.filter(m => m.status === "Active").map(m => <SelectItem key={m.id} value={m.id}>{m.client_name} — {m.medication_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
