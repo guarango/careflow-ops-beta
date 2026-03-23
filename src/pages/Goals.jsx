@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Target, Plus, ChevronDown, ChevronRight, PlusCircle } from "lucide-react";
+import { useAssignedClients } from "@/hooks/useAssignedClients";
+import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 
 const domains = ["Communication", "Self-Care", "Mobility", "Social Skills", "Vocational", "Behavioral", "Academic", "Community Integration", "Health & Safety", "Other"];
 const goalStatuses = ["Active", "Mastered", "Discontinued", "On Hold"];
@@ -126,6 +128,7 @@ function GoalCard({ goal, onEdit, onLogProgress }) {
 }
 
 export default function Goals() {
+  const { isDSPMode, assignedClientIds } = useAssignedClients();
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyGoal);
@@ -167,7 +170,8 @@ export default function Goals() {
     else createMutation.mutate(form);
   };
 
-  const filteredGoals = selectedClient === "all" ? goals : goals.filter(g => g.client_id === selectedClient);
+  const visibleGoals = isDSPMode ? goals.filter(g => assignedClientIds.includes(g.client_id)) : goals;
+  const filteredGoals = selectedClient === "all" ? visibleGoals : visibleGoals.filter(g => g.client_id === selectedClient);
 
   // Group by client
   const grouped = filteredGoals.reduce((acc, g) => {
@@ -177,13 +181,16 @@ export default function Goals() {
     return acc;
   }, {});
 
-  const activeClients = clients.filter(c => c.status === "Active");
+  const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;
+  const activeClients = visibleClients.filter(c => c.status === "Active");
+
+  if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
 
   return (
     <div>
       <PageHeader
         title="Client Goals"
-        subtitle={`${goals.length} goals tracked`}
+        subtitle={`${visibleGoals.length} goals tracked`}
         action={<Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Goal</Button>}
       />
 
@@ -226,7 +233,7 @@ export default function Goals() {
               <Label>Client *</Label>
               <Select value={form.client_id} onValueChange={handleClientSelect}>
                 <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
+                <SelectContent>{visibleClients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Goal Title *</Label><Input value={form.goal_title} onChange={e => setForm({ ...form, goal_title: e.target.value })} placeholder="e.g. Will independently brush teeth" /></div>
