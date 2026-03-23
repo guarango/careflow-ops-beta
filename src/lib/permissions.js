@@ -3,8 +3,8 @@
  *
  * Roles:
  *  admin — full access to everything
- *  hr    — staff & compliance management, no billing/service codes
- *  dsp   — direct support: submit notes/incidents, view own schedule, eMAR
+ *  hr    — Dashboard, Staff, Schedule, Timecards, Compliance ONLY
+ *  dsp   — Dashboard, Clients (own), Schedule (own), Session Notes (own), eMAR (own), Timecards (own) ONLY
  */
 
 export const ROLES = {
@@ -13,60 +13,59 @@ export const ROLES = {
   DSP: "dsp",
 };
 
-// Nav items visible per role
+// Nav items visible per role — exactly as specified
 export const NAV_ACCESS = {
-  "/": ["admin", "hr", "dsp"],
-  "/staff": ["admin", "hr"],
-  "/clients": ["admin", "hr", "dsp"],
-  "/schedule": ["admin", "hr", "dsp"],
-  "/goals": ["admin", "hr", "dsp"],
-  "/session-notes": ["admin", "hr", "dsp"],
-  "/incidents": ["admin", "hr", "dsp"],
-  "/emar": ["admin", "hr", "dsp"],
-  "/timecards": ["admin", "hr", "dsp"],
-  "/compliance": ["admin", "hr"],
+  "/":              ["admin", "hr", "dsp"],
+  "/staff":         ["admin", "hr"],
+  "/clients":       ["admin", "dsp"],
+  "/schedule":      ["admin", "hr", "dsp"],
+  "/goals":         ["admin"],
+  "/session-notes": ["admin", "dsp"],
+  "/incidents":     ["admin"],
+  "/emar":          ["admin", "dsp"],
+  "/timecards":     ["admin", "hr", "dsp"],
+  "/compliance":    ["admin", "hr"],
   "/service-codes": ["admin"],
-  "/billing": ["admin"],
-  "/users": ["admin"],
-  "/role-preview": ["admin"],
+  "/payroll":       ["admin"],
+  "/billing":       ["admin"],
+  "/users":         ["admin"],
+  "/role-preview":  ["admin"],
 };
 
-// Feature-level permissions
+// Feature-level permissions — exactly as specified
 export const CAN = {
-  // Incident Reports
-  changeIncidentStatus: ["admin", "hr"],
-  viewAllIncidents: ["admin", "hr"],
-
   // Timecards
-  approveTimecards: ["admin", "hr"],
-  viewAllTimecards: ["admin", "hr"],
+  approveTimecards:     ["admin", "hr"],
+  viewAllTimecards:     ["admin", "hr"],
 
   // Session Notes
-  approveSessionNotes: ["admin", "hr"],
+  approveSessionNotes:  ["admin", "hr"],
 
   // Staff
-  editStaff: ["admin", "hr"],
+  editStaff:            ["admin", "hr"],
+
+  // Incidents
+  changeIncidentStatus: ["admin"],
+  viewAllIncidents:     ["admin"],
 
   // Clients
-  editClients: ["admin", "hr"],
+  editClients:          ["admin"],
 
   // Billing
-  accessBilling: ["admin"],
+  accessBilling:        ["admin"],
 
   // Service Codes
-  editServiceCodes: ["admin"],
+  editServiceCodes:     ["admin"],
 
   // Users
-  manageUsers: ["admin"],
+  manageUsers:          ["admin"],
 
   // Goals
-  editGoals: ["admin", "hr"],
+  editGoals:            ["admin"],
 };
 
 /**
  * Check if a user role has a specific permission
- * @param {string} userRole - the current user's role
- * @param {string} permission - key from CAN
  */
 export function can(userRole, permission) {
   const allowed = CAN[permission];
@@ -84,7 +83,7 @@ export function canAccessPath(userRole, path) {
 }
 
 export function getRoleLabel(role) {
-  return { admin: "Admin", hr: "HR", dsp: "DSP" }[role] || role;
+  return { admin: "Admin", hr: "HR Manager", dsp: "DSP" }[role] || role;
 }
 
 export function getRoleBadgeColor(role) {
