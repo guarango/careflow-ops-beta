@@ -19,7 +19,8 @@ export function useAssignedClients() {
     queryFn: () => base44.entities.StaffMember.list(),
     enabled: isDSP,
     staleTime: 0,
-    refetchOnMount: true,
+    gcTime: 0,
+    refetchOnMount: "always",
   });
 
   if (!isDSP) {

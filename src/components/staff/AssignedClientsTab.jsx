@@ -4,17 +4,31 @@ import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 
 export default function AssignedClientsTab({ staff }) {
   const [search, setSearch] = useState("");
-  const [localIds, setLocalIds] = useState(staff.assigned_client_ids || []);
   const queryClient = useQueryClient();
 
-  // Keep in sync if staff prop updates (e.g. after cache invalidation)
+  // Always fetch fresh data for this specific staff member
+  const { data: freshStaff, isLoading: loadingStaff } = useQuery({
+    queryKey: ["staff-member", staff.id],
+    queryFn: async () => {
+      const all = await base44.entities.StaffMember.filter({ id: staff.id });
+      return all[0] || staff;
+    },
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+
+  const [localIds, setLocalIds] = useState([]);
+
+  // Sync localIds whenever freshStaff loads
   useEffect(() => {
-    setLocalIds(staff.assigned_client_ids || []);
-  }, [staff.id, JSON.stringify(staff.assigned_client_ids)]);
+    if (freshStaff) {
+      setLocalIds(freshStaff.assigned_client_ids || []);
+    }
+  }, [freshStaff?.id, JSON.stringify(freshStaff?.assigned_client_ids)]);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients"],
@@ -27,6 +41,7 @@ export default function AssignedClientsTab({ staff }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
       queryClient.invalidateQueries({ queryKey: ["staff-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["staff-member", staff.id] });
     },
   });
 
@@ -53,6 +68,14 @@ export default function AssignedClientsTab({ staff }) {
     if (!aA && bA) return 1;
     return `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`);
   });
+
+  if (loadingStaff) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
