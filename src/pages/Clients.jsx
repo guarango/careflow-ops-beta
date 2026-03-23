@@ -203,6 +203,12 @@ export default function Clients() {
             </div>
 
             <div><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} rows={3} /></div>
+
+            {editing && (
+              <div className="border-t pt-4">
+                <AssignedStaffSection clientId={editing.id} isAdmin={isAdmin} />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>

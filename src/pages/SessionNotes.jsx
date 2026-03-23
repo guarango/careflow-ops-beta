@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Plus, Search } from "lucide-react";
+import { useAssignedClients } from "@/hooks/useAssignedClients";
+import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 
 const serviceTypes = ["Residential", "Day Program", "Community Living", "Respite", "Supported Employment"];
 const noteStatuses = ["Draft", "Submitted", "Approved", "Needs Revision"];
@@ -20,6 +22,7 @@ const noteStatuses = ["Draft", "Submitted", "Approved", "Needs Revision"];
 const emptyNote = { client_id: "", client_name: "", staff_name: "", date: "", start_time: "", end_time: "", service_type: "", goals_addressed: "", activities: "", behavior_notes: "", progress_notes: "", status: "Draft" };
 
 export default function SessionNotes() {
+  const { isDSPMode, assignedClientIds } = useAssignedClients();
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyNote);
@@ -60,13 +63,18 @@ export default function SessionNotes() {
     setForm({ ...form, client_id: clientId, client_name: client ? `${client.first_name} ${client.last_name}` : "" });
   };
 
-  const filtered = notes.filter(n =>
+  const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;
+  const visibleNotes = isDSPMode ? notes.filter(n => assignedClientIds.includes(n.client_id)) : notes;
+
+  const filtered = visibleNotes.filter(n =>
     `${n.client_name} ${n.staff_name} ${n.date}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
+
   return (
     <div>
-      <PageHeader title="Session Notes" subtitle={`${notes.length} notes`} action={<Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />New Note</Button>} />
+      <PageHeader title="Session Notes" subtitle={`${visibleNotes.length} notes`} action={<Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />New Note</Button>} />
 
       <Card className="mb-6">
         <CardContent className="py-3">
@@ -116,7 +124,7 @@ export default function SessionNotes() {
               <Label>Client *</Label>
               <Select value={form.client_id} onValueChange={handleClientSelect}>
                 <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
+                <SelectContent>{visibleClients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Date *</Label><Input type="date" value={form.date} onChange={(e) => setForm({...form, date: e.target.value})} /></div>
