@@ -11,6 +11,11 @@ export default function AssignedClientsTab({ staff }) {
   const [localIds, setLocalIds] = useState(staff.assigned_client_ids || []);
   const queryClient = useQueryClient();
 
+  // Keep in sync if staff prop updates (e.g. after cache invalidation)
+  React.useEffect(() => {
+    setLocalIds(staff.assigned_client_ids || []);
+  }, [staff.id, JSON.stringify(staff.assigned_client_ids)]);
+
   const { data: clients = [] } = useQuery({
     queryKey: ["clients"],
     queryFn: () => base44.entities.Client.list(),
@@ -19,7 +24,10 @@ export default function AssignedClientsTab({ staff }) {
   const mutation = useMutation({
     mutationFn: (ids) =>
       base44.entities.StaffMember.update(staff.id, { assigned_client_ids: ids }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["staff"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff"] });
+      queryClient.invalidateQueries({ queryKey: ["staff-assignments"] });
+    },
   });
 
   const toggle = (clientId) => {

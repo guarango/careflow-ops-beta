@@ -15,9 +15,11 @@ export function useAssignedClients() {
   const { previewRole } = useRolePreview();
 
   const { data: staffMembers = [], isLoading } = useQuery({
-    queryKey: ["staff"],
+    queryKey: ["staff-assignments"],
     queryFn: () => base44.entities.StaffMember.list(),
     enabled: isDSP,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   if (!isDSP) {
