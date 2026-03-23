@@ -8,13 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { User, Briefcase, Shield, Award, Plus, Trash2, Paperclip, ExternalLink, Loader2 } from "lucide-react";
+import { User, Briefcase, Shield, Award, Plus, Trash2, Paperclip, ExternalLink, Loader2, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import AssignedClientsTab from "./AssignedClientsTab";
 
 const CONTRACT_AREAS = ["DSPD", "DCFS", "Private Pay", "Licensed Program", "Foster Care"];
 const CERT_NAMES = ["CPR/First Aid", "Medication Administration", "CPI / Crisis Prevention", "HIPAA", "Mandated Reporter", "Abuse & Neglect", "Driver's License", "Other"];
 
-export default function StaffProfileDialog({ staff, onSave, onClose }) {
+export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = false }) {
   const [form, setForm] = useState(staff);
   const [tab, setTab] = useState("personal");
 
@@ -77,11 +78,12 @@ export default function StaffProfileDialog({ staff, onSave, onClose }) {
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid grid-cols-4 flex-shrink-0">
+          <TabsList className={`grid flex-shrink-0 ${isAdmin ? "grid-cols-5" : "grid-cols-4"}`}>
             <TabsTrigger value="personal"><User className="w-3.5 h-3.5 mr-1.5" />Personal</TabsTrigger>
             <TabsTrigger value="employment"><Briefcase className="w-3.5 h-3.5 mr-1.5" />Employment</TabsTrigger>
             <TabsTrigger value="compliance"><Shield className="w-3.5 h-3.5 mr-1.5" />Compliance</TabsTrigger>
             <TabsTrigger value="certifications"><Award className="w-3.5 h-3.5 mr-1.5" />Certs</TabsTrigger>
+            {isAdmin && <TabsTrigger value="assigned"><Users className="w-3.5 h-3.5 mr-1.5" />Assigned</TabsTrigger>}
           </TabsList>
 
           <div className="flex-1 overflow-y-auto mt-4 pr-1">
@@ -361,6 +363,17 @@ export default function StaffProfileDialog({ staff, onSave, onClose }) {
                 <div><Label>Total Training Hours</Label><Input type="number" value={form.training_hours || 0} onChange={e => set("training_hours", parseFloat(e.target.value) || 0)} /></div>
               </div>
             </TabsContent>
+
+            {/* ASSIGNED CLIENTS TAB (Admin only) */}
+            {isAdmin && (
+              <TabsContent value="assigned" className="mt-0">
+                {staff.id ? (
+                  <AssignedClientsTab staff={staff} />
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">Save the staff profile first before assigning clients.</p>
+                )}
+              </TabsContent>
+            )}
           </div>
         </Tabs>
 
