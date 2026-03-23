@@ -7,7 +7,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, Target, CalendarDays, Tag, UserCog,
-  TrendingUp, Check, X, Eye, EyeOff, Lock
+  TrendingUp, Check, X, Lock
 } from "lucide-react";
 import { NAV_ACCESS, CAN, getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
 
@@ -29,47 +29,45 @@ const ALL_NAV = [
 ];
 
 const FEATURE_LABELS = {
+  approveTimecards:     "Approve Timecards",
+  viewAllTimecards:     "View All Timecards",
+  approveSessionNotes:  "Approve Session Notes",
+  editStaff:            "Edit Staff Records",
   changeIncidentStatus: "Change Incident Status",
-  viewAllIncidents: "View All Incidents",
-  approveTimecards: "Approve Timecards",
-  viewAllTimecards: "View All Timecards",
-  approveSessionNotes: "Approve Session Notes",
-  editStaff: "Edit Staff Records",
-  editClients: "Edit Client Records",
-  accessBilling: "Access Billing",
-  editServiceCodes: "Edit Service Codes",
-  manageUsers: "Manage Users",
-  editGoals: "Edit Goals",
-};
-
-const ROLE_COLORS = {
-  admin: "bg-primary/10 border-primary/30 text-primary",
-  hr: "bg-amber-50 border-amber-200 text-amber-700",
-  dsp: "bg-blue-50 border-blue-200 text-blue-700",
+  viewAllIncidents:     "View All Incidents",
+  editClients:          "Edit Client Records",
+  accessBilling:        "Access Billing",
+  editServiceCodes:     "Edit Service Codes",
+  manageUsers:          "Manage Users",
+  editGoals:            "Edit Goals",
 };
 
 const ROLE_HEADER_COLORS = {
   admin: "bg-primary text-primary-foreground",
-  hr: "bg-amber-500 text-white",
-  dsp: "bg-blue-500 text-white",
+  hr:    "bg-violet-600 text-white",
+  dsp:   "bg-blue-500 text-white",
+};
+
+const ROLE_DESCRIPTIONS = {
+  admin: "Full access to all features and data",
+  hr:    "Dashboard, Staff, Schedule, Timecards, Compliance only",
+  dsp:   "Dashboard, own Clients, Schedule, Notes, eMAR, Timecards only",
 };
 
 function MockSidebar({ role }) {
   const visibleNav = ALL_NAV.filter(item => {
     const allowed = NAV_ACCESS[item.path];
-    if (!allowed) return role === "admin";
-    return allowed.includes(role);
+    return allowed ? allowed.includes(role) : role === "admin";
   });
   const hiddenNav = ALL_NAV.filter(item => !visibleNav.includes(item));
 
   return (
     <div className="flex gap-4">
-      {/* Visible nav */}
       <div className="flex-1">
         <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Visible ({visibleNav.length})</p>
         <div className="space-y-1">
           {visibleNav.map(item => (
-            <div key={item.path} className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted/50 text-sm">
+            <div key={item.path} className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-green-50 border border-green-100 text-sm">
               <item.icon className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
               <span>{item.label}</span>
               <Check className="w-3 h-3 text-green-600 ml-auto" />
@@ -77,14 +75,13 @@ function MockSidebar({ role }) {
           ))}
         </div>
       </div>
-      {/* Hidden nav */}
       {hiddenNav.length > 0 && (
         <div className="flex-1">
           <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Hidden ({hiddenNav.length})</p>
           <div className="space-y-1">
             {hiddenNav.map(item => (
-              <div key={item.path} className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted/20 text-sm text-muted-foreground">
-                <Lock className="w-3.5 h-3.5 flex-shrink-0" />
+              <div key={item.path} className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-red-50/60 border border-red-100 text-sm text-muted-foreground">
+                <Lock className="w-3.5 h-3.5 flex-shrink-0 text-red-300" />
                 <span className="line-through">{item.label}</span>
                 <X className="w-3 h-3 text-red-400 ml-auto" />
               </div>
@@ -100,10 +97,9 @@ function FeatureMatrix({ role }) {
   return (
     <div className="space-y-1.5">
       {Object.entries(FEATURE_LABELS).map(([key, label]) => {
-        const allowed = CAN[key] || [];
-        const hasAccess = allowed.includes(role);
+        const hasAccess = (CAN[key] || []).includes(role);
         return (
-          <div key={key} className={`flex items-center justify-between px-3 py-2 rounded-md text-sm ${hasAccess ? "bg-green-50 border border-green-100" : "bg-red-50/50 border border-red-100"}`}>
+          <div key={key} className={`flex items-center justify-between px-3 py-2 rounded-md text-sm border ${hasAccess ? "bg-green-50 border-green-100" : "bg-red-50/40 border-red-100"}`}>
             <span className={hasAccess ? "text-foreground" : "text-muted-foreground"}>{label}</span>
             {hasAccess
               ? <span className="flex items-center gap-1 text-xs text-green-700 font-medium"><Check className="w-3.5 h-3.5" />Allowed</span>
@@ -122,16 +118,10 @@ function RoleCard({ role }) {
       <div className={`px-5 py-4 ${ROLE_HEADER_COLORS[role]}`}>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold">{getRoleLabel(role)} View</h2>
-            <p className="text-xs opacity-80 mt-0.5">
-              {role === "admin" && "Full access to all features and data"}
-              {role === "hr" && "Staff & compliance management, no billing"}
-              {role === "dsp" && "Direct support: notes, schedule, incidents, eMAR"}
-            </p>
+            <h2 className="text-lg font-bold">{getRoleLabel(role)}</h2>
+            <p className="text-xs opacity-80 mt-0.5">{ROLE_DESCRIPTIONS[role]}</p>
           </div>
-          <Badge className="bg-white/20 text-white border-white/30 text-sm px-3 py-1">
-            {getRoleLabel(role)}
-          </Badge>
+          <Badge className="bg-white/20 text-white border-white/30 text-sm px-3 py-1">{getRoleLabel(role)}</Badge>
         </div>
       </div>
       <CardContent className="p-5 space-y-6">
@@ -155,31 +145,19 @@ export default function RolePreview() {
     <div>
       <PageHeader
         title="Role Preview"
-        subtitle="Compare what each role can see and do in the system"
+        subtitle="Exact permissions enforced for each role throughout the app"
         action={
           <div className="flex gap-2">
-            <Button
-              variant={compareMode === "side-by-side" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCompareMode("side-by-side")}
-            >
-              Side by Side
-            </Button>
-            <Button
-              variant={compareMode === "tabs" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCompareMode("tabs")}
-            >
-              Tabbed
-            </Button>
+            <Button variant={compareMode === "side-by-side" ? "default" : "outline"} size="sm" onClick={() => setCompareMode("side-by-side")}>Side by Side</Button>
+            <Button variant={compareMode === "tabs" ? "default" : "outline"} size="sm" onClick={() => setCompareMode("tabs")}>Tabbed</Button>
           </div>
         }
       />
 
-      {/* Quick comparison matrix */}
+      {/* Full comparison matrix */}
       <Card className="mb-6">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Quick Comparison</CardTitle>
+          <CardTitle className="text-sm">Full Permissions Matrix</CardTitle>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
@@ -187,18 +165,23 @@ export default function RolePreview() {
               <tr className="border-b bg-muted/30">
                 <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Feature / Page</th>
                 {["admin", "hr", "dsp"].map(role => (
-                  <th key={role} className="text-center px-4 py-2.5 font-medium">
+                  <th key={role} className="text-center px-6 py-2.5 font-medium">
                     <Badge variant="outline" className={getRoleBadgeColor(role)}>{getRoleLabel(role)}</Badge>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
+              <tr className="bg-muted/20 border-t">
+                <td className="px-4 py-2 font-semibold text-xs text-muted-foreground uppercase tracking-wider" colSpan={4}>Navigation Pages</td>
+              </tr>
               {ALL_NAV.map(item => (
                 <tr key={item.path} className="border-b last:border-0 hover:bg-muted/20">
-                  <td className="px-4 py-2 flex items-center gap-2">
-                    <item.icon className="w-3.5 h-3.5 text-muted-foreground" />
-                    {item.label}
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      <item.icon className="w-3.5 h-3.5 text-muted-foreground" />
+                      {item.label}
+                    </div>
                   </td>
                   {["admin", "hr", "dsp"].map(role => {
                     const allowed = NAV_ACCESS[item.path];
@@ -239,15 +222,16 @@ export default function RolePreview() {
       </Card>
 
       {compareMode === "side-by-side" ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <RoleCard role="admin" />
+          <RoleCard role="hr" />
           <RoleCard role="dsp" />
         </div>
       ) : (
         <Tabs defaultValue="admin">
           <TabsList>
             <TabsTrigger value="admin">Admin</TabsTrigger>
-            <TabsTrigger value="hr">HR</TabsTrigger>
+            <TabsTrigger value="hr">HR Manager</TabsTrigger>
             <TabsTrigger value="dsp">DSP</TabsTrigger>
           </TabsList>
           <TabsContent value="admin"><RoleCard role="admin" /></TabsContent>
