@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Search, Phone, Mail, AlertTriangle } from "lucide-react";
+import { useRole } from "@/hooks/useRole";
 
 const emptyStaff = {
   first_name: "", last_name: "", email: "", phone: "", role: "DSP", status: "Active",
@@ -28,6 +29,7 @@ function complianceAlerts(s) {
 }
 
 export default function Staff() {
+  const { isAdmin } = useRole();
   const [showDialog, setShowDialog] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [search, setSearch] = useState("");
@@ -143,6 +145,7 @@ export default function Staff() {
           staff={editingStaff}
           onSave={handleSave}
           onClose={() => { setShowDialog(false); setEditingStaff(null); }}
+          isAdmin={isAdmin}
         />
       )}
     </div>
