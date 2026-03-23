@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertTriangle, Plus, Search, Lock } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
+import { useAssignedClients } from "@/hooks/useAssignedClients";
+import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 
 const types = ["Behavioral", "Medical", "Fall", "Elopement", "Property Damage", "Medication Error", "Injury", "Other"];
 const severities = ["Low", "Medium", "High", "Critical"];
@@ -24,6 +26,7 @@ const emptyIncident = { client_id: "", client_name: "", reported_by_name: "", da
 
 export default function Incidents() {
   const { can, isDSP, role } = useRole();
+  const { isDSPMode, assignedClientIds } = useAssignedClients();
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyIncident);
@@ -67,9 +70,14 @@ export default function Incidents() {
     setForm({ ...form, client_id: clientId, client_name: client ? `${client.first_name} ${client.last_name}` : "" });
   };
 
-  const filtered = incidents.filter(i =>
+  const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;
+  const visibleIncidents = isDSPMode ? incidents.filter(i => assignedClientIds.includes(i.client_id)) : incidents;
+
+  const filtered = visibleIncidents.filter(i =>
     `${i.client_name} ${i.type} ${i.severity} ${i.status}`.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
 
   return (
     <div>
@@ -133,7 +141,7 @@ export default function Incidents() {
               <Label>Client *</Label>
               <Select value={form.client_id} onValueChange={handleClientSelect}>
                 <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
+                <SelectContent>{visibleClients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label>Date *</Label><Input type="date" value={form.date} onChange={(e) => setForm({...form, date: e.target.value})} /></div>
