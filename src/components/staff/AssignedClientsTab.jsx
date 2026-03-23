@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ export default function AssignedClientsTab({ staff }) {
   const queryClient = useQueryClient();
 
   // Keep in sync if staff prop updates (e.g. after cache invalidation)
-  React.useEffect(() => {
+  useEffect(() => {
     setLocalIds(staff.assigned_client_ids || []);
   }, [staff.id, JSON.stringify(staff.assigned_client_ids)]);
 
