@@ -13,13 +13,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pill, Plus, Search, ChevronsUpDown } from "lucide-react";
+import { Pill, Plus, Search, LayoutGrid, List } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import { useRole } from "@/hooks/useRole";
+import ClientGridCard from "@/components/emar/ClientGridCard";
 import ClientMedCard from "@/components/emar/ClientMedCard";
+import ClientMedDetail from "@/components/emar/ClientMedDetail";
 import MedScheduleSection from "@/components/emar/MedScheduleSection";
 import MedAutocomplete from "@/components/emar/MedAutocomplete";
+import { cn } from "@/lib/utils";
 
 const routes = ["Oral", "Topical", "Injection", "Inhaled", "Sublingual", "Other"];
 const medStatuses = ["Active", "Discontinued", "On Hold"];
@@ -42,14 +45,14 @@ export default function EMAR() {
   const canEdit = role === "admin" || role === "hr";
 
   const [tab, setTab] = useState("medications");
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
+  const [selectedClient, setSelectedClient] = useState(null); // client detail view
   const [showMedDialog, setShowMedDialog] = useState(false);
   const [showLogDialog, setShowLogDialog] = useState(false);
   const [editingMed, setEditingMed] = useState(null);
   const [medForm, setMedForm] = useState(emptyMed);
   const [logForm, setLogForm] = useState(emptyLog);
   const [search, setSearch] = useState("");
-  const [allExpanded, setAllExpanded] = useState(true);
-  const [expandKey, setExpandKey] = useState(0); // force re-render on toggle all
 
   const queryClient = useQueryClient();
 
@@ -88,12 +91,7 @@ export default function EMAR() {
   };
 
   const openEdit = (med) => {
-    setMedForm({
-      ...emptyMed,
-      ...med,
-      schedule_days: med.schedule_days || [...DAY_KEYS],
-      scheduled_times: med.scheduled_times || [],
-    });
+    setMedForm({ ...emptyMed, ...med, schedule_days: med.schedule_days || [...DAY_KEYS], scheduled_times: med.scheduled_times || [] });
     setEditingMed(med);
     setShowMedDialog(true);
   };
@@ -104,37 +102,29 @@ export default function EMAR() {
   };
 
   const saveMed = () => {
-    if (editingMed) {
-      updateMedMutation.mutate({ id: editingMed.id, data: medForm });
-    } else {
-      createMedMutation.mutate(medForm);
-    }
+    if (editingMed) updateMedMutation.mutate({ id: editingMed.id, data: medForm });
+    else createMedMutation.mutate(medForm);
   };
 
-  // Role-filtered clients and meds
   const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;
   const visibleMeds = isDSPMode ? medications.filter(m => assignedClientIds.includes(m.client_id)) : medications;
   const visibleLogs = isDSPMode ? logs.filter(l => assignedClientIds.includes(l.client_id)) : logs;
 
-  // Search filter across clients + meds
   const searchLower = search.toLowerCase();
   const filteredClients = visibleClients.filter(c => {
     const name = `${c.first_name} ${c.last_name}`.toLowerCase();
     if (name.includes(searchLower)) return true;
-    const clientMeds = visibleMeds.filter(m => m.client_id === c.id);
-    return clientMeds.some(m => m.medication_name.toLowerCase().includes(searchLower));
+    return visibleMeds.filter(m => m.client_id === c.id).some(m => m.medication_name.toLowerCase().includes(searchLower));
   });
 
   const filteredLogs = visibleLogs.filter(l =>
     `${l.client_name} ${l.medication_name}`.toLowerCase().includes(searchLower)
   );
 
-  const toggleAll = () => {
-    setAllExpanded(v => !v);
-    setExpandKey(k => k + 1);
-  };
-
   if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
+
+  // Sync selectedClient with latest data
+  const currentClient = selectedClient ? clients.find(c => c.id === selectedClient.id) || selectedClient : null;
 
   return (
     <div>
@@ -142,19 +132,19 @@ export default function EMAR() {
         title="eMAR"
         subtitle="Electronic Medication Administration Record"
         action={
-          !isDSPMode && canEdit && tab === "medications" ? (
-            <Button onClick={() => { setMedForm(emptyMed); setEditingMed(null); setShowMedDialog(true); }}>
-              <Plus className="w-4 h-4 mr-2" />Add Medication
-            </Button>
-          ) : tab === "logs" ? (
+          tab === "logs" ? (
             <Button onClick={() => setShowLogDialog(true)}>
               <Plus className="w-4 h-4 mr-2" />Log Administration
+            </Button>
+          ) : selectedClient && canEdit ? (
+            <Button size="sm" onClick={() => openAddForClient(currentClient)}>
+              <Plus className="w-4 h-4 mr-1.5" />Add Medication
             </Button>
           ) : null
         }
       />
 
-      <Tabs value={tab} onValueChange={setTab} className="mb-6">
+      <Tabs value={tab} onValueChange={(v) => { setTab(v); setSelectedClient(null); }} className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <TabsList>
             <TabsTrigger value="medications">Medications</TabsTrigger>
@@ -162,54 +152,89 @@ export default function EMAR() {
           </TabsList>
         </div>
 
-        {/* Search Bar */}
-        <Card className="mb-4">
-          <CardContent className="py-3">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder={tab === "medications" ? "Search clients or medications..." : "Search logs..."}
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="pl-9 border-0 bg-transparent focus-visible:ring-0"
-                />
+        {/* Search + view toggle bar */}
+        {!selectedClient && (
+          <Card className="mb-4">
+            <CardContent className="py-3">
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder={tab === "medications" ? "Search clients or medications..." : "Search logs..."}
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="pl-9 border-0 bg-transparent focus-visible:ring-0"
+                  />
+                </div>
+                {tab === "medications" && (
+                  <div className="flex items-center gap-1 border border-border rounded-md p-0.5 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("grid")}
+                      className={cn("p-1.5 rounded transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+                      title="Grid view"
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("list")}
+                      className={cn("p-1.5 rounded transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+                      title="List view"
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
-              {tab === "medications" && (
-                <button
-                  type="button"
-                  onClick={toggleAll}
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                >
-                  <ChevronsUpDown className="w-3.5 h-3.5" />
-                  {allExpanded ? "Collapse All" : "Expand All"}
-                </button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* MEDICATIONS TAB */}
         <TabsContent value="medications">
-          {filteredClients.length === 0 ? (
+          {/* Client detail view */}
+          {selectedClient ? (
+            <ClientMedDetail
+              client={currentClient}
+              medications={visibleMeds.filter(m => m.client_id === currentClient.id)}
+              logs={visibleLogs}
+              canEdit={canEdit}
+              onBack={() => setSelectedClient(null)}
+              onAdd={openAddForClient}
+              onEdit={openEdit}
+              onAdminister={openLogForMed}
+            />
+          ) : filteredClients.length === 0 ? (
             <EmptyState icon={Pill} title="No clients found" description="No clients match your search." />
+          ) : viewMode === "grid" ? (
+            /* GRID VIEW */
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredClients.map(client => (
+                <ClientGridCard
+                  key={client.id}
+                  client={client}
+                  medications={visibleMeds.filter(m => m.client_id === client.id)}
+                  logs={visibleLogs}
+                  onClick={() => setSelectedClient(client)}
+                />
+              ))}
+            </div>
           ) : (
+            /* LIST VIEW */
             <div className="space-y-3">
-              {filteredClients.map(client => {
-                const clientMeds = visibleMeds.filter(m => m.client_id === client.id);
-                return (
-                  <ClientMedCard
-                    key={`${client.id}-${expandKey}`}
-                    client={client}
-                    medications={clientMeds}
-                    canEdit={canEdit}
-                    onAdd={openAddForClient}
-                    onEdit={openEdit}
-                    onAdminister={openLogForMed}
-                    defaultOpen={allExpanded}
-                  />
-                );
-              })}
+              {filteredClients.map(client => (
+                <ClientMedCard
+                  key={client.id}
+                  client={client}
+                  medications={visibleMeds.filter(m => m.client_id === client.id)}
+                  canEdit={canEdit}
+                  onAdd={openAddForClient}
+                  onEdit={openEdit}
+                  onAdminister={openLogForMed}
+                  defaultOpen={true}
+                />
+              ))}
             </div>
           )}
         </TabsContent>
@@ -269,14 +294,10 @@ export default function EMAR() {
                   <SelectContent>{visibleClients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <Label>Medication Name *</Label>
-                  <MedAutocomplete
-                    value={medForm.medication_name}
-                    onChange={v => setMedForm(f => ({ ...f, medication_name: v }))}
-                  />
+                  <MedAutocomplete value={medForm.medication_name} onChange={v => setMedForm(f => ({ ...f, medication_name: v }))} />
                 </div>
                 <div>
                   <Label>Dosage *</Label>
@@ -297,16 +318,11 @@ export default function EMAR() {
                   </Select>
                 </div>
               </div>
-
               <MedScheduleSection form={medForm} setForm={setMedForm} />
             </div>
-
             <DialogFooter className="mt-4">
               <Button variant="outline" onClick={closeMedDialog}>Cancel</Button>
-              <Button
-                onClick={saveMed}
-                disabled={!medForm.client_id || !medForm.medication_name || !medForm.dosage || !medForm.frequency}
-              >
+              <Button onClick={saveMed} disabled={!medForm.client_id || !medForm.medication_name || !medForm.dosage || !medForm.frequency}>
                 {editingMed ? "Update" : "Create"}
               </Button>
             </DialogFooter>
