@@ -80,5 +80,15 @@ module.exports = {
   		}
   	}
   },
+  safelist: [
+    "border-l-blue-500", "border-l-purple-500", "border-l-green-500", "border-l-orange-500",
+    "border-l-teal-500", "border-l-rose-500", "border-l-amber-500", "border-l-indigo-500",
+    "bg-blue-50", "bg-purple-50", "bg-green-50", "bg-orange-50",
+    "bg-teal-50", "bg-rose-50", "bg-amber-50", "bg-indigo-50",
+    "bg-blue-500", "bg-purple-500", "bg-green-500", "bg-orange-500",
+    "bg-teal-500", "bg-rose-500", "bg-amber-500", "bg-indigo-500",
+    "text-blue-700", "text-purple-700", "text-green-700", "text-orange-700",
+    "text-teal-700", "text-rose-700", "text-amber-700", "text-indigo-700",
+  ],
   plugins: [require("tailwindcss-animate")],
 }
