@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, ChevronLeft, ChevronRight,
   Menu, X, Activity, Target, CalendarDays, Tag, UserCog,
-  TrendingUp, Eye, Check, ChevronUp, MapPin, Briefcase, Settings2
+  TrendingUp, Eye, Check, ChevronUp, MapPin, Briefcase, Settings2, ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -115,6 +115,22 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
+          {/* Family Portal quick link */}
+          <a href="/portal" target="_blank"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground mb-1",
+              collapsed && "justify-center px-0"
+            )}
+            title={collapsed ? "Family Portal" : undefined}>
+            <Heart className="w-[18px] h-[18px] flex-shrink-0 text-pink-400" />
+            {!collapsed && (
+              <span className="flex-1 flex items-center gap-1.5">
+                Family Portal
+                <ExternalLink className="w-3 h-3 opacity-40" />
+              </span>
+            )}
+          </a>
+          <div className={cn("h-px bg-sidebar-border my-1", collapsed && "mx-2")} />
           {visibleNav.map((item) => {
             const isActive = location.pathname === item.path;
             return (
