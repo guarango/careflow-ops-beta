@@ -78,6 +78,7 @@ const AuthenticatedApp = () => {
       <Route path="/api/docs" element={<APIDocs />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
+      
     </Routes>
   );
 };
