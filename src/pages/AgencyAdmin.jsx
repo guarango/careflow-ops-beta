@@ -7,7 +7,9 @@ import AgencyProfile from "@/components/agencyadmin/AgencyProfile";
 import AgencyNotifications from "@/components/agencyadmin/AgencyNotifications";
 import AgencyAPISettings from "@/components/agencyadmin/AgencyAPISettings";
 import AgencySubscription from "@/components/agencyadmin/AgencySubscription";
-import { Settings, Palette, Bell, Code, CreditCard } from "lucide-react";
+import PortalUserManagement from "@/components/portal/PortalUserManagement";
+import StaffMessageInbox from "@/components/portal/StaffMessageInbox";
+import { Settings, Palette, Bell, Code, CreditCard, Users, MessageSquare } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AgencyAdmin() {
@@ -46,6 +48,8 @@ export default function AgencyAdmin() {
           <TabsTrigger value="notifications" className="gap-2"><Bell className="w-4 h-4" /> Notifications</TabsTrigger>
           <TabsTrigger value="api" className="gap-2"><Code className="w-4 h-4" /> API & Webhooks</TabsTrigger>
           <TabsTrigger value="subscription" className="gap-2"><CreditCard className="w-4 h-4" /> Subscription</TabsTrigger>
+          <TabsTrigger value="portal-users" className="gap-2"><Users className="w-4 h-4" /> Family Portal</TabsTrigger>
+          <TabsTrigger value="portal-messages" className="gap-2"><MessageSquare className="w-4 h-4" /> Portal Messages</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -62,6 +66,12 @@ export default function AgencyAdmin() {
         </TabsContent>
         <TabsContent value="subscription">
           <AgencySubscription agency={agency} />
+        </TabsContent>
+        <TabsContent value="portal-users">
+          <PortalUserManagement />
+        </TabsContent>
+        <TabsContent value="portal-messages">
+          <StaffMessageInbox />
         </TabsContent>
       </Tabs>
     </div>
