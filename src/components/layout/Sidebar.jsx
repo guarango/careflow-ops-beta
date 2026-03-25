@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, ChevronLeft, ChevronRight,
   Menu, X, Activity, Target, CalendarDays, Tag, UserCog,
-  TrendingUp, Eye, Check, ChevronUp, MapPin, Briefcase, Settings2, ExternalLink, BarChart3, Sparkles, Smartphone
+  TrendingUp, Eye, Check, ChevronUp, MapPin, Briefcase, Settings2, ExternalLink, BarChart3, Sparkles, Smartphone, Plug
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ const navItems = [
   { label: "HR", icon: Briefcase, path: "/hr" },
   { label: "Reports & Analytics", icon: BarChart3, path: "/reports" },
   { label: "AI & Automation Hub", icon: Sparkles, path: "/ai-hub" },
+  { label: "Integrations", icon: Plug, path: "/agency-admin?tab=integrations" },
   { label: "Agency Settings", icon: Settings2, path: "/agency-admin" },
   { label: "Role Preview", icon: Eye, path: "/role-preview" },
 ];
