@@ -29,6 +29,7 @@ import SuperAdmin from './pages/SuperAdmin';
 import AgencyAdmin from './pages/AgencyAdmin';
 import OnboardingWizard from './pages/OnboardingWizard';
 import APIDocs from './pages/APIDocs';
+import Portal from './pages/Portal';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -76,6 +77,8 @@ const AuthenticatedApp = () => {
       <Route path="/super-admin" element={<SuperAdmin />} />
       <Route path="/onboarding" element={<OnboardingWizard />} />
       <Route path="/api/docs" element={<APIDocs />} />
+      {/* Family Portal — completely separate environment */}
+      <Route path="/portal/*" element={<Portal />} />
       <Route path="*" element={<PageNotFound />} />
 
     </Routes>
