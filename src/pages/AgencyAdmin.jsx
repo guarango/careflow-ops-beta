@@ -10,7 +10,9 @@ import AgencySubscription from "@/components/agencyadmin/AgencySubscription";
 import PortalUserManagement from "@/components/portal/PortalUserManagement";
 import StaffMessageInbox from "@/components/portal/StaffMessageInbox";
 import AIFeatureManager from "@/components/ai/AIFeatureManager";
-import { Settings, Palette, Bell, Code, CreditCard, Users, MessageSquare, Sparkles } from "lucide-react";
+import AgencyIntegrationHub from "@/components/integrations/AgencyIntegrationHub";
+import IntegrationHealthDashboard from "@/components/integrations/IntegrationHealthDashboard";
+import { Settings, Palette, Bell, Code, CreditCard, Users, MessageSquare, Sparkles, Plug, Activity } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AgencyAdmin() {
@@ -52,6 +54,8 @@ export default function AgencyAdmin() {
           <TabsTrigger value="portal-users" className="gap-2"><Users className="w-4 h-4" /> Family Portal</TabsTrigger>
           <TabsTrigger value="portal-messages" className="gap-2"><MessageSquare className="w-4 h-4" /> Portal Messages</TabsTrigger>
           <TabsTrigger value="ai-settings" className="gap-2"><Sparkles className="w-4 h-4" /> AI Features</TabsTrigger>
+          <TabsTrigger value="integrations" className="gap-2"><Plug className="w-4 h-4" /> Integrations</TabsTrigger>
+          <TabsTrigger value="int-health" className="gap-2"><Activity className="w-4 h-4" /> Integration Health</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -77,6 +81,12 @@ export default function AgencyAdmin() {
         </TabsContent>
         <TabsContent value="ai-settings">
           <AIFeatureManager isSuperAdmin={false} agencyId={agency?.id} />
+        </TabsContent>
+        <TabsContent value="integrations">
+          <AgencyIntegrationHub agencyId={agency?.id || "demo-agency"} />
+        </TabsContent>
+        <TabsContent value="int-health">
+          <IntegrationHealthDashboard agencyId={agency?.id || "demo-agency"} />
         </TabsContent>
       </Tabs>
     </div>
