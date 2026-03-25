@@ -12,13 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tag, Plus } from "lucide-react";
+import { Tag, Plus, MapPin } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const rateTypes = ["Hourly", "Daily", "Per Unit", "Monthly"];
 const fundingSources = ["Medicaid", "Medicaid Waiver", "State", "Private", "Other"];
 const serviceTypes = ["Residential", "Day Program", "Community Living", "Respite", "Supported Employment", "Behavioral Support", "Nursing", "Other"];
 
-const empty = { code: "", description: "", rate_type: "Hourly", rate: 0, unit_minutes: 15, funding_source: "Medicaid Waiver", service_type: "", active: true, notes: "" };
+const empty = { code: "", description: "", rate_type: "Hourly", rate: 0, unit_minutes: 15, funding_source: "Medicaid Waiver", service_type: "", active: true, evv_required: false, notes: "" };
 
 export default function ServiceCodes() {
   const [showDialog, setShowDialog] = useState(false);
@@ -69,7 +70,8 @@ export default function ServiceCodes() {
                   <TableHead>State Rate</TableHead>
                   <TableHead>Funding</TableHead>
                   <TableHead>Status</TableHead>
-                </TableRow>
+                  <TableHead>EVV</TableHead>
+                  </TableRow>
               </TableHeader>
               <TableBody>
                 {codes.map(c => (
@@ -81,7 +83,12 @@ export default function ServiceCodes() {
                     <TableCell className="font-semibold">${c.rate?.toFixed(2)}{c.rate_type === "Per Unit" ? "/unit" : c.rate_type === "Hourly" ? "/hr" : c.rate_type === "Daily" ? "/day" : "/mo"}</TableCell>
                     <TableCell className="text-sm">{c.funding_source}</TableCell>
                     <TableCell><Badge variant="outline" className={c.active ? "bg-accent/15 text-accent border-accent/20" : "bg-muted text-muted-foreground"}>{c.active ? "Active" : "Inactive"}</Badge></TableCell>
-                  </TableRow>
+                    <TableCell>
+                     {c.evv_required ? (
+                       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 gap-1 text-xs"><MapPin className="w-3 h-3" />Required</Badge>
+                     ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
+                    </TableRow>
                 ))}
               </TableBody>
             </Table>
@@ -127,6 +134,13 @@ export default function ServiceCodes() {
               </div>
             </div>
             <div><Label>Notes</Label><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+              <Switch checked={!!form.evv_required} onCheckedChange={v => setForm({ ...form, evv_required: v })} />
+              <div>
+                <p className="text-sm font-medium flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-primary" />EVV Required</p>
+                <p className="text-xs text-muted-foreground">GPS location must be captured at clock-in and clock-out</p>
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
