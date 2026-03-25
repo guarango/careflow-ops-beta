@@ -2,7 +2,7 @@ import React from "react";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Clock, FileText } from "lucide-react";
+import { CalendarDays, Clock, FileText, Smartphone } from "lucide-react";
 
 function StatCard({ label, value, sub, subColor = "text-muted-foreground", icon: Icon, iconColor = "text-primary" }) {
   return (
@@ -69,6 +69,22 @@ export default function DSPDashboard({ user }) {
         <StatCard label="Hours this week" value="18.5" sub="of 40 scheduled" icon={Clock} />
         <StatCard label="Notes due" value={1} sub="From Friday" subColor="text-amber-600" iconColor="text-amber-500" icon={FileText} />
       </div>
+
+      {/* Mobile app banner */}
+      <Card className="border border-blue-200 bg-blue-50/60">
+        <CardContent className="p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+            <Smartphone className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground">Use the Mobile Field App</p>
+            <p className="text-xs text-muted-foreground">Clock in/out, session notes, goal data & more — optimized for your phone</p>
+          </div>
+          <a href="/mobile" className="flex-shrink-0 bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors">
+            Open
+          </a>
+        </CardContent>
+      </Card>
 
       {/* Clock in card — primary action */}
       <Card className="border-2 border-green-200 bg-green-50/50">
