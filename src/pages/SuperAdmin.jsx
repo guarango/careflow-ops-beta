@@ -8,7 +8,8 @@ import SuperAdminMetrics from "@/components/superadmin/SuperAdminMetrics";
 import SuperAdminReleases from "@/components/superadmin/SuperAdminReleases";
 import SuperAdminStateReporting from "@/components/superadmin/SuperAdminStateReporting";
 import SuperAdminAnalytics from "@/components/superadmin/SuperAdminAnalytics";
-import { Activity, Building2, CreditCard, BarChart3, Megaphone, Globe, TrendingUp } from "lucide-react";
+import AIFeatureManager from "@/components/ai/AIFeatureManager";
+import { Activity, Building2, CreditCard, BarChart3, Megaphone, Globe, TrendingUp, Sparkles } from "lucide-react";
 
 export default function SuperAdmin() {
   const [activeTab, setActiveTab] = useState("agencies");
@@ -70,6 +71,9 @@ export default function SuperAdmin() {
             <TabsTrigger value="platform-analytics" className="gap-2">
               <TrendingUp className="w-4 h-4" /> Platform Analytics
             </TabsTrigger>
+            <TabsTrigger value="ai-management" className="gap-2">
+              <Sparkles className="w-4 h-4" /> AI Feature Management
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="agencies">
@@ -89,6 +93,9 @@ export default function SuperAdmin() {
           </TabsContent>
           <TabsContent value="platform-analytics">
             <SuperAdminAnalytics agencies={agencies} />
+          </TabsContent>
+          <TabsContent value="ai-management">
+            <AIFeatureManager isSuperAdmin={true} agencyId={null} />
           </TabsContent>
         </Tabs>
       </div>
