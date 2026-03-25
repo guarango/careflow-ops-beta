@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FileText, Plus, Search } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
+import CheckSignature from "@/components/signatures/CheckSignature";
 
 const serviceTypes = ["Residential", "Day Program", "Community Living", "Respite", "Supported Employment"];
 const noteStatuses = ["Draft", "Submitted", "Approved", "Needs Revision"];
@@ -149,6 +150,19 @@ export default function SessionNotes() {
             <div className="col-span-2"><Label>Activities</Label><Textarea value={form.activities} onChange={(e) => setForm({...form, activities: e.target.value})} rows={2} /></div>
             <div className="col-span-2"><Label>Behavior Notes</Label><Textarea value={form.behavior_notes} onChange={(e) => setForm({...form, behavior_notes: e.target.value})} rows={2} /></div>
             <div className="col-span-2"><Label>Progress Notes</Label><Textarea value={form.progress_notes} onChange={(e) => setForm({...form, progress_notes: e.target.value})} rows={2} /></div>
+            {editing && (
+              <div className="col-span-2">
+                <CheckSignature
+                  recordId={editing.id}
+                  recordType="SessionNote"
+                  requiredSigners={[
+                    { role: "dsp", label: "DSP Signature (Submission)" },
+                    { role: "supervisor", label: "Supervisor Co-Signature (Finalization)" },
+                  ]}
+                  onSignComplete={() => updateMutation.mutate({ id: editing.id, data: { status: "Submitted" } })}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
