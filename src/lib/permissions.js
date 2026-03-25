@@ -30,6 +30,8 @@ export const NAV_ACCESS = {
   "/billing":       ["admin"],
   "/users":         ["admin"],
   "/role-preview":  ["admin"],
+  "/evv":           ["admin", "hr"],
+  "/hr":            ["admin", "hr", "dsp"],
 };
 
 // Feature-level permissions — exactly as specified

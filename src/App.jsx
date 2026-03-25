@@ -23,6 +23,8 @@ import ServiceCodes from './pages/ServiceCodes';
 import UserManagement from './pages/UserManagement';
 import Payroll from './pages/Payroll';
 import RolePreview from './pages/RolePreview';
+import EVV from './pages/EVV';
+import HR from './pages/HR';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -62,6 +64,8 @@ const AuthenticatedApp = () => {
         <Route path="/users" element={<UserManagement />} />
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/role-preview" element={<RolePreview />} />
+        <Route path="/evv" element={<EVV />} />
+        <Route path="/hr" element={<HR />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

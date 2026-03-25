@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, ChevronLeft, ChevronRight,
   Menu, X, Activity, Target, CalendarDays, Tag, UserCog,
-  TrendingUp, Eye, Check, ChevronUp
+  TrendingUp, Eye, Check, ChevronUp, MapPin, Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,8 @@ const navItems = [
   { label: "Payroll", icon: TrendingUp, path: "/payroll" },
   { label: "Billing", icon: DollarSign, path: "/billing" },
   { label: "User Management", icon: UserCog, path: "/users" },
+  { label: "EVV", icon: MapPin, path: "/evv" },
+  { label: "HR", icon: Briefcase, path: "/hr" },
   { label: "Role Preview", icon: Eye, path: "/role-preview" },
 ];
 
