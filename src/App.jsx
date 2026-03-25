@@ -25,6 +25,10 @@ import Payroll from './pages/Payroll';
 import RolePreview from './pages/RolePreview';
 import EVV from './pages/EVV';
 import HR from './pages/HR';
+import SuperAdmin from './pages/SuperAdmin';
+import AgencyAdmin from './pages/AgencyAdmin';
+import OnboardingWizard from './pages/OnboardingWizard';
+import APIDocs from './pages/APIDocs';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -66,6 +70,12 @@ const AuthenticatedApp = () => {
         <Route path="/role-preview" element={<RolePreview />} />
         <Route path="/evv" element={<EVV />} />
         <Route path="/hr" element={<HR />} />
+        <Route path="/agency-admin" element={<AgencyAdmin />} />
+      </Route>
+      {/* Standalone routes — no sidebar layout */}
+      <Route path="/super-admin" element={<SuperAdmin />} />
+      <Route path="/onboarding" element={<OnboardingWizard />} />
+      <Route path="/api/docs" element={<APIDocs />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
