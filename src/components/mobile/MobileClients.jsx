@@ -134,10 +134,10 @@ function ClientDetail({ client, onBack }) {
   );
 }
 
-function InfoRow({ icon: Icon, label, value }) {
+function InfoRow({ icon: RowIcon, label, value }) {
   return (
     <div className="flex items-start gap-3 bg-card border border-border rounded-xl px-4 py-3">
-      <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+      <RowIcon className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
       <div>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">{label}</p>
         <p className="text-sm text-foreground">{value}</p>
