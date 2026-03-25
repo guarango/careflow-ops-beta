@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { DollarSign, TrendingUp, AlertTriangle, Clock, Download, Filter } from "lucide-react";
+import { DollarSign, TrendingUp, AlertTriangle, Clock, Download, Filter, Activity } from "lucide-react";
 
 const COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
 
@@ -108,7 +108,7 @@ export default function RevenueCycleDashboard() {
         ].map(({ label, value, color, icon: Icon }) => (
           <Card key={label}>
             <CardContent className="pt-4 pb-3">
-              <div className="flex items-center gap-2 mb-1"><Icon className={`w-4 h-4 ${color}`} /><p className="text-xs text-muted-foreground">{label}</p></div>
+              <div className="flex items-center gap-2 mb-1"><DollarSign className={`w-4 h-4 ${color}`} /><p className="text-xs text-muted-foreground">{label}</p></div>
               <p className={`text-2xl font-bold ${color}`}>{value}</p>
             </CardContent>
           </Card>
