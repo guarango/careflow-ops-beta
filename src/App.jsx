@@ -76,9 +76,8 @@ const AuthenticatedApp = () => {
       <Route path="/super-admin" element={<SuperAdmin />} />
       <Route path="/onboarding" element={<OnboardingWizard />} />
       <Route path="/api/docs" element={<APIDocs />} />
-      </Route>
       <Route path="*" element={<PageNotFound />} />
-      
+
     </Routes>
   );
 };
