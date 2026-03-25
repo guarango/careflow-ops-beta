@@ -1,0 +1,26 @@
+{
+  "name": "CareOps Pro",
+  "short_name": "CareOps",
+  "description": "I/DD Care Management Platform — Field Staff Mobile App",
+  "start_url": "/mobile",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["medical", "productivity"],
+  "screenshots": []
+}

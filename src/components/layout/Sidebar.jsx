@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, ChevronLeft, ChevronRight,
   Menu, X, Activity, Target, CalendarDays, Tag, UserCog,
-  TrendingUp, Eye, Check, ChevronUp, MapPin, Briefcase, Settings2, ExternalLink, BarChart3, Sparkles
+  TrendingUp, Eye, Check, ChevronUp, MapPin, Briefcase, Settings2, ExternalLink, BarChart3, Sparkles, Smartphone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
