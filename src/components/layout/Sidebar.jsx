@@ -117,6 +117,21 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
+          {/* Mobile App quick link */}
+          <a href="/mobile"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground mb-1",
+              collapsed && "justify-center px-0"
+            )}
+            title={collapsed ? "Mobile Field App" : undefined}>
+            <Smartphone className="w-[18px] h-[18px] flex-shrink-0 text-blue-400" />
+            {!collapsed && (
+              <span className="flex-1 flex items-center gap-1.5">
+                Mobile Field App
+                <ExternalLink className="w-3 h-3 opacity-40" />
+              </span>
+            )}
+          </a>
           {/* Family Portal quick link */}
           <a href="/portal" target="_blank"
             className={cn(
