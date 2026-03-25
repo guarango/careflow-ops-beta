@@ -11,18 +11,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Clock, Plus, Search, CheckCircle, XCircle } from "lucide-react";
+import { Clock, Plus, Search, CheckCircle, XCircle, MapPin, AlertCircle } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
+import EVVCapturePanel from "@/components/evv/EVVCapturePanel";
 
 const tcStatuses = ["Pending", "Approved", "Rejected"];
 
-const emptyTC = { staff_id: "", staff_name: "", date: "", clock_in: "", clock_out: "", total_hours: 0, break_minutes: 0, status: "Pending", notes: "" };
+const emptyTC = { staff_id: "", staff_name: "", date: "", clock_in: "", clock_out: "", total_hours: 0, break_minutes: 0, status: "Pending", notes: "", evv_location_in: null, evv_location_out: null, service_code_id: "", service_type: "" };
 
 export default function Timecards() {
   const { can } = useRole();
   const [showDialog, setShowDialog] = useState(false);
   const [form, setForm] = useState(emptyTC);
   const [search, setSearch] = useState("");
+  const [evvError, setEvvError] = useState(null);
 
   const queryClient = useQueryClient();
   const { data: timecards = [], isLoading } = useQuery({
@@ -33,6 +35,11 @@ export default function Timecards() {
   const { data: staff = [] } = useQuery({
     queryKey: ["staff"],
     queryFn: () => base44.entities.StaffMember.list(),
+  });
+
+  const { data: serviceCodes = [] } = useQuery({
+    queryKey: ["service-codes"],
+    queryFn: () => base44.entities.ServiceCode.list(),
   });
 
   const createMutation = useMutation({
@@ -60,7 +67,24 @@ export default function Timecards() {
     return 0;
   };
 
+  const selectedCode = serviceCodes.find(c => c.id === form.service_code_id);
+  const evvRequired = selectedCode?.evv_required;
+
   const handleSave = () => {
+    setEvvError(null);
+    if (evvRequired) {
+      const missing = [];
+      if (!form.evv_location_in) missing.push("Clock-In GPS Location");
+      if (!form.evv_location_out) missing.push("Clock-Out GPS Location");
+      if (!form.service_type) missing.push("Service Type");
+      if (!form.staff_id) missing.push("Provider Identity");
+      if (!form.date) missing.push("Date of Service");
+      if (!form.clock_in || !form.clock_out) missing.push("Start/End Time");
+      if (missing.length > 0) {
+        setEvvError(`Missing required EVV data: ${missing.join(", ")}`);
+        return;
+      }
+    }
     const hours = calcHours();
     createMutation.mutate({ ...form, total_hours: hours });
   };
@@ -144,8 +168,29 @@ export default function Timecards() {
               <div><Label>Clock In *</Label><Input type="time" value={form.clock_in} onChange={(e) => setForm({...form, clock_in: e.target.value})} /></div>
               <div><Label>Clock Out</Label><Input type="time" value={form.clock_out} onChange={(e) => setForm({...form, clock_out: e.target.value})} /></div>
             </div>
+            <div>
+              <Label>Service Code</Label>
+              <Select value={form.service_code_id} onValueChange={v => { const c = serviceCodes.find(x => x.id === v); setForm({...form, service_code_id: v, service_type: c?.service_type || ""}); }}>
+                <SelectTrigger><SelectValue placeholder="Select service code" /></SelectTrigger>
+                <SelectContent>{serviceCodes.map(c => <SelectItem key={c.id} value={c.id}>{c.code} — {c.description}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             <div><Label>Break (minutes)</Label><Input type="number" value={form.break_minutes} onChange={(e) => setForm({...form, break_minutes: parseInt(e.target.value) || 0})} /></div>
             <div><Label>Notes</Label><Input value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} /></div>
+            {evvRequired && (
+              <EVVCapturePanel
+                capturedIn={form.evv_location_in}
+                capturedOut={form.evv_location_out}
+                onCapture={(type, data) => setForm(f => type === "in" ? { ...f, evv_location_in: data } : { ...f, evv_location_out: data })}
+                required={true}
+              />
+            )}
+            {evvError && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>{evvError}</span>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
