@@ -73,6 +73,7 @@ const AuthenticatedApp = () => {
         <Route path="/evv" element={<EVV />} />
         <Route path="/hr" element={<HR />} />
         <Route path="/agency-admin" element={<AgencyAdmin />} />
+        <Route path="/reports" element={<Reports />} />
       </Route>
       {/* Standalone routes — no sidebar layout */}
       <Route path="/super-admin" element={<SuperAdmin />} />
