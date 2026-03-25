@@ -30,6 +30,7 @@ import AgencyAdmin from './pages/AgencyAdmin';
 import OnboardingWizard from './pages/OnboardingWizard';
 import APIDocs from './pages/APIDocs';
 import Portal from './pages/Portal';
+import Reports from './pages/Reports';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
