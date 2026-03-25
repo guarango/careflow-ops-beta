@@ -31,6 +31,7 @@ import OnboardingWizard from './pages/OnboardingWizard';
 import APIDocs from './pages/APIDocs';
 import Portal from './pages/Portal';
 import Reports from './pages/Reports';
+import AIHub from './pages/AIHub';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -74,6 +75,7 @@ const AuthenticatedApp = () => {
         <Route path="/hr" element={<HR />} />
         <Route path="/agency-admin" element={<AgencyAdmin />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/ai-hub" element={<AIHub />} />
       </Route>
       {/* Standalone routes — no sidebar layout */}
       <Route path="/super-admin" element={<SuperAdmin />} />
