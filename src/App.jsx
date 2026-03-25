@@ -32,6 +32,7 @@ import APIDocs from './pages/APIDocs';
 import Portal from './pages/Portal';
 import Reports from './pages/Reports';
 import AIHub from './pages/AIHub';
+import MobileApp from './pages/MobileApp';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -77,6 +78,8 @@ const AuthenticatedApp = () => {
         <Route path="/reports" element={<Reports />} />
         <Route path="/ai-hub" element={<AIHub />} />
       </Route>
+      {/* Mobile PWA — dedicated layout */}
+      <Route path="/mobile" element={<MobileApp />} />
       {/* Standalone routes — no sidebar layout */}
       <Route path="/super-admin" element={<SuperAdmin />} />
       <Route path="/onboarding" element={<OnboardingWizard />} />
