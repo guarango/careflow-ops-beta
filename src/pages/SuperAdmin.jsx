@@ -6,7 +6,8 @@ import SuperAdminAgencies from "@/components/superadmin/SuperAdminAgencies";
 import SuperAdminBilling from "@/components/superadmin/SuperAdminBilling";
 import SuperAdminMetrics from "@/components/superadmin/SuperAdminMetrics";
 import SuperAdminReleases from "@/components/superadmin/SuperAdminReleases";
-import { Activity, Building2, CreditCard, BarChart3, Megaphone } from "lucide-react";
+import SuperAdminStateReporting from "@/components/superadmin/SuperAdminStateReporting";
+import { Activity, Building2, CreditCard, BarChart3, Megaphone, Globe } from "lucide-react";
 
 export default function SuperAdmin() {
   const [activeTab, setActiveTab] = useState("agencies");
