@@ -9,7 +9,8 @@ import AgencyAPISettings from "@/components/agencyadmin/AgencyAPISettings";
 import AgencySubscription from "@/components/agencyadmin/AgencySubscription";
 import PortalUserManagement from "@/components/portal/PortalUserManagement";
 import StaffMessageInbox from "@/components/portal/StaffMessageInbox";
-import { Settings, Palette, Bell, Code, CreditCard, Users, MessageSquare } from "lucide-react";
+import AIFeatureManager from "@/components/ai/AIFeatureManager";
+import { Settings, Palette, Bell, Code, CreditCard, Users, MessageSquare, Sparkles } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AgencyAdmin() {
@@ -50,6 +51,7 @@ export default function AgencyAdmin() {
           <TabsTrigger value="subscription" className="gap-2"><CreditCard className="w-4 h-4" /> Subscription</TabsTrigger>
           <TabsTrigger value="portal-users" className="gap-2"><Users className="w-4 h-4" /> Family Portal</TabsTrigger>
           <TabsTrigger value="portal-messages" className="gap-2"><MessageSquare className="w-4 h-4" /> Portal Messages</TabsTrigger>
+          <TabsTrigger value="ai-settings" className="gap-2"><Sparkles className="w-4 h-4" /> AI Features</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -72,6 +74,9 @@ export default function AgencyAdmin() {
         </TabsContent>
         <TabsContent value="portal-messages">
           <StaffMessageInbox />
+        </TabsContent>
+        <TabsContent value="ai-settings">
+          <AIFeatureManager isSuperAdmin={false} agencyId={agency?.id} />
         </TabsContent>
       </Tabs>
     </div>
