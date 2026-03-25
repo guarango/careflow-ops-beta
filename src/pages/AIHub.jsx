@@ -1,14 +1,59 @@
 import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Sparkles, Brain, FileText, Calendar, TrendingUp, Zap, DollarSign, Settings } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Brain, FileText, Calendar, TrendingUp, Zap, DollarSign, Settings } from "lucide-react";
 import AIBadge from "@/components/ai/AIBadge";
 import ClinicalRiskDashboard from "@/components/ai/ClinicalRiskDashboard";
 import SessionNoteAssistant from "@/components/ai/SessionNoteAssistant";
+import IncidentReportAssistant from "@/components/ai/IncidentReportAssistant";
 import SchedulingAssistant from "@/components/ai/SchedulingAssistant";
 import TurnoverRiskDashboard from "@/components/ai/TurnoverRiskDashboard";
 import BillingScrubber from "@/components/ai/BillingScrubber";
 import AutomationBuilder from "@/components/ai/AutomationBuilder";
 import AIFeatureManager from "@/components/ai/AIFeatureManager";
+
+const INCIDENT_TYPES = ["Physical Aggression", "Self-Injurious Behavior", "Elopement", "Medication Error", "Emergency Medical", "Property Destruction", "Abuse/Neglect", "Other"];
+
+const DEMO_GOALS = [
+  { id: "1", goal_title: "Meal Preparation Independence (3-step sequence)" },
+  { id: "2", goal_title: "Community Navigation — Bus Route #12" },
+  { id: "3", goal_title: "Social Interaction Skills — Initiating Greetings" },
+];
+
+function DocumentationTab() {
+  const [incidentType, setIncidentType] = useState("Physical Aggression");
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div>
+        <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+          Session Note Assistant <AIBadge />
+        </h3>
+        <SessionNoteAssistant
+          clientName="Demo Client"
+          goalsList={DEMO_GOALS}
+          onNoteGenerated={(note) => console.log("Note generated:", note)}
+        />
+      </div>
+      <div>
+        <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+          Incident Report Assistant <AIBadge />
+        </h3>
+        <div className="mb-3">
+          <label className="text-xs text-muted-foreground block mb-1">Incident Type:</label>
+          <Select value={incidentType} onValueChange={setIncidentType}>
+            <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+            <SelectContent>{INCIDENT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <IncidentReportAssistant
+          clientName="Demo Client"
+          incidentType={incidentType}
+          onDraftGenerated={(d) => console.log("Draft:", d)}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function AIHub() {
   const [activeTab, setActiveTab] = useState("risk");
@@ -53,76 +98,25 @@ export default function AIHub() {
         <TabsContent value="risk">
           <ClinicalRiskDashboard />
         </TabsContent>
-
         <TabsContent value="documentation">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
-                Session Note Assistant <AIBadge />
-              </h3>
-              <SessionNoteAssistant
-                clientName="Demo Client"
-                goalsList={[
-                  { id: "1", goal_title: "Meal Preparation Independence (3-step sequence)" },
-                  { id: "2", goal_title: "Community Navigation — Bus Route #12" },
-                  { id: "3", goal_title: "Social Interaction Skills — Initiating Greetings" },
-                ]}
-                onNoteGenerated={(note) => console.log("Note generated:", note)}
-              />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
-                Incident Report Assistant <AIBadge />
-              </h3>
-              <IncidentAssistantDemo />
-            </div>
-          </div>
+          <DocumentationTab />
         </TabsContent>
-
         <TabsContent value="scheduling">
           <SchedulingAssistant />
         </TabsContent>
-
         <TabsContent value="workforce">
           <TurnoverRiskDashboard />
         </TabsContent>
-
         <TabsContent value="billing">
           <BillingScrubber />
         </TabsContent>
-
         <TabsContent value="automation">
           <AutomationBuilder />
         </TabsContent>
-
         <TabsContent value="settings">
           <AIFeatureManager isSuperAdmin={false} agencyId={null} />
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
-
-// Inline demo wrapper for IncidentReportAssistant
-function IncidentAssistantDemo() {
-  const [incidentType, setIncidentType] = useState("Physical Aggression");
-  const { default: IncidentReportAssistant } = { default: require("@/components/ai/IncidentReportAssistant").default };
-
-  return (
-    <div>
-      <div className="mb-3">
-        <label className="text-xs text-muted-foreground block mb-1">Incident Type (for demo):</label>
-        <select
-          value={incidentType}
-          onChange={e => setIncidentType(e.target.value)}
-          className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm"
-        >
-          {["Physical Aggression", "Self-Injurious Behavior", "Elopement", "Medication Error", "Emergency Medical", "Property Destruction", "Other"].map(t => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
-      </div>
-      <IncidentReportAssistant clientName="Demo Client" incidentType={incidentType} onDraftGenerated={(d) => console.log("Draft:", d)} />
     </div>
   );
 }
