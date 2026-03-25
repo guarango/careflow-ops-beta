@@ -63,6 +63,9 @@ export default function SuperAdmin() {
             <TabsTrigger value="releases" className="gap-2">
               <Megaphone className="w-4 h-4" /> Releases & Announcements
             </TabsTrigger>
+            <TabsTrigger value="state-reporting" className="gap-2">
+              <Globe className="w-4 h-4" /> State Reporting Library
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="agencies">
@@ -76,6 +79,9 @@ export default function SuperAdmin() {
           </TabsContent>
           <TabsContent value="releases">
             <SuperAdminReleases />
+          </TabsContent>
+          <TabsContent value="state-reporting">
+            <SuperAdminStateReporting />
           </TabsContent>
         </Tabs>
       </div>
