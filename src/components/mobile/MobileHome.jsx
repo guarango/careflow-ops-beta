@@ -102,7 +102,7 @@ export default function MobileHome({ user, onNavigate }) {
       {/* Quick actions */}
       <div className="px-4 mt-6">
         <h2 className="text-sm font-semibold text-foreground mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {[
             { icon: Play, label: "Start Visit", color: "bg-green-500", action: "clock" },
             { icon: AlertTriangle, label: "File Incident", color: "bg-red-500", action: "incident" },
