@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Plus, Search } from "lucide-react";
+import { Heart, Plus, Search, LayoutGrid, List } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import { useRole } from "@/hooks/useRole";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
@@ -38,6 +38,7 @@ export default function Clients() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyClient);
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState("grid");
 
   const queryClient = useQueryClient();
   const { data: clients = [], isLoading } = useQuery({
@@ -117,15 +118,55 @@ export default function Clients() {
 
       <Card className="mb-6">
         <CardContent className="py-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search clients..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Search clients..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
+            </div>
+            <div className="flex items-center gap-1 border border-border rounded-lg p-1">
+              <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button onClick={() => setViewMode("list")} className={`p-1.5 rounded ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <List className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {filtered.length === 0 && !isLoading ? (
         <EmptyState icon={Heart} title="No clients" description={isDSPMode ? "No assigned clients match your search." : "Add your first client to get started."} action={!isDSPMode && <Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Client</Button>} />
+      ) : viewMode === "grid" ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {filtered.map((c) => {
+            const initials = `${c.first_name?.[0] || ""}${c.last_name?.[0] || ""}`.toUpperCase();
+            const colors = ["bg-blue-100 text-blue-700", "bg-purple-100 text-purple-700", "bg-green-100 text-green-700", "bg-pink-100 text-pink-700", "bg-amber-100 text-amber-700", "bg-cyan-100 text-cyan-700", "bg-rose-100 text-rose-700"];
+            const color = colors[(c.first_name?.charCodeAt(0) || 0) % colors.length];
+            const service = getServiceSummary(c);
+            return (
+              <Card key={c.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openEdit(c)}>
+                <CardContent className="p-0">
+                  <div className="bg-muted/40 flex items-center justify-center h-32 rounded-t-xl">
+                    {c.photo_url
+                      ? <img src={c.photo_url} alt={`${c.first_name} ${c.last_name}`} className="w-20 h-20 rounded-full object-cover" />
+                      : <div className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold ${color}`}>{initials}</div>
+                    }
+                  </div>
+                  <div className="p-3">
+                    <p className="font-semibold text-foreground text-sm truncate">{c.first_name} {c.last_name}</p>
+                    {service !== "—" && (
+                      <Badge variant="outline" className="text-[10px] mt-1">{service}</Badge>
+                    )}
+                    <div className="mt-2">
+                      <StatusBadge status={c.status || "Active"} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       ) : (
         <Card>
           <div className="overflow-x-auto">

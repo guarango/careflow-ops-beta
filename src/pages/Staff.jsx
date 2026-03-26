@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Search, Phone, Mail, AlertTriangle } from "lucide-react";
+import { Users, Plus, Search, Phone, Mail, AlertTriangle, LayoutGrid, List } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 
 const emptyStaff = {
@@ -33,6 +33,7 @@ export default function Staff() {
   const [showDialog, setShowDialog] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState("grid");
 
   const queryClient = useQueryClient();
   const { data: staff = [], isLoading } = useQuery({
@@ -72,20 +73,63 @@ export default function Staff() {
 
       <Card className="mb-6">
         <CardContent className="py-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search staff by name, email, or role..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 border-0 bg-transparent focus-visible:ring-0"
-            />
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search staff by name, email, or role..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 border-0 bg-transparent focus-visible:ring-0"
+              />
+            </div>
+            <div className="flex items-center gap-1 border border-border rounded-lg p-1">
+              <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button onClick={() => setViewMode("list")} className={`p-1.5 rounded ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <List className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {filtered.length === 0 && !isLoading ? (
         <EmptyState icon={Users} title="No staff members" description="Add your first staff member to get started." action={<Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Staff</Button>} />
+      ) : viewMode === "grid" ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {filtered.map((s) => {
+            const alerts = complianceAlerts(s);
+            const initials = `${s.first_name?.[0] || ""}${s.last_name?.[0] || ""}`.toUpperCase();
+            const colors = ["bg-blue-100 text-blue-700", "bg-purple-100 text-purple-700", "bg-green-100 text-green-700", "bg-pink-100 text-pink-700", "bg-amber-100 text-amber-700", "bg-cyan-100 text-cyan-700", "bg-rose-100 text-rose-700"];
+            const color = colors[(s.first_name?.charCodeAt(0) || 0) % colors.length];
+            return (
+              <Card key={s.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openEdit(s)}>
+                <CardContent className="p-0">
+                  <div className="bg-muted/40 flex items-center justify-center h-32 rounded-t-xl">
+                    {s.photo_url
+                      ? <img src={s.photo_url} alt={`${s.first_name} ${s.last_name}`} className="w-20 h-20 rounded-full object-cover" />
+                      : <div className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold ${color}`}>{initials}</div>
+                    }
+                  </div>
+                  <div className="p-3">
+                    <p className="font-semibold text-foreground text-sm truncate">{s.first_name} {s.last_name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.role}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <StatusBadge status={s.status || "Active"} />
+                      {alerts.length > 0 && (
+                        <span className="flex items-center gap-0.5 text-[10px] text-chart-4">
+                          <AlertTriangle className="w-3 h-3" />{alerts.length}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       ) : (
         <Card>
           <div className="overflow-x-auto">
