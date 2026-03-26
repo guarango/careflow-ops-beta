@@ -22,6 +22,7 @@ import MedScheduleSection from "@/components/emar/MedScheduleSection";
 import MedAutocomplete from "@/components/emar/MedAutocomplete";
 import MARScheduledView from "@/components/emar/MARScheduledView";
 import MARDetailView from "@/components/emar/MARDetailView";
+import MARAdminSummary from "@/components/emar/MARAdminSummary";
 import { cn } from "@/lib/utils";
 
 const routes = ["Oral", "Topical", "Injection", "Inhaled", "Sublingual", "Other"];
@@ -133,6 +134,7 @@ export default function EMAR() {
         <TabsList className="mb-4">
           <TabsTrigger value="mar">Scheduled MAR</TabsTrigger>
           <TabsTrigger value="medications">Medications</TabsTrigger>
+          <TabsTrigger value="summary">Administration Summary</TabsTrigger>
           <TabsTrigger value="logs">Administration Log</TabsTrigger>
         </TabsList>
 
@@ -248,6 +250,15 @@ export default function EMAR() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* ── ADMINISTRATION SUMMARY TAB ────────────────────── */}
+        <TabsContent value="summary">
+          <MARAdminSummary
+            clients={visibleClients}
+            medications={visibleMeds}
+            logs={visibleLogs}
+          />
         </TabsContent>
 
         {/* ── LOGS TAB ──────────────────────────────────────── */}
