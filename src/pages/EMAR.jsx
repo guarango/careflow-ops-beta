@@ -13,15 +13,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pill, Plus, Search, LayoutGrid, List } from "lucide-react";
+import { Pill, Plus, Search, LayoutGrid, List, ArrowLeft } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import { useRole } from "@/hooks/useRole";
 import ClientGridCard from "@/components/emar/ClientGridCard";
-import ClientMedCard from "@/components/emar/ClientMedCard";
-import ClientMedDetail from "@/components/emar/ClientMedDetail";
 import MedScheduleSection from "@/components/emar/MedScheduleSection";
 import MedAutocomplete from "@/components/emar/MedAutocomplete";
+import MARScheduledView from "@/components/emar/MARScheduledView";
+import MARDetailView from "@/components/emar/MARDetailView";
+import MARGoalsSummary from "@/components/emar/MARGoalsSummary";
 import { cn } from "@/lib/utils";
 
 const routes = ["Oral", "Topical", "Injection", "Inhaled", "Sublingual", "Other"];
@@ -44,9 +45,10 @@ export default function EMAR() {
   const { role } = useRole();
   const canEdit = role === "admin" || role === "hr";
 
-  const [tab, setTab] = useState("medications");
-  const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
-  const [selectedClient, setSelectedClient] = useState(null); // client detail view
+  const [tab, setTab] = useState("mar");       // "mar" | "goals" | "logs"
+  const [viewMode, setViewMode] = useState("grid");
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [marDetail, setMarDetail] = useState(null); // { client, time, meds, date }
   const [showMedDialog, setShowMedDialog] = useState(false);
   const [showLogDialog, setShowLogDialog] = useState(false);
   const [editingMed, setEditingMed] = useState(null);
@@ -56,18 +58,10 @@ export default function EMAR() {
 
   const queryClient = useQueryClient();
 
-  const { data: medications = [] } = useQuery({
-    queryKey: ["medications"],
-    queryFn: () => base44.entities.Medication.list(),
-  });
-  const { data: logs = [] } = useQuery({
-    queryKey: ["med-logs"],
-    queryFn: () => base44.entities.MedicationLog.list("-created_date"),
-  });
-  const { data: clients = [] } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => base44.entities.Client.list(),
-  });
+  const { data: medications = [] } = useQuery({ queryKey: ["medications"], queryFn: () => base44.entities.Medication.list() });
+  const { data: logs = [] } = useQuery({ queryKey: ["med-logs"], queryFn: () => base44.entities.MedicationLog.list("-created_date") });
+  const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: () => base44.entities.Client.list() });
+  const { data: goals = [] } = useQuery({ queryKey: ["goals"], queryFn: () => base44.entities.ClientGoal.list() });
 
   const createMedMutation = useMutation({
     mutationFn: (data) => base44.entities.Medication.create(data),
@@ -116,15 +110,12 @@ export default function EMAR() {
     if (name.includes(searchLower)) return true;
     return visibleMeds.filter(m => m.client_id === c.id).some(m => m.medication_name.toLowerCase().includes(searchLower));
   });
-
-  const filteredLogs = visibleLogs.filter(l =>
-    `${l.client_name} ${l.medication_name}`.toLowerCase().includes(searchLower)
-  );
+  const filteredLogs = visibleLogs.filter(l => `${l.client_name} ${l.medication_name}`.toLowerCase().includes(searchLower));
 
   if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
 
-  // Sync selectedClient with latest data
   const currentClient = selectedClient ? clients.find(c => c.id === selectedClient.id) || selectedClient : null;
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div>
@@ -132,115 +123,182 @@ export default function EMAR() {
         title="eMAR"
         subtitle="Electronic Medication Administration Record"
         action={
-          tab === "logs" ? (
-            <Button onClick={() => setShowLogDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" />Log Administration
-            </Button>
-          ) : selectedClient && canEdit ? (
-            <Button size="sm" onClick={() => openAddForClient(currentClient)}>
+          canEdit && !marDetail && !selectedClient && tab === "mar" ? (
+            <Button size="sm" onClick={() => setShowMedDialog(true)}>
               <Plus className="w-4 h-4 mr-1.5" />Add Medication
             </Button>
           ) : null
         }
       />
 
-      <Tabs value={tab} onValueChange={(v) => { setTab(v); setSelectedClient(null); }} className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <TabsList>
-            <TabsTrigger value="medications">Medications</TabsTrigger>
-            <TabsTrigger value="logs">Administration Log</TabsTrigger>
-          </TabsList>
-        </div>
+      <Tabs value={tab} onValueChange={(v) => { setTab(v); setSelectedClient(null); setMarDetail(null); }}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="mar">Scheduled MAR</TabsTrigger>
+          <TabsTrigger value="goals">Goals Summary</TabsTrigger>
+          <TabsTrigger value="medications">Medications</TabsTrigger>
+          <TabsTrigger value="logs">Administration Log</TabsTrigger>
+        </TabsList>
 
-        {/* Search + view toggle bar */}
-        {!selectedClient && (
-          <Card className="mb-4">
-            <CardContent className="py-3">
-              <div className="flex items-center gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder={tab === "medications" ? "Search clients or medications..." : "Search logs..."}
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="pl-9 border-0 bg-transparent focus-visible:ring-0"
-                  />
-                </div>
-                {tab === "medications" && (
-                  <div className="flex items-center gap-1 border border-border rounded-md p-0.5 flex-shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("grid")}
-                      className={cn("p-1.5 rounded transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
-                      title="Grid view"
-                    >
-                      <LayoutGrid className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("list")}
-                      className={cn("p-1.5 rounded transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
-                      title="List view"
-                    >
-                      <List className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* MEDICATIONS TAB */}
-        <TabsContent value="medications">
-          {/* Client detail view */}
-          {selectedClient ? (
-            <ClientMedDetail
-              client={currentClient}
-              medications={visibleMeds.filter(m => m.client_id === currentClient.id)}
+        {/* ── SCHEDULED MAR TAB ─────────────────────────────── */}
+        <TabsContent value="mar">
+          {marDetail ? (
+            <MARDetailView
+              client={marDetail.client}
+              time={marDetail.time}
+              meds={marDetail.meds}
+              date={marDetail.date}
+              allMeds={visibleMeds}
               logs={visibleLogs}
-              canEdit={canEdit}
-              onBack={() => setSelectedClient(null)}
-              onAdd={openAddForClient}
-              onEdit={openEdit}
-              onAdminister={openLogForMed}
+              onBack={() => setMarDetail(null)}
+              onSave={() => setMarDetail(null)}
             />
+          ) : (
+            <MARScheduledView
+              clients={visibleClients}
+              medications={visibleMeds}
+              logs={visibleLogs}
+              date={today}
+              onOpenDetail={setMarDetail}
+            />
+          )}
+        </TabsContent>
+
+        {/* ── GOALS SUMMARY TAB ─────────────────────────────── */}
+        <TabsContent value="goals">
+          {selectedClient ? (
+            <MARGoalsSummary
+              client={currentClient}
+              goals={goals.filter(g => g.client_id === currentClient.id)}
+              goalLogs={[]}
+            />
+          ) : (
+            <div>
+              <Card className="mb-4">
+                <CardContent className="py-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
+                  </div>
+                </CardContent>
+              </Card>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredClients.map(client => (
+                  <ClientGridCard
+                    key={client.id}
+                    client={client}
+                    medications={visibleMeds.filter(m => m.client_id === client.id)}
+                    logs={visibleLogs}
+                    onClick={() => setSelectedClient(client)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ── MEDICATIONS TAB ───────────────────────────────── */}
+        <TabsContent value="medications">
+          {!selectedClient && (
+            <Card className="mb-4">
+              <CardContent className="py-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input placeholder="Search clients or medications..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
+                  </div>
+                  <div className="flex items-center gap-1 border border-border rounded-md p-0.5 flex-shrink-0">
+                    <button type="button" onClick={() => setViewMode("grid")} className={cn("p-1.5 rounded transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}><LayoutGrid className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => setViewMode("list")} className={cn("p-1.5 rounded transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}><List className="w-4 h-4" /></button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {selectedClient ? (
+            <div>
+              <button type="button" onClick={() => setSelectedClient(null)} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors">
+                <ArrowLeft className="w-4 h-4" /> Back to all clients
+              </button>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">{currentClient.first_name} {currentClient.last_name}</h2>
+                {canEdit && <Button size="sm" onClick={() => openAddForClient(currentClient)}><Plus className="w-4 h-4 mr-1.5" />Add Medication</Button>}
+              </div>
+              {visibleMeds.filter(m => m.client_id === currentClient.id).length === 0 ? (
+                <div className="border border-dashed border-border rounded-xl py-12 text-center text-muted-foreground text-sm">
+                  No medications on file.
+                  {canEdit && <button type="button" onClick={() => openAddForClient(currentClient)} className="ml-2 text-primary hover:underline">+ Add one</button>}
+                </div>
+              ) : (
+                <div className="border border-border rounded-xl overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/30">
+                        <TableHead>Medication</TableHead>
+                        <TableHead>Dosage</TableHead>
+                        <TableHead className="hidden sm:table-cell">Frequency</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {visibleMeds.filter(m => m.client_id === currentClient.id).map(med => (
+                        <TableRow key={med.id} className={cn(med.status !== "Active" && "opacity-60")}>
+                          <TableCell className="font-medium text-sm">
+                            {med.medication_name}
+                            {med.is_controlled && <span className="ml-2 text-[10px] font-bold text-red-600 bg-red-100 px-1 rounded">C2</span>}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{med.dosage}</TableCell>
+                          <TableCell className="text-sm hidden sm:table-cell">{med.frequency}</TableCell>
+                          <TableCell><StatusBadge status={med.status || "Active"} /></TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-1 justify-end">
+                              {med.status === "Active" && <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openLogForMed(med)}>Administer</Button>}
+                              {canEdit && <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openEdit(med)}>Edit</Button>}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
           ) : filteredClients.length === 0 ? (
             <EmptyState icon={Pill} title="No clients found" description="No clients match your search." />
           ) : viewMode === "grid" ? (
-            /* GRID VIEW */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredClients.map(client => (
-                <ClientGridCard
-                  key={client.id}
-                  client={client}
-                  medications={visibleMeds.filter(m => m.client_id === client.id)}
-                  logs={visibleLogs}
-                  onClick={() => setSelectedClient(client)}
-                />
+                <ClientGridCard key={client.id} client={client} medications={visibleMeds.filter(m => m.client_id === client.id)} logs={visibleLogs} onClick={() => setSelectedClient(client)} />
               ))}
             </div>
           ) : (
-            /* LIST VIEW */
             <div className="space-y-3">
               {filteredClients.map(client => (
-                <ClientMedCard
-                  key={client.id}
-                  client={client}
-                  medications={visibleMeds.filter(m => m.client_id === client.id)}
-                  canEdit={canEdit}
-                  onAdd={openAddForClient}
-                  onEdit={openEdit}
-                  onAdminister={openLogForMed}
-                  defaultOpen={true}
-                />
+                <div key={client.id} className="border border-border rounded-xl p-4 bg-card cursor-pointer hover:bg-muted/40" onClick={() => setSelectedClient(client)}>
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold">{client.first_name} {client.last_name}</p>
+                    <span className="text-xs text-muted-foreground">{visibleMeds.filter(m => m.client_id === client.id && m.status === "Active").length} active meds</span>
+                  </div>
+                </div>
               ))}
             </div>
           )}
         </TabsContent>
 
-        {/* LOGS TAB */}
+        {/* ── LOGS TAB ──────────────────────────────────────── */}
         <TabsContent value="logs">
+          <Card className="mb-4">
+            <CardContent className="py-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search logs..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
+              </div>
+            </CardContent>
+          </Card>
+          <div className="flex justify-end mb-3">
+            <Button size="sm" onClick={() => setShowLogDialog(true)}><Plus className="w-4 h-4 mr-1.5" />Log Administration</Button>
+          </div>
           {filteredLogs.length === 0 ? (
             <EmptyState icon={Pill} title="No logs" description="No medication administration logs yet." />
           ) : (
@@ -280,9 +338,7 @@ export default function EMAR() {
       {canEdit && (
         <Dialog open={showMedDialog} onOpenChange={closeMedDialog}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingMed ? "Edit Medication" : "Add Medication"}</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>{editingMed ? "Edit Medication" : "Add Medication"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
                 <Label>Client *</Label>
@@ -317,6 +373,22 @@ export default function EMAR() {
                     <SelectContent>{medStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+                <div className="flex items-center gap-2 pt-5">
+                  <input type="checkbox" id="is_controlled" checked={!!medForm.is_controlled} onChange={e => setMedForm(f => ({ ...f, is_controlled: e.target.checked }))} className="w-4 h-4 accent-red-500" />
+                  <Label htmlFor="is_controlled" className="text-sm cursor-pointer">Controlled Substance (C2)</Label>
+                </div>
+                <div className="flex items-center gap-2 pt-5">
+                  <input type="checkbox" id="is_prn" checked={!!medForm.is_prn} onChange={e => setMedForm(f => ({ ...f, is_prn: e.target.checked }))} className="w-4 h-4 accent-amber-500" />
+                  <Label htmlFor="is_prn" className="text-sm cursor-pointer">PRN (As Needed)</Label>
+                </div>
+              </div>
+              <div>
+                <Label>Instructions</Label>
+                <Textarea value={medForm.instructions || ""} onChange={e => setMedForm(f => ({ ...f, instructions: e.target.value }))} rows={2} />
+              </div>
+              <div>
+                <Label>Diagnosis</Label>
+                <Input value={medForm.diagnosis || ""} onChange={e => setMedForm(f => ({ ...f, diagnosis: e.target.value }))} />
               </div>
               <MedScheduleSection form={medForm} setForm={setMedForm} />
             </div>
