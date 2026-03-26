@@ -22,7 +22,6 @@ import MedScheduleSection from "@/components/emar/MedScheduleSection";
 import MedAutocomplete from "@/components/emar/MedAutocomplete";
 import MARScheduledView from "@/components/emar/MARScheduledView";
 import MARDetailView from "@/components/emar/MARDetailView";
-import MARGoalsSummary from "@/components/emar/MARGoalsSummary";
 import { cn } from "@/lib/utils";
 
 const routes = ["Oral", "Topical", "Injection", "Inhaled", "Sublingual", "Other"];
@@ -45,7 +44,7 @@ export default function EMAR() {
   const { role } = useRole();
   const canEdit = role === "admin" || role === "hr";
 
-  const [tab, setTab] = useState("mar");       // "mar" | "goals" | "logs"
+  const [tab, setTab] = useState("mar");       // "mar" | "medications" | "logs"
   const [viewMode, setViewMode] = useState("grid");
   const [selectedClient, setSelectedClient] = useState(null);
   const [marDetail, setMarDetail] = useState(null); // { client, time, meds, date }
@@ -61,7 +60,6 @@ export default function EMAR() {
   const { data: medications = [] } = useQuery({ queryKey: ["medications"], queryFn: () => base44.entities.Medication.list() });
   const { data: logs = [] } = useQuery({ queryKey: ["med-logs"], queryFn: () => base44.entities.MedicationLog.list("-created_date") });
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: () => base44.entities.Client.list() });
-  const { data: goals = [] } = useQuery({ queryKey: ["goals"], queryFn: () => base44.entities.ClientGoal.list() });
 
   const createMedMutation = useMutation({
     mutationFn: (data) => base44.entities.Medication.create(data),
@@ -134,7 +132,6 @@ export default function EMAR() {
       <Tabs value={tab} onValueChange={(v) => { setTab(v); setSelectedClient(null); setMarDetail(null); }}>
         <TabsList className="mb-4">
           <TabsTrigger value="mar">Scheduled MAR</TabsTrigger>
-          <TabsTrigger value="goals">Goals Summary</TabsTrigger>
           <TabsTrigger value="medications">Medications</TabsTrigger>
           <TabsTrigger value="logs">Administration Log</TabsTrigger>
         </TabsList>
@@ -160,39 +157,6 @@ export default function EMAR() {
               date={today}
               onOpenDetail={setMarDetail}
             />
-          )}
-        </TabsContent>
-
-        {/* ── GOALS SUMMARY TAB ─────────────────────────────── */}
-        <TabsContent value="goals">
-          {selectedClient ? (
-            <MARGoalsSummary
-              client={currentClient}
-              goals={goals.filter(g => g.client_id === currentClient.id)}
-              goalLogs={[]}
-            />
-          ) : (
-            <div>
-              <Card className="mb-4">
-                <CardContent className="py-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
-                  </div>
-                </CardContent>
-              </Card>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredClients.map(client => (
-                  <ClientGridCard
-                    key={client.id}
-                    client={client}
-                    medications={visibleMeds.filter(m => m.client_id === client.id)}
-                    logs={visibleLogs}
-                    onClick={() => setSelectedClient(client)}
-                  />
-                ))}
-              </div>
-            </div>
           )}
         </TabsContent>
 
