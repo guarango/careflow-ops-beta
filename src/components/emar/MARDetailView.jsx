@@ -14,7 +14,7 @@ import { useAuth } from "@/lib/AuthContext";
 
 const LOG_STATUSES = ["Administered", "Refused", "Held", "Not Available", "Missed"];
 
-function MedRow({ med, log, onLogChange, isControlled, isPRN }) {
+function MedRow({ med, log, onLogChange, isControlled, isPRN, isMissed }) {
   const [qty, setQty] = useState(log?.qty || "1");
   const [notes, setNotes] = useState(log?.notes || "");
   const [temp, setTemp] = useState(log?.temp || "");
@@ -38,8 +38,9 @@ function MedRow({ med, log, onLogChange, isControlled, isPRN }) {
 
   return (
     <div className={cn(
-      "border border-gray-200 rounded-xl p-4 bg-white",
-      isControlled && "border-l-4 border-l-red-400"
+      "border border-gray-200 p-4 bg-white",
+      isMissed ? "rounded-b-xl bg-red-50 border-red-200" : "rounded-xl",
+      !isMissed && isControlled && "border-l-4 border-l-red-400"
     )}>
       <div className="flex flex-col sm:flex-row sm:items-start gap-4">
         {/* Signature checkbox */}
@@ -145,6 +146,17 @@ function MedRow({ med, log, onLogChange, isControlled, isPRN }) {
   );
 }
 
+function isMissedWindow(timeLabel) {
+  const TIME_HOURS = {
+    "7:00 AM": 7, "Breakfast": 8, "8:00 AM": 8, "9:00 AM": 9,
+    "10:00 AM": 10, "12:00 PM": 12, "2:00 PM": 14, "4:00 PM": 16,
+    "Dinner": 18, "8:00 PM": 20, "9:00 PM": 21, "Bedtime": 21,
+  };
+  const windowHour = TIME_HOURS[timeLabel];
+  if (windowHour == null) return false;
+  return new Date().getHours() >= windowHour + 1;
+}
+
 export default function MARDetailView({ client, time, meds, date, allMeds, logs, onBack, onSave }) {
   const queryClient = useQueryClient();
   const [logMap, setLogMap] = useState({});
@@ -153,6 +165,7 @@ export default function MARDetailView({ client, time, meds, date, allMeds, logs,
   const scheduledMeds = meds || [];
 
   const todayLogs = logs.filter(l => l.client_id === client.id && l.date === date);
+  const windowIsMissed = isMissedWindow(time);
 
   const handleLogChange = (medId, data) => {
     setLogMap(p => ({ ...p, [medId]: { ...(p[medId] || {}), ...data } }));
@@ -225,16 +238,28 @@ export default function MARDetailView({ client, time, meds, date, allMeds, logs,
           <p className="text-sm text-gray-400 py-4 text-center">No scheduled medications for this time window.</p>
         ) : (
           <div className="space-y-3">
-            {scheduledMeds.map(med => (
-              <MedRow
-                key={med.id}
-                med={med}
-                log={logMap[med.id]}
-                onLogChange={handleLogChange}
-                isControlled={!!med.is_controlled}
-                isPRN={false}
-              />
-            ))}
+            {scheduledMeds.map(med => {
+              const hasExistingLog = todayLogs.some(l => l.medication_id === med.id);
+              const isMissed = windowIsMissed && !hasExistingLog && !logMap[med.id]?.signed;
+              return (
+                <div key={med.id} className={cn(isMissed && "ring-2 ring-red-300 rounded-xl")}>
+                  {isMissed && (
+                    <div className="flex items-center gap-2 bg-red-500 text-white text-xs font-bold px-4 py-1.5 rounded-t-xl">
+                      <span>⚠</span>
+                      <span>MISSED — Administration window has passed without a recorded signature</span>
+                    </div>
+                  )}
+                  <MedRow
+                    med={med}
+                    log={logMap[med.id]}
+                    onLogChange={handleLogChange}
+                    isControlled={!!med.is_controlled}
+                    isPRN={false}
+                    isMissed={isMissed}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

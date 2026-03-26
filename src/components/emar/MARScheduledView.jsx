@@ -39,19 +39,41 @@ function groupMedsByTime(medications) {
   });
 }
 
-function ClientMARCard({ client, meds, time, date, onOpen }) {
+function isMissedWindow(timeLabel) {
+  const TIME_HOURS = {
+    "7:00 AM": 7, "Breakfast": 8, "8:00 AM": 8, "9:00 AM": 9,
+    "10:00 AM": 10, "12:00 PM": 12, "2:00 PM": 14, "4:00 PM": 16,
+    "Dinner": 18, "8:00 PM": 20, "9:00 PM": 21, "Bedtime": 21,
+  };
+  const windowHour = TIME_HOURS[timeLabel];
+  if (windowHour == null) return false;
+  return new Date().getHours() >= windowHour + 1;
+}
+
+function ClientMARCard({ client, meds, time, date, logs, onOpen }) {
   const initials = `${client.first_name?.[0] || ""}${client.last_name?.[0] || ""}`.toUpperCase();
   const colorClass = getColor(client.id);
   const program = client.service_enrollments?.[0]?.service_type || null;
+
+  // Determine missed status: scheduled meds with no log entry for today's time window
+  const scheduledMeds = meds.filter(m => !m.is_prn);
+  const missedCount = scheduledMeds.filter(m => {
+    if (!isMissedWindow(time)) return false;
+    return !logs.some(l => l.medication_id === m.id && l.date === date);
+  }).length;
+  const hasMissed = missedCount > 0;
 
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="w-full flex items-center gap-4 bg-white border border-gray-200 rounded-xl p-4 hover:border-primary/40 hover:shadow-md transition-all text-left group"
+      className={cn(
+        "w-full flex items-center gap-4 bg-white border rounded-xl p-4 hover:shadow-md transition-all text-left group",
+        hasMissed ? "border-red-300 hover:border-red-400" : "border-gray-200 hover:border-primary/40"
+      )}
     >
       {/* Photo */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 relative">
         {client.photo_url ? (
           <img src={client.photo_url} alt={initials} className="w-14 h-14 rounded-full object-cover" />
         ) : (
@@ -59,11 +81,23 @@ function ClientMARCard({ client, meds, time, date, onOpen }) {
             {initials}
           </div>
         )}
+        {hasMissed && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow">
+            {missedCount}
+          </span>
+        )}
       </div>
 
       {/* Name / program */}
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-gray-900 text-sm">{client.first_name} {client.last_name}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="font-bold text-gray-900 text-sm">{client.first_name} {client.last_name}</p>
+          {hasMissed && (
+            <span className="text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 px-1.5 py-0.5 rounded uppercase tracking-wide">
+              {missedCount} Missed
+            </span>
+          )}
+        </div>
         {program && <p className="text-xs text-gray-500 mt-0.5">{program}</p>}
         <div className="flex flex-wrap gap-1 mt-1.5">
           {meds.map(m => (
@@ -80,18 +114,21 @@ function ClientMARCard({ client, meds, time, date, onOpen }) {
 
       {/* Med count badge */}
       <div className="flex-shrink-0 flex flex-col items-center gap-1">
-        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow">
+        <div className={cn(
+          "w-12 h-12 rounded-full flex items-center justify-center shadow",
+          hasMissed ? "bg-red-500" : "bg-primary"
+        )}>
           <span className="text-xl font-bold text-white">{meds.length}</span>
         </div>
         <span className="text-[10px] text-gray-500 font-medium text-center leading-tight">{time}</span>
       </div>
 
-      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors flex-shrink-0" />
+      <ChevronRight className={cn("w-4 h-4 transition-colors flex-shrink-0", hasMissed ? "text-red-300 group-hover:text-red-500" : "text-gray-300 group-hover:text-primary")} />
     </button>
   );
 }
 
-export default function MARScheduledView({ clients, medications, logs, date, onOpenDetail }) {
+export default function MARScheduledView({ clients, medications, logs = [], date, onOpenDetail }) {
   const [sortBy, setSortBy] = useState("name");
   const [viewBy, setViewBy] = useState("time");
 
@@ -177,6 +214,7 @@ export default function MARScheduledView({ clients, medications, logs, date, onO
                           meds={clientMeds}
                           time={time}
                           date={today}
+                          logs={logs}
                           onOpen={() => onOpenDetail({ client, time, meds: clientMeds, date: today })}
                         />
                       );
