@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Printer, Download, Plus, CheckCircle2, XCircle, MinusCircle, Minus } from "lucide-react";
-import { format, getDaysInMonth, startOfMonth, addMonths, subMonths } from "date-fns";
+import { Printer, Download, Plus, CheckCircle2, XCircle, MinusCircle, Minus, LayoutGrid, List } from "lucide-react";
+import { format, getDaysInMonth, addMonths, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 
 // Status indicator cell
@@ -22,6 +22,7 @@ function DayCell({ status, initials }) {
 
 export default function MARGoalsSummary({ client, goals = [], goalLogs = [] }) {
   const [displayDate, setDisplayDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "cards"
   const year = displayDate.getFullYear();
   const month = displayDate.getMonth();
   const daysInMonth = getDaysInMonth(displayDate);
@@ -96,6 +97,23 @@ export default function MARGoalsSummary({ client, goals = [], goalLogs = [] }) {
             </Select>
             <Button variant="outline" size="sm" className="h-7 px-2 border-gray-200" onClick={() => setDisplayDate(d => addMonths(d, 1))}>›</Button>
           </div>
+          {/* View toggle */}
+          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-7">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={cn("px-2.5 h-full flex items-center transition-colors", viewMode === "grid" ? "bg-primary text-white" : "bg-white text-gray-500 hover:bg-gray-50")}
+              title="Grid View"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode("cards")}
+              className={cn("px-2.5 h-full flex items-center transition-colors border-l border-gray-200", viewMode === "cards" ? "bg-primary text-white" : "bg-white text-gray-500 hover:bg-gray-50")}
+              title="Card View"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+          </div>
           <Button variant="outline" size="sm" className="gap-1.5 text-xs border-gray-200 h-7" onClick={() => {}}>
             <Plus className="w-3 h-3" /> Create Historical PRN
           </Button>
@@ -108,9 +126,69 @@ export default function MARGoalsSummary({ client, goals = [], goalLogs = [] }) {
         </div>
       </div>
 
-      {/* Grid */}
+      {/* Grid / Card views */}
       {goals.length === 0 ? (
         <div className="py-16 text-center text-gray-400 text-sm">No goals on file for this client.</div>
+      ) : viewMode === "cards" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {goals.map(goal => {
+            const dayMap = getGoalDayMap(goal.id);
+            const proficiency = calcProficiency(goal.id);
+            const entries = Object.values(dayMap);
+            const completed = entries.filter(e => e.status === "completed").length;
+            const missed = entries.filter(e => e.status === "missed").length;
+            const incomplete = entries.filter(e => e.status === "incomplete").length;
+
+            return (
+              <div key={goal.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm leading-tight">{goal.goal_name || goal.title || "Unnamed Goal"}</p>
+                    {goal.category && <p className="text-xs text-gray-400 mt-0.5">{goal.category}</p>}
+                    {goal.start_date && <p className="text-xs text-gray-400">Start: {goal.start_date}</p>}
+                  </div>
+                  {proficiency !== null ? (
+                    <span className={cn(
+                      "text-lg font-bold flex-shrink-0",
+                      proficiency >= 80 ? "text-green-600" : proficiency >= 50 ? "text-amber-500" : "text-red-500"
+                    )}>
+                      {proficiency}%
+                    </span>
+                  ) : (
+                    <span className="text-gray-300 text-sm">—</span>
+                  )}
+                </div>
+
+                {/* Progress bar */}
+                {proficiency !== null && (
+                  <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
+                    <div
+                      className={cn("h-2 rounded-full transition-all", proficiency >= 80 ? "bg-green-500" : proficiency >= 50 ? "bg-amber-400" : "bg-red-400")}
+                      style={{ width: `${proficiency}%` }}
+                    />
+                  </div>
+                )}
+
+                {/* Stats row */}
+                <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> {completed} done</span>
+                  <span className="flex items-center gap-1"><XCircle className="w-3.5 h-3.5 text-red-400" /> {missed} missed</span>
+                  <span className="flex items-center gap-1"><MinusCircle className="w-3.5 h-3.5 text-yellow-400" /> {incomplete} partial</span>
+                  <span className="ml-auto text-gray-400">{monthLabel}</span>
+                </div>
+
+                {/* Steps if any */}
+                {goal.steps?.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 space-y-1">
+                    {goal.steps.map((step, si) => (
+                      <p key={si} className="text-[10px] text-gray-400">↳ {step.description || step.name || `Step ${si + 1}`}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
@@ -199,8 +277,7 @@ export default function MARGoalsSummary({ client, goals = [], goalLogs = [] }) {
         </div>
       )}
 
-      {/* Legend */}
-      <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-gray-500 bg-white border border-gray-200 rounded-xl px-4 py-3">
+      {viewMode === "grid" && <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-gray-500 bg-white border border-gray-200 rounded-xl px-4 py-3">
         <span className="font-semibold text-gray-600 mr-1">Legend:</span>
         <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-500" /> Completed</span>
         <span className="flex items-center gap-1.5"><XCircle className="w-4 h-4 text-red-500" /> Missed</span>
@@ -209,7 +286,7 @@ export default function MARGoalsSummary({ client, goals = [], goalLogs = [] }) {
         <span className="flex items-center gap-1.5">
           <span className="text-[10px] font-bold text-green-700 bg-green-100 rounded px-1">CW</span> Staff Initials (Completed)
         </span>
-      </div>
+      </div>}
     </div>
   );
 }
