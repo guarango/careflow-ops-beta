@@ -12,9 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Target, Plus, ChevronDown, ChevronRight, PlusCircle } from "lucide-react";
+import { Target, Plus, ChevronDown, ChevronRight, PlusCircle, ArrowLeft, Search } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
+import ClientGoalCard from "@/components/goals/ClientGoalCard";
+import { cn } from "@/lib/utils";
 
 const domains = ["Communication", "Self-Care", "Mobility", "Social Skills", "Vocational", "Behavioral", "Academic", "Community Integration", "Health & Safety", "Other"];
 const goalStatuses = ["Active", "Mastered", "Discontinued", "On Hold"];
@@ -133,7 +135,8 @@ export default function Goals() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyGoal);
   const [loggingGoal, setLoggingGoal] = useState(null);
-  const [selectedClient, setSelectedClient] = useState("all");
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [search, setSearch] = useState("");
 
   const queryClient = useQueryClient();
   const { data: goals = [] } = useQuery({
@@ -171,50 +174,102 @@ export default function Goals() {
   };
 
   const visibleGoals = isDSPMode ? goals.filter(g => assignedClientIds.includes(g.client_id)) : goals;
-  const filteredGoals = selectedClient === "all" ? visibleGoals : visibleGoals.filter(g => g.client_id === selectedClient);
-
-  // Group by client
-  const grouped = filteredGoals.reduce((acc, g) => {
-    const key = g.client_name || "Unknown Client";
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(g);
-    return acc;
-  }, {});
-
   const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;
   const activeClients = visibleClients.filter(c => c.status === "Active");
 
+  const filteredClients = activeClients.filter(c =>
+    `${c.first_name} ${c.last_name}`.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const currentClient = selectedClient ? clients.find(c => c.id === selectedClient.id) || selectedClient : null;
+  const clientGoals = currentClient ? visibleGoals.filter(g => g.client_id === currentClient.id) : [];
+
   if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
+
+  const AVATAR_COLORS = [
+    "bg-blue-100 text-blue-700","bg-purple-100 text-purple-700","bg-green-100 text-green-700",
+    "bg-orange-100 text-orange-700","bg-pink-100 text-pink-700","bg-teal-100 text-teal-700",
+    "bg-indigo-100 text-indigo-700","bg-rose-100 text-rose-700",
+  ];
+  const getColorForClient = (id) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  };
 
   return (
     <div>
       <PageHeader
         title="Client Goals"
-        subtitle={`${visibleGoals.length} goals tracked`}
+        subtitle={selectedClient ? `${currentClient.first_name} ${currentClient.last_name}` : `${visibleGoals.length} goals tracked`}
         action={<Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Goal</Button>}
       />
 
-      {/* Client filter */}
-      <div className="flex gap-2 flex-wrap mb-6">
-        <Button variant={selectedClient === "all" ? "default" : "outline"} size="sm" onClick={() => setSelectedClient("all")}>All Clients</Button>
-        {activeClients.map(c => (
-          <Button key={c.id} variant={selectedClient === c.id ? "default" : "outline"} size="sm" onClick={() => setSelectedClient(c.id)}>
-            {c.first_name} {c.last_name}
-          </Button>
-        ))}
-      </div>
+      {/* Client Detail View */}
+      {selectedClient ? (
+        <div>
+          <button
+            type="button"
+            onClick={() => setSelectedClient(null)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to all clients
+          </button>
 
-      {filteredGoals.length === 0 ? (
-        <EmptyState icon={Target} title="No goals found" description="Add ISP goals to start tracking client progress." action={<Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Goal</Button>} />
-      ) : (
-        Object.entries(grouped).map(([clientName, clientGoals]) => (
-          <div key={clientName} className="mb-8">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{clientName} — {clientGoals.length} goals</h2>
-            {clientGoals.map(g => (
-              <GoalCard key={g.id} goal={g} onEdit={openEdit} onLogProgress={setLoggingGoal} />
-            ))}
+          {/* Client header */}
+          <div className="flex items-center gap-4 mb-6 p-4 bg-card border border-border rounded-xl">
+            {currentClient.photo_url ? (
+              <img src={currentClient.photo_url} alt="" className="w-14 h-14 rounded-full object-cover" />
+            ) : (
+              <div className={cn("w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0", getColorForClient(currentClient.id))}>
+                {currentClient.first_name[0]}{currentClient.last_name[0]}
+              </div>
+            )}
+            <div>
+              <p className="font-semibold text-lg">{currentClient.first_name} {currentClient.last_name}</p>
+              {currentClient.service_enrollments?.[0]?.service_type && (
+                <span className="inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  {currentClient.service_enrollments[0].service_type}
+                </span>
+              )}
+            </div>
           </div>
-        ))
+
+          {clientGoals.length === 0 ? (
+            <EmptyState icon={Target} title="No goals found" description="No goals on file for this client." action={<Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Goal</Button>} />
+          ) : (
+            clientGoals.map(g => (
+              <GoalCard key={g.id} goal={g} onEdit={openEdit} onLogProgress={setLoggingGoal} />
+            ))
+          )}
+        </div>
+      ) : (
+        /* Card Grid View */
+        <div>
+          <Card className="mb-4">
+            <CardContent className="py-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {filteredClients.length === 0 ? (
+            <EmptyState icon={Target} title="No clients found" description="Add ISP goals to start tracking client progress." action={<Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Goal</Button>} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredClients.map(client => (
+                <ClientGoalCard
+                  key={client.id}
+                  client={client}
+                  goals={visibleGoals.filter(g => g.client_id === client.id)}
+                  onClick={() => setSelectedClient(client)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {loggingGoal && (
