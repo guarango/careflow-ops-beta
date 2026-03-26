@@ -27,13 +27,46 @@ function getProgramType(client) {
 function getGoalDot(goal) {
   const entries = goal.progress_entries || [];
   if (entries.length === 0) return "yellow";
+
   const last = entries[entries.length - 1];
-  // Check if last entry is recent (within 14 days)
   const lastDate = new Date(last.date);
   const daysSince = (new Date() - lastDate) / (1000 * 60 * 60 * 24);
-  if (daysSince > 14) return "yellow";
-  if (goal.status === "Active") return "green";
-  return "yellow";
+
+  // Red: no data in 14+ days
+  if (daysSince > 14) return "red";
+
+  // Detect regression: compare last 2 entries to the 2 before them (if enough data)
+  if (entries.length >= 4) {
+    const recent = entries.slice(-2);
+    const prior = entries.slice(-4, -2);
+    const parseScore = (s) => {
+      if (!s) return null;
+      const fracMatch = s.match(/(\d+)\s*\/\s*(\d+)/);
+      if (fracMatch) return parseInt(fracMatch[1]) / parseInt(fracMatch[2]);
+      const pctMatch = s.match(/([\d.]+)%/);
+      if (pctMatch) return parseFloat(pctMatch[1]) / 100;
+      const numMatch = s.match(/^[\d.]+/);
+      if (numMatch) return parseFloat(numMatch[0]);
+      if (s.toLowerCase() === "yes") return 1;
+      if (s.toLowerCase() === "no") return 0;
+      return null;
+    };
+    const avgRecent = recent.map(e => parseScore(e.score)).filter(v => v !== null);
+    const avgPrior = prior.map(e => parseScore(e.score)).filter(v => v !== null);
+    if (avgRecent.length && avgPrior.length) {
+      const recentAvg = avgRecent.reduce((a, b) => a + b, 0) / avgRecent.length;
+      const priorAvg = avgPrior.reduce((a, b) => a + b, 0) / avgPrior.length;
+      // Red if significant regression (>25% drop)
+      if (priorAvg > 0 && recentAvg < priorAvg * 0.75) return "red";
+      // Yellow if mild decline or stagnant at low performance
+      if (recentAvg < priorAvg * 0.95) return "yellow";
+    }
+  }
+
+  // Yellow: no data in 7+ days
+  if (daysSince > 7) return "yellow";
+
+  return "green";
 }
 
 export default function ClientGoalCard({ client, goals, onClick }) {
