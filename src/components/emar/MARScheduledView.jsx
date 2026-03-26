@@ -252,85 +252,21 @@ export default function MARScheduledView({ clients, medications, logs = [], date
         }
 
         return (
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {clientEntries.map(([clientId, clientMeds]) => {
               const client = clients.find(c => c.id === clientId);
               if (!client) return null;
-              const initials = `${client.first_name?.[0] || ""}${client.last_name?.[0] || ""}`.toUpperCase();
-              const colorClass = getColor(client.id);
-              const program = client.service_enrollments?.[0]?.service_type || null;
-
-              // Group this client's meds by scheduled time
-              const timeMap = {};
-              for (const med of clientMeds) {
-                const times = med.scheduled_times?.length ? med.scheduled_times : ["Unscheduled"];
-                for (const t of times) {
-                  if (!timeMap[t]) timeMap[t] = [];
-                  timeMap[t].push(med);
-                }
-              }
-              const timesOrdered = Object.entries(timeMap).sort(([a], [b]) => {
-                const ai = COMMON_TIMES.indexOf(a), bi = COMMON_TIMES.indexOf(b);
-                if (ai === -1 && bi === -1) return a.localeCompare(b);
-                if (ai === -1) return 1; if (bi === -1) return -1;
-                return ai - bi;
-              });
-
+              // Use "All" as the time label when viewing by client
               return (
-                <div key={clientId} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                  {/* Client header */}
-                  <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-gray-50">
-                    {client.photo_url ? (
-                      <img src={client.photo_url} alt={initials} className="w-10 h-10 rounded-full object-cover" />
-                    ) : (
-                      <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0", colorClass)}>
-                        {initials}
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm">{client.first_name} {client.last_name}</p>
-                      {program && <p className="text-xs text-gray-500">{program}</p>}
-                    </div>
-                    <div className="ml-auto text-xs text-gray-400 font-medium">{clientMeds.length} med{clientMeds.length !== 1 ? "s" : ""}</div>
-                  </div>
-
-                  {/* Time sub-rows */}
-                  <div className="divide-y divide-gray-100">
-                    {timesOrdered.map(([time, timeMeds]) => {
-                      const hasMissed = isMissedWindow(time) && timeMeds.some(m => !logs.some(l => l.medication_id === m.id && l.date === today));
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          onClick={() => onOpenDetail({ client, time, meds: timeMeds, date: today })}
-                          className={cn(
-                            "w-full flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors text-left group",
-                            hasMissed && "bg-red-50 hover:bg-red-50"
-                          )}
-                        >
-                          <span className={cn(
-                            "text-xs font-semibold w-24 flex-shrink-0",
-                            hasMissed ? "text-red-600" : "text-primary"
-                          )}>{time}</span>
-                          <div className="flex flex-wrap gap-1 flex-1">
-                            {timeMeds.map(m => (
-                              <span key={m.id} className={cn(
-                                "text-[10px] font-medium px-1.5 py-0.5 rounded",
-                                m.is_controlled ? "bg-red-100 text-red-700 border border-red-200" : "bg-gray-100 text-gray-600"
-                              )}>
-                                {m.medication_name}{m.is_controlled && <span className="ml-1 font-bold">C2</span>}
-                              </span>
-                            ))}
-                            {hasMissed && (
-                              <span className="text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 px-1.5 py-0.5 rounded uppercase">Missed</span>
-                            )}
-                          </div>
-                          <ChevronRight className={cn("w-4 h-4 flex-shrink-0", hasMissed ? "text-red-300 group-hover:text-red-500" : "text-gray-300 group-hover:text-primary")} />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                <ClientMARCard
+                  key={clientId}
+                  client={client}
+                  meds={clientMeds}
+                  time={`${clientMeds.length} med${clientMeds.length !== 1 ? "s" : ""}`}
+                  date={today}
+                  logs={logs}
+                  onOpen={() => onOpenDetail({ client, time: null, meds: clientMeds, date: today })}
+                />
               );
             })}
           </div>
