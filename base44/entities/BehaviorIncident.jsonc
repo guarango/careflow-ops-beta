@@ -1,0 +1,108 @@
+{
+  "name": "BehaviorIncident",
+  "type": "object",
+  "properties": {
+    "bsp_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "target_behavior_id": {
+      "type": "string"
+    },
+    "target_behavior_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "start_time": {
+      "type": "string"
+    },
+    "end_time": {
+      "type": "string"
+    },
+    "duration_minutes": {
+      "type": "number"
+    },
+    "location": {
+      "type": "string"
+    },
+    "severity_tier": {
+      "type": "string",
+      "enum": [
+        "Mild",
+        "Moderate",
+        "Severe"
+      ]
+    },
+    "antecedent": {
+      "type": "string",
+      "enum": [
+        "Transition",
+        "Demand/Request",
+        "Denied Access",
+        "Peer Interaction",
+        "Unstructured Time",
+        "Sensory Trigger",
+        "Health/Pain",
+        "Unknown",
+        "Other"
+      ]
+    },
+    "antecedent_other": {
+      "type": "string"
+    },
+    "staff_present": {
+      "type": "string"
+    },
+    "staff_id": {
+      "type": "string"
+    },
+    "replacement_prompted": {
+      "type": "boolean"
+    },
+    "intervention_used": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "Behavior Resolved",
+        "Required Backup",
+        "Required Physical Intervention",
+        "Required Medical Attention",
+        "Required Incident Report"
+      ]
+    },
+    "restrictive_procedure_used": {
+      "type": "boolean",
+      "default": false
+    },
+    "restrictive_procedure_detail": {
+      "type": "string"
+    },
+    "supervisor_notified": {
+      "type": "boolean",
+      "default": false
+    },
+    "staff_observations": {
+      "type": "string"
+    },
+    "logged_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "bsp_id",
+    "client_id",
+    "target_behavior_id",
+    "date",
+    "severity_tier"
+  ]
+}

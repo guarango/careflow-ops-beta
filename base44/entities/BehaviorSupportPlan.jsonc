@@ -1,0 +1,468 @@
+{
+  "name": "BehaviorSupportPlan",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Pending Approval",
+        "Active",
+        "Under Review",
+        "Archived"
+      ],
+      "default": "Draft"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "plan_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "last_revised_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "next_review_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "regulatory_framework": {
+      "type": "string",
+      "enum": [
+        "HCBS Waiver",
+        "ICF/IDD",
+        "State Behavioral Support Requirement",
+        "School-Based IEP",
+        "Other"
+      ]
+    },
+    "includes_restrictive_procedures": {
+      "type": "boolean",
+      "default": false
+    },
+    "restrictive_procedure_approval_status": {
+      "type": "string",
+      "enum": [
+        "Not Required",
+        "Pending Administrator Approval",
+        "Approved",
+        "Denied"
+      ],
+      "default": "Not Required"
+    },
+    "administrator_cosignature": {
+      "type": "string"
+    },
+    "administrator_cosigned_at": {
+      "type": "string"
+    },
+    "bsp_author": {
+      "type": "string"
+    },
+    "bsp_author_credential": {
+      "type": "string",
+      "enum": [
+        "BCBA",
+        "BCaBA",
+        "Psychologist",
+        "Licensed Clinical Supervisor",
+        "LCSW",
+        "Other Licensed Clinician"
+      ]
+    },
+    "supervising_bcba": {
+      "type": "string"
+    },
+    "supervising_bcba_id": {
+      "type": "string"
+    },
+    "program_director": {
+      "type": "string"
+    },
+    "team_members": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "plain_language_summary": {
+      "type": "string",
+      "description": "Written at 6th-grade level for person and family"
+    },
+    "fba_reason_for_referral": {
+      "type": "string"
+    },
+    "fba_diagnostic_context": {
+      "type": "string"
+    },
+    "fba_assessment_methods": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Direct Observation",
+          "ABC Data Review",
+          "Caregiver Interview",
+          "Standardized Assessment",
+          "Record Review",
+          "Functional Analysis",
+          "Preference Assessment"
+        ]
+      }
+    },
+    "fba_environmental_factors": {
+      "type": "string"
+    },
+    "fba_summary_narrative": {
+      "type": "string"
+    },
+    "target_behaviors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "topography": {
+            "type": "string"
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "non_examples": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "function": {
+            "type": "string",
+            "enum": [
+              "Escape/Avoidance",
+              "Attention",
+              "Access to Tangibles",
+              "Sensory/Automatic",
+              "Communication",
+              "Unknown"
+            ]
+          },
+          "measurement_method": {
+            "type": "string",
+            "enum": [
+              "Frequency Count",
+              "Duration Recording",
+              "Intensity Rating",
+              "Partial Interval",
+              "Whole Interval",
+              "Momentary Time Sampling"
+            ]
+          },
+          "baseline_rate": {
+            "type": "string"
+          },
+          "baseline_date": {
+            "type": "string"
+          },
+          "severity_mild": {
+            "type": "string"
+          },
+          "severity_moderate": {
+            "type": "string"
+          },
+          "severity_severe": {
+            "type": "string"
+          },
+          "antecedent_strategies": {
+            "type": "object",
+            "properties": {
+              "setting_modifications": {
+                "type": "string"
+              },
+              "schedule_routine_supports": {
+                "type": "string"
+              },
+              "sensory_physiological": {
+                "type": "string"
+              },
+              "relationship_communication": {
+                "type": "string"
+              },
+              "triggers_to_avoid": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "trigger": {
+                      "type": "string"
+                    },
+                    "required_staff_action": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "replacement_behavior": {
+            "type": "object",
+            "properties": {
+              "definition": {
+                "type": "string"
+              },
+              "functional_match_explanation": {
+                "type": "string"
+              },
+              "prompt_procedure": {
+                "type": "string"
+              },
+              "reinforcement_procedure": {
+                "type": "string"
+              },
+              "current_skill_level": {
+                "type": "string"
+              },
+              "linked_goal_id": {
+                "type": "string"
+              },
+              "reinforcement_schedule": {
+                "type": "string",
+                "enum": [
+                  "Continuous (FR1)",
+                  "Fixed Ratio",
+                  "Variable Ratio",
+                  "Fixed Interval",
+                  "Variable Interval",
+                  "Natural/Intermittent"
+                ]
+              }
+            }
+          },
+          "reactive_strategies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "severity_tier": {
+                  "type": "string",
+                  "enum": [
+                    "Mild",
+                    "Moderate",
+                    "Severe"
+                  ]
+                },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "helpful_phrases": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "phrases_to_avoid": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "environmental_modifications": {
+                  "type": "string"
+                },
+                "when_to_call_backup": {
+                  "type": "string"
+                },
+                "who_to_call": {
+                  "type": "string"
+                },
+                "post_incident_documentation": {
+                  "type": "string"
+                },
+                "contraindicated_responses": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "is_restrictive": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "restrictive_details": {
+                  "type": "object",
+                  "properties": {
+                    "legal_authorization": {
+                      "type": "string"
+                    },
+                    "less_restrictive_tried": {
+                      "type": "string"
+                    },
+                    "training_requirement": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "reinforcement_system": {
+      "type": "object",
+      "properties": {
+        "identified_reinforcers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "assessment_date": {
+          "type": "string"
+        },
+        "assessment_method": {
+          "type": "string"
+        },
+        "reinforcer_log": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "reinforcer": {
+                "type": "string"
+              },
+              "last_used": {
+                "type": "string"
+              },
+              "days_in_use": {
+                "type": "number"
+              },
+              "effectiveness_rating": {
+                "type": "number"
+              },
+              "notes": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "revision_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "revised_at": {
+            "type": "string"
+          },
+          "revised_by": {
+            "type": "string"
+          },
+          "summary_of_changes": {
+            "type": "string"
+          },
+          "hypothesis_confirmed": {
+            "type": "boolean"
+          },
+          "behaviors_discontinued": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "new_behaviors_emerging": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "staff_training": {
+      "type": "object",
+      "properties": {
+        "quiz_questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": {
+                "type": "string"
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "correct_index": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "acknowledgments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "staff_id": {
+                "type": "string"
+              },
+              "staff_name": {
+                "type": "string"
+              },
+              "acknowledged_at": {
+                "type": "string"
+              },
+              "quiz_passed": {
+                "type": "boolean"
+              },
+              "quiz_score": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name"
+  ]
+}
