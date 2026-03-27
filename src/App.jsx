@@ -11,7 +11,7 @@ import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
 import Staff from './pages/Staff';
 import Clients from './pages/Clients';
-import SessionNotes from './pages/SessionNotes';
+import SessionNotes from './pages/SessionNotes.jsx';
 import Incidents from './pages/Incidents';
 import EMAR from './pages/EMAR';
 import Timecards from './pages/Timecards';

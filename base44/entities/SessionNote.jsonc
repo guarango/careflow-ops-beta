@@ -1,0 +1,192 @@
+{
+  "name": "SessionNote",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "start_time": {
+      "type": "string"
+    },
+    "end_time": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "enum": [
+        "Day Program",
+        "Community Outing",
+        "Residence",
+        "Vocational Site",
+        "Telehealth",
+        "Other"
+      ]
+    },
+    "location_other": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Submitted",
+        "Approved",
+        "Needs Revision",
+        "Flagged for Review"
+      ],
+      "default": "Draft"
+    },
+    "goal_data": {
+      "type": "array",
+      "description": "Per-goal data entries for this session",
+      "items": {
+        "type": "object",
+        "properties": {
+          "goal_id": {
+            "type": "string"
+          },
+          "goal_title": {
+            "type": "string"
+          },
+          "skipped": {
+            "type": "boolean",
+            "default": false
+          },
+          "skip_reason": {
+            "type": "string"
+          },
+          "trials_total": {
+            "type": "number"
+          },
+          "trials_correct": {
+            "type": "number"
+          },
+          "percentage": {
+            "type": "number"
+          },
+          "prompt_level": {
+            "type": "string"
+          },
+          "mastery_met": {
+            "type": "string",
+            "enum": [
+              "Yes",
+              "No",
+              "Partial",
+              "Not Enough Trials"
+            ]
+          },
+          "narrative": {
+            "type": "string"
+          },
+          "person_expressed_preference": {
+            "type": "boolean"
+          },
+          "preference_detail": {
+            "type": "string"
+          },
+          "person_communication": {
+            "type": "string"
+          },
+          "session_highlight": {
+            "type": "string"
+          },
+          "engagement": {
+            "type": "string",
+            "enum": [
+              "Motivated",
+              "Neutral",
+              "Resistant",
+              "Distressed",
+              "Variable"
+            ]
+          }
+        }
+      }
+    },
+    "health_safety_flags": {
+      "type": "object",
+      "properties": {
+        "fall_or_injury": {
+          "type": "boolean",
+          "default": false
+        },
+        "fall_detail": {
+          "type": "string"
+        },
+        "medication_refusal": {
+          "type": "boolean",
+          "default": false
+        },
+        "medication_refusal_detail": {
+          "type": "string"
+        },
+        "behavioral_escalation": {
+          "type": "boolean",
+          "default": false
+        },
+        "behavioral_detail": {
+          "type": "string"
+        },
+        "health_concern": {
+          "type": "boolean",
+          "default": false
+        },
+        "health_detail": {
+          "type": "string"
+        },
+        "restrictive_procedure": {
+          "type": "boolean",
+          "default": false
+        },
+        "restrictive_detail": {
+          "type": "string"
+        }
+      }
+    },
+    "session_overall_notes": {
+      "type": "string"
+    },
+    "supervisor_note": {
+      "type": "string"
+    },
+    "supervisor_reviewed_by": {
+      "type": "string"
+    },
+    "supervisor_reviewed_at": {
+      "type": "string"
+    },
+    "supervisor_action": {
+      "type": "string",
+      "enum": [
+        "Approved",
+        "Coaching Note Added",
+        "Flagged for Clinical Review"
+      ]
+    },
+    "offline_created": {
+      "type": "boolean",
+      "default": false
+    },
+    "synced_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "date"
+  ]
+}
