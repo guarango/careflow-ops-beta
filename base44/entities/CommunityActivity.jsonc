@@ -1,0 +1,64 @@
+{
+  "name": "CommunityActivity",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "activity_name": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "activity_type": {
+      "type": "string"
+    },
+    "integration_type": {
+      "type": "string",
+      "enum": [
+        "Integrated (includes non-disabled people)",
+        "IDD-Specific (only people with IDD)",
+        "Mixed"
+      ],
+      "default": "Integrated (includes non-disabled people)"
+    },
+    "person_chose_activity": {
+      "type": "boolean",
+      "default": true
+    },
+    "enjoyment_rating": {
+      "type": "number",
+      "description": "1\u20135 enjoyment rating from person"
+    },
+    "new_connections_made": {
+      "type": "boolean",
+      "default": false
+    },
+    "new_connection_details": {
+      "type": "string"
+    },
+    "linked_to_life_vision": {
+      "type": "boolean",
+      "default": false
+    },
+    "staff_present": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "date",
+    "activity_name"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "name": "NetworkContact",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "contact_name": {
+      "type": "string"
+    },
+    "relationship_type": {
+      "type": "string",
+      "enum": [
+        "Family",
+        "Friend",
+        "Neighbor",
+        "Coworker",
+        "Community Member",
+        "Paid Support",
+        "Professional"
+      ],
+      "default": "Friend"
+    },
+    "relationship_duration_years": {
+      "type": "number"
+    },
+    "contact_frequency": {
+      "type": "string",
+      "enum": [
+        "Daily",
+        "Weekly",
+        "Monthly",
+        "A few times a year",
+        "Rarely"
+      ],
+      "default": "Weekly"
+    },
+    "is_reciprocal": {
+      "type": "boolean",
+      "default": false,
+      "description": "Person gives as well as receives support"
+    },
+    "is_natural_support": {
+      "type": "boolean",
+      "default": true,
+      "description": "Relationship would exist without IDD services"
+    },
+    "person_importance_rating": {
+      "type": "number",
+      "description": "1\u20135, how important to the person"
+    },
+    "last_contact_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "At Risk",
+        "Lapsed"
+      ],
+      "default": "Active"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "contact_name",
+    "relationship_type"
+  ]
+}

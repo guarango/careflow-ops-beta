@@ -1,0 +1,78 @@
+{
+  "name": "EmploymentRecord",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Competitive Integrated Employment",
+        "Supported Employment",
+        "Sheltered/Center-Based Work",
+        "Volunteer",
+        "Day Program",
+        "Other Meaningful Activity",
+        "Unemployed \u2014 Not Seeking",
+        "Unemployed \u2014 Seeking"
+      ],
+      "default": "Day Program"
+    },
+    "employer_name": {
+      "type": "string"
+    },
+    "job_title": {
+      "type": "string"
+    },
+    "hours_per_week": {
+      "type": "number"
+    },
+    "hourly_wage": {
+      "type": "number"
+    },
+    "meets_minimum_wage": {
+      "type": "boolean"
+    },
+    "job_coach_support_level": {
+      "type": "string",
+      "enum": [
+        "Intensive (daily)",
+        "Moderate (weekly)",
+        "Fading (monthly)",
+        "Natural Supports Only",
+        "None"
+      ],
+      "default": "Natural Supports Only"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "barriers_to_employment": {
+      "type": "string"
+    },
+    "action_plan": {
+      "type": "string"
+    },
+    "is_current": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "status"
+  ]
+}

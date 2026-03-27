@@ -36,6 +36,7 @@ import MobileApp from './pages/MobileApp';
 import BSP from './pages/BSP';
 import ISP from './pages/ISP';
 import Training from './pages/Training';
+import QoL from './pages/QoL';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -83,6 +84,7 @@ const AuthenticatedApp = () => {
         <Route path="/bsp" element={<BSP />} />
         <Route path="/isp" element={<ISP />} />
         <Route path="/training" element={<Training />} />
+        <Route path="/qol" element={<QoL />} />
       </Route>
       {/* Mobile PWA — dedicated layout */}
       <Route path="/mobile" element={<MobileApp />} />

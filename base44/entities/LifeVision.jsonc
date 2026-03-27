@@ -1,0 +1,93 @@
+{
+  "name": "LifeVision",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "captured_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "captured_by": {
+      "type": "string"
+    },
+    "where_live": {
+      "type": "string",
+      "description": "Where they want to live and with whom"
+    },
+    "meaningful_activity": {
+      "type": "string",
+      "description": "Work or meaningful daytime activity"
+    },
+    "relationships_wanted": {
+      "type": "string",
+      "description": "What relationships they want to have"
+    },
+    "places_to_go": {
+      "type": "string",
+      "description": "Places they want to go"
+    },
+    "experiences_to_have": {
+      "type": "string",
+      "description": "Experiences they want to have"
+    },
+    "what_to_know_about_me": {
+      "type": "string",
+      "description": "What they want people to know about them"
+    },
+    "five_year_vision": {
+      "type": "string",
+      "description": "Life in five years"
+    },
+    "employment_aspiration": {
+      "type": "string",
+      "enum": [
+        "Competitive Integrated Employment",
+        "Supported Employment",
+        "Volunteer Work",
+        "Day Program",
+        "Other Meaningful Activity",
+        "No Interest in Employment",
+        "Unsure"
+      ],
+      "default": "Unsure"
+    },
+    "domain_connections": {
+      "type": "object",
+      "description": "Maps each vision element to primary QoL domain"
+    },
+    "version_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "captured_date": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "captured_date"
+  ]
+}

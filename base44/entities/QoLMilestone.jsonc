@@ -1,0 +1,51 @@
+{
+  "name": "QoLMilestone",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "milestone_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "milestone_type": {
+      "type": "string",
+      "enum": [
+        "Domain Best Score",
+        "New Relationship",
+        "Community Connection",
+        "Employment",
+        "Goal Mastered",
+        "Life Vision Progress",
+        "Self-Advocacy Moment",
+        "Other"
+      ],
+      "default": "Other"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "in_persons_words": {
+      "type": "string"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "client_id",
+    "milestone_date",
+    "title"
+  ]
+}

@@ -1,0 +1,173 @@
+{
+  "name": "QoLAssessment",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "assessment_type": {
+      "type": "string",
+      "enum": [
+        "Annual Interview",
+        "Quarterly Check-In",
+        "Person-Requested Review"
+      ],
+      "default": "Annual Interview"
+    },
+    "assessment_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "conducted_by": {
+      "type": "string"
+    },
+    "conducted_by_role": {
+      "type": "string"
+    },
+    "interview_format": {
+      "type": "string",
+      "enum": [
+        "Verbal Interview",
+        "Picture-Based",
+        "AAC-Supported",
+        "Observational",
+        "Proxy Input"
+      ],
+      "default": "Verbal Interview"
+    },
+    "proxy_name": {
+      "type": "string"
+    },
+    "proxy_relationship": {
+      "type": "string"
+    },
+    "persons_voice": {
+      "type": "object",
+      "properties": {
+        "good_day": {
+          "type": "string"
+        },
+        "bad_day": {
+          "type": "string"
+        },
+        "important_people": {
+          "type": "string"
+        },
+        "community_activities": {
+          "type": "string"
+        },
+        "wishes_could_do": {
+          "type": "string"
+        },
+        "feels_safe": {
+          "type": "string"
+        },
+        "feels_listened_to": {
+          "type": "string"
+        },
+        "most_proud_of": {
+          "type": "string"
+        },
+        "wants_different": {
+          "type": "string"
+        },
+        "good_life_looks_like": {
+          "type": "string"
+        }
+      }
+    },
+    "domain_ratings": {
+      "type": "object",
+      "properties": {
+        "emotional_wellbeing": {
+          "type": "number"
+        },
+        "interpersonal_relations": {
+          "type": "number"
+        },
+        "material_wellbeing": {
+          "type": "number"
+        },
+        "personal_development": {
+          "type": "number"
+        },
+        "physical_wellbeing": {
+          "type": "number"
+        },
+        "self_determination": {
+          "type": "number"
+        },
+        "social_inclusion": {
+          "type": "number"
+        },
+        "rights": {
+          "type": "number"
+        }
+      }
+    },
+    "domain_person_priorities": {
+      "type": "object",
+      "description": "Person's own priority level per domain: high/medium/low",
+      "properties": {
+        "emotional_wellbeing": {
+          "type": "string"
+        },
+        "interpersonal_relations": {
+          "type": "string"
+        },
+        "material_wellbeing": {
+          "type": "string"
+        },
+        "personal_development": {
+          "type": "string"
+        },
+        "physical_wellbeing": {
+          "type": "string"
+        },
+        "self_determination": {
+          "type": "string"
+        },
+        "social_inclusion": {
+          "type": "string"
+        },
+        "rights": {
+          "type": "string"
+        }
+      }
+    },
+    "quarterly_domain_notes": {
+      "type": "object",
+      "description": "Open-ended per-domain notes from quarterly check-ins"
+    },
+    "wants_to_change_next_quarter": {
+      "type": "string"
+    },
+    "new_connections_or_activities": {
+      "type": "string"
+    },
+    "concerns_raised": {
+      "type": "string"
+    },
+    "overall_life_satisfaction": {
+      "type": "number",
+      "description": "1\u201310 scale"
+    },
+    "pwi_id_score": {
+      "type": "number"
+    },
+    "pom_score": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "assessment_date"
+  ]
+}
