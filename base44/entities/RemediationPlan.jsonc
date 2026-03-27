@@ -1,0 +1,88 @@
+{
+  "name": "RemediationPlan",
+  "type": "object",
+  "properties": {
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "training_id": {
+      "type": "string"
+    },
+    "training_title": {
+      "type": "string"
+    },
+    "gap_description": {
+      "type": "string"
+    },
+    "why_it_matters": {
+      "type": "string"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "supervisor_id": {
+      "type": "string"
+    },
+    "supervisor_name": {
+      "type": "string"
+    },
+    "scheduling_restriction": {
+      "type": "boolean",
+      "default": true
+    },
+    "restricted_client_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Completed",
+        "Escalated",
+        "Overdue"
+      ],
+      "default": "Active"
+    },
+    "cycle_number": {
+      "type": "number",
+      "default": 1
+    },
+    "hr_flag": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "staff_id",
+    "training_id",
+    "training_title"
+  ]
+}

@@ -35,6 +35,7 @@ import AIHub from './pages/AIHub';
 import MobileApp from './pages/MobileApp';
 import BSP from './pages/BSP';
 import ISP from './pages/ISP';
+import Training from './pages/Training';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -81,6 +82,7 @@ const AuthenticatedApp = () => {
         <Route path="/ai-hub" element={<AIHub />} />
         <Route path="/bsp" element={<BSP />} />
         <Route path="/isp" element={<ISP />} />
+        <Route path="/training" element={<Training />} />
       </Route>
       {/* Mobile PWA — dedicated layout */}
       <Route path="/mobile" element={<MobileApp />} />
