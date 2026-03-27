@@ -34,6 +34,7 @@ import Reports from './pages/Reports';
 import AIHub from './pages/AIHub';
 import MobileApp from './pages/MobileApp';
 import BSP from './pages/BSP';
+import ISP from './pages/ISP';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -79,6 +80,7 @@ const AuthenticatedApp = () => {
         <Route path="/reports" element={<Reports />} />
         <Route path="/ai-hub" element={<AIHub />} />
         <Route path="/bsp" element={<BSP />} />
+        <Route path="/isp" element={<ISP />} />
       </Route>
       {/* Mobile PWA — dedicated layout */}
       <Route path="/mobile" element={<MobileApp />} />

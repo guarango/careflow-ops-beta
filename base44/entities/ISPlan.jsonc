@@ -1,0 +1,532 @@
+{
+  "name": "ISPlan",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "In Review",
+        "Pending Signatures",
+        "Active",
+        "Archived",
+        "Amended"
+      ],
+      "default": "Draft"
+    },
+    "plan_type": {
+      "type": "string",
+      "enum": [
+        "Initial",
+        "Annual Review",
+        "Amendment"
+      ],
+      "default": "Annual Review"
+    },
+    "plan_year_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "plan_year_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "planning_meeting_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "next_review_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "waiver_type": {
+      "type": "string",
+      "enum": [
+        "HCBS Waiver",
+        "ICF/IDD",
+        "State-Funded",
+        "Private Pay",
+        "Other"
+      ]
+    },
+    "regulatory_framework": {
+      "type": "string"
+    },
+    "funding_source": {
+      "type": "string"
+    },
+    "medicaid_id": {
+      "type": "string"
+    },
+    "service_coordinator_name": {
+      "type": "string"
+    },
+    "service_coordinator_agency": {
+      "type": "string"
+    },
+    "fiscal_intermediary": {
+      "type": "string"
+    },
+    "persons_voice": {
+      "type": "object",
+      "properties": {
+        "most_important_daily": {
+          "type": "string"
+        },
+        "what_to_know_before_supporting": {
+          "type": "string"
+        },
+        "good_day_looks_like": {
+          "type": "string"
+        },
+        "bad_day_looks_like_and_helps": {
+          "type": "string"
+        },
+        "dreams_and_vision": {
+          "type": "string"
+        },
+        "proud_of_this_year": {
+          "type": "string"
+        },
+        "wants_to_change_or_try": {
+          "type": "string"
+        },
+        "communication_method": {
+          "type": "string"
+        },
+        "aac_device_or_support": {
+          "type": "string"
+        },
+        "voice_capture_method": {
+          "type": "string"
+        }
+      }
+    },
+    "personal_profile": {
+      "type": "object",
+      "properties": {
+        "preferred_communication": {
+          "type": "string"
+        },
+        "aac_systems": {
+          "type": "string"
+        },
+        "sensory_preferences": {
+          "type": "string"
+        },
+        "cultural_background": {
+          "type": "string"
+        },
+        "spiritual_preferences": {
+          "type": "string"
+        },
+        "meaningful_relationships": {
+          "type": "string"
+        },
+        "living_situation": {
+          "type": "string"
+        },
+        "daily_routine_preferences": {
+          "type": "string"
+        },
+        "food_preferences_restrictions": {
+          "type": "string"
+        },
+        "known_triggers_and_helps": {
+          "type": "string"
+        },
+        "what_people_who_know_me_say": {
+          "type": "string"
+        }
+      }
+    },
+    "life_domains": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "current_function_narrative": {
+            "type": "string"
+          },
+          "progress_narrative": {
+            "type": "string"
+          },
+          "strengths": {
+            "type": "string"
+          },
+          "additional_support_needed": {
+            "type": "string"
+          },
+          "persons_priorities": {
+            "type": "string"
+          },
+          "support_level": {
+            "type": "string",
+            "enum": [
+              "No Support",
+              "Intermittent",
+              "Limited",
+              "Extensive",
+              "Pervasive"
+            ]
+          },
+          "staffing_ratio": {
+            "type": "string"
+          },
+          "specialized_qualifications": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "health_summary": {
+      "type": "object",
+      "properties": {
+        "primary_diagnosis": {
+          "type": "string"
+        },
+        "secondary_diagnoses": {
+          "type": "string"
+        },
+        "allergies": {
+          "type": "string"
+        },
+        "physician_contacts": {
+          "type": "string"
+        },
+        "hospitalizations_er": {
+          "type": "string"
+        },
+        "standing_health_orders": {
+          "type": "string"
+        },
+        "seizure_protocol": {
+          "type": "string"
+        },
+        "dietary_orders": {
+          "type": "string"
+        },
+        "health_trend_narrative": {
+          "type": "string"
+        },
+        "health_changes_influencing_plan": {
+          "type": "string"
+        }
+      }
+    },
+    "bsp_summary": {
+      "type": "object",
+      "properties": {
+        "bsp_status": {
+          "type": "string",
+          "enum": [
+            "No BSP",
+            "In Development",
+            "Active BSP"
+          ]
+        },
+        "supervising_bcba": {
+          "type": "string"
+        },
+        "supervising_bcba_credential": {
+          "type": "string"
+        },
+        "behavioral_summary_narrative": {
+          "type": "string"
+        },
+        "restrictive_procedures_authorized": {
+          "type": "boolean",
+          "default": false
+        },
+        "restrictive_procedures_justification": {
+          "type": "string"
+        }
+      }
+    },
+    "rights_risks": {
+      "type": "object",
+      "properties": {
+        "rights_statement": {
+          "type": "string"
+        },
+        "rights_restrictions": {
+          "type": "string"
+        },
+        "rights_restriction_justification": {
+          "type": "string"
+        },
+        "dignity_of_risk": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "area": {
+                "type": "string"
+              },
+              "persons_choice": {
+                "type": "string"
+              },
+              "team_acknowledgment": {
+                "type": "string"
+              },
+              "safeguards_in_place": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "emergency_crisis_plan": {
+          "type": "string"
+        },
+        "financial_arrangements": {
+          "type": "string"
+        },
+        "guardianship_status": {
+          "type": "string",
+          "enum": [
+            "No Guardian",
+            "Full Guardianship",
+            "Limited Guardianship",
+            "Supported Decision-Making",
+            "Power of Attorney",
+            "Unknown"
+          ]
+        },
+        "guardianship_documentation": {
+          "type": "string"
+        },
+        "advance_directive_status": {
+          "type": "string",
+          "enum": [
+            "None on File",
+            "On File",
+            "In Progress",
+            "Not Applicable"
+          ]
+        }
+      }
+    },
+    "service_grid": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "service_type": {
+            "type": "string"
+          },
+          "provider_agency": {
+            "type": "string"
+          },
+          "authorized_units_monthly": {
+            "type": "number"
+          },
+          "units_used_prior_year": {
+            "type": "number"
+          },
+          "utilization_pct": {
+            "type": "number"
+          },
+          "funding_source": {
+            "type": "string"
+          },
+          "auth_start": {
+            "type": "string"
+          },
+          "auth_end": {
+            "type": "string"
+          },
+          "underutilized": {
+            "type": "boolean",
+            "default": false
+          },
+          "underutilization_explanation": {
+            "type": "string"
+          },
+          "coordinator_notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "team_input": {
+      "type": "object",
+      "properties": {
+        "attendees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "relationship": {
+                "type": "string"
+              },
+              "attendance_method": {
+                "type": "string",
+                "enum": [
+                  "In Person",
+                  "Phone",
+                  "Written Input",
+                  "Video"
+                ]
+              }
+            }
+          }
+        },
+        "member_priorities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "member_name": {
+                "type": "string"
+              },
+              "stated_priorities": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "unresolved_concerns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "concern": {
+                "type": "string"
+              },
+              "raised_by": {
+                "type": "string"
+              },
+              "follow_up_owner": {
+                "type": "string"
+              },
+              "due_date": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "action_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string"
+              },
+              "responsible_party": {
+                "type": "string"
+              },
+              "due_date": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "what_team_heard": {
+          "type": "string"
+        }
+      }
+    },
+    "signatures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Pending",
+              "Signed",
+              "Declined",
+              "Objected"
+            ],
+            "default": "Pending"
+          },
+          "signed_at": {
+            "type": "string"
+          },
+          "objection_note": {
+            "type": "string"
+          },
+          "is_guardian_signing_for_person": {
+            "type": "boolean",
+            "default": false
+          },
+          "guardian_justification": {
+            "type": "string"
+          },
+          "supported_decision_making_agreement": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "version_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "saved_at": {
+            "type": "string"
+          },
+          "saved_by": {
+            "type": "string"
+          },
+          "summary_of_changes": {
+            "type": "string"
+          },
+          "is_amendment": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "assembly_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "plain_language_version": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "plan_year_start",
+    "plan_year_end"
+  ]
+}
