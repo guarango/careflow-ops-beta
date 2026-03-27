@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, ChevronLeft, ChevronRight,
   Menu, X, Activity, Target, CalendarDays, Tag, UserCog,
-  TrendingUp, Eye, Check, ChevronUp, MapPin, Briefcase, Settings2, ExternalLink, BarChart3, Sparkles, Smartphone, Plug, Brain, ClipboardList, GraduationCap, Smile
+  TrendingUp, Eye, Check, ChevronUp, MapPin, Briefcase, Settings2, ExternalLink, BarChart3, Sparkles, Smartphone, Plug, Brain, ClipboardList, GraduationCap, Smile, HeartHandshake
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ const navItems = [
   { label: "ISP / PCP Builder", icon: ClipboardList, path: "/isp" },
   { label: "Staff Training & Competency", icon: GraduationCap, path: "/training" },
   { label: "Quality of Life Outcomes", icon: Smile, path: "/qol" },
+  { label: "Family Communication Portal", icon: HeartHandshake, path: "/family-portal-admin" },
   { label: "Incidents", icon: AlertTriangle, path: "/incidents" },
   { label: "eMAR", icon: Pill, path: "/emar" },
   { label: "Timecards", icon: Clock, path: "/timecards" },

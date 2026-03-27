@@ -1,0 +1,132 @@
+{
+  "name": "FamilyHighlightReport",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "report_week_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "report_week_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "generated_date": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Pending Review",
+        "Sent",
+        "Suppressed"
+      ],
+      "default": "Draft"
+    },
+    "sent_at": {
+      "type": "string"
+    },
+    "recipients": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "portal_user_id": {
+            "type": "string"
+          },
+          "portal_user_name": {
+            "type": "string"
+          },
+          "sent_at": {
+            "type": "string"
+          },
+          "opened_at": {
+            "type": "string"
+          },
+          "opened": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "highlights": {
+      "type": "array",
+      "description": "Session highlights assembled from session notes",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "staff_name": {
+            "type": "string"
+          },
+          "highlight": {
+            "type": "string"
+          },
+          "choices_made": {
+            "type": "string"
+          },
+          "memorable_quote": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "goal_progress_narrative": {
+      "type": "string",
+      "description": "Plain-language goal progress, no clinical scores"
+    },
+    "community_activities_narrative": {
+      "type": "string"
+    },
+    "new_skills_narrative": {
+      "type": "string"
+    },
+    "upcoming_preview": {
+      "type": "string",
+      "description": "Things the person is looking forward to"
+    },
+    "report_body": {
+      "type": "string",
+      "description": "Full assembled report text in plain language"
+    },
+    "plain_language_flagged": {
+      "type": "boolean",
+      "default": false
+    },
+    "plain_language_issues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string"
+    },
+    "photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "report_week_start",
+    "report_week_end"
+  ]
+}

@@ -4,17 +4,23 @@ import { PortalContext } from "@/pages/Portal";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Calendar, Target, FileText, MessageSquare, Heart,
-  LogOut, Menu, X, Shield, Bell, User, ChevronDown
+  LogOut, Menu, X, Shield, Bell, User, ChevronDown, Star, ClipboardList, Camera, Lock, AlertOctagon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { label: "Dashboard", path: "/portal/dashboard", icon: LayoutDashboard, roles: ["Guardian", "Case Manager"] },
   { label: "My Care", path: "/portal/my-care", icon: Heart, roles: ["Client"] },
+  { label: "Weekly Updates", path: "/portal/weekly-reports", icon: FileText, roles: ["Guardian", "Case Manager"] },
+  { label: "Milestones", path: "/portal/milestones", icon: Star, roles: ["Guardian", "Client", "Case Manager"] },
   { label: "Schedule", path: "/portal/schedule", icon: Calendar, roles: ["Guardian", "Client", "Case Manager"] },
   { label: "Goals", path: "/portal/goals", icon: Target, roles: ["Guardian", "Client", "Case Manager"] },
-  { label: "Documents", path: "/portal/documents", icon: FileText, roles: ["Guardian", "Case Manager"] },
   { label: "Messages", path: "/portal/messages", icon: MessageSquare, roles: ["Guardian", "Client", "Case Manager"] },
+  { label: "ISP Input", path: "/portal/isp-input", icon: ClipboardList, roles: ["Guardian", "Case Manager"] },
+  { label: "Memories", path: "/portal/memories", icon: Camera, roles: ["Guardian", "Client", "Case Manager"] },
+  { label: "Concerns", path: "/portal/concerns", icon: AlertOctagon, roles: ["Guardian", "Case Manager"] },
+  { label: "My Access", path: "/portal/my-access", icon: Lock, roles: ["Guardian", "Case Manager"] },
+  { label: "Documents", path: "/portal/documents", icon: FileText, roles: ["Guardian", "Case Manager"] },
 ];
 
 const roleColors = {

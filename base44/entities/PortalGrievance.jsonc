@@ -1,0 +1,90 @@
+{
+  "name": "PortalGrievance",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "portal_user_id": {
+      "type": "string"
+    },
+    "portal_user_name": {
+      "type": "string"
+    },
+    "submitted_date": {
+      "type": "string"
+    },
+    "grievance_type": {
+      "type": "string",
+      "enum": [
+        "Service Quality",
+        "Staff Conduct",
+        "Communication",
+        "Safety Concern",
+        "Rights Violation",
+        "Medical/Health",
+        "Billing",
+        "Other"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "Concern",
+        "Complaint",
+        "Formal Grievance"
+      ],
+      "default": "Complaint"
+    },
+    "description": {
+      "type": "string"
+    },
+    "desired_resolution": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Submitted",
+        "Acknowledged",
+        "Under Investigation",
+        "Resolved",
+        "Escalated"
+      ],
+      "default": "Submitted"
+    },
+    "assigned_to": {
+      "type": "string"
+    },
+    "acknowledged_at": {
+      "type": "string"
+    },
+    "expected_resolution_date": {
+      "type": "string"
+    },
+    "investigation_notes": {
+      "type": "string"
+    },
+    "resolution_summary": {
+      "type": "string"
+    },
+    "resolution_sent_at": {
+      "type": "string"
+    },
+    "resolved_at": {
+      "type": "string"
+    },
+    "satisfaction_with_resolution": {
+      "type": "number",
+      "description": "1-5 rating from family member"
+    }
+  },
+  "required": [
+    "client_id",
+    "portal_user_id",
+    "description"
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "name": "FamilyInputForm",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "portal_user_id": {
+      "type": "string"
+    },
+    "portal_user_name": {
+      "type": "string"
+    },
+    "isp_cycle_year": {
+      "type": "string"
+    },
+    "submitted_date": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Submitted",
+        "Reviewed",
+        "Incorporated"
+      ],
+      "default": "Pending"
+    },
+    "seeing_at_home": {
+      "type": "string",
+      "description": "What the family is observing at home or in the community"
+    },
+    "what_is_going_well": {
+      "type": "string"
+    },
+    "needs_different_approach": {
+      "type": "string"
+    },
+    "priorities_coming_year": {
+      "type": "string"
+    },
+    "good_life_perspective": {
+      "type": "string",
+      "description": "What a good life looks like from family's perspective"
+    },
+    "items_for_meeting": {
+      "type": "string"
+    },
+    "what_team_is_missing": {
+      "type": "string",
+      "description": "Anything about who this person is that the team may not know"
+    },
+    "will_attend_meeting": {
+      "type": "boolean"
+    },
+    "attendance_method": {
+      "type": "string",
+      "enum": [
+        "In Person",
+        "Video",
+        "Phone",
+        "Written Input Only"
+      ]
+    },
+    "reviewed_by_case_manager": {
+      "type": "string"
+    },
+    "reviewed_date": {
+      "type": "string"
+    },
+    "cm_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "portal_user_id"
+  ]
+}

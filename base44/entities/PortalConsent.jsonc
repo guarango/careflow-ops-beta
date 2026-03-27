@@ -1,0 +1,126 @@
+{
+  "name": "PortalConsent",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "portal_user_id": {
+      "type": "string"
+    },
+    "portal_user_name": {
+      "type": "string"
+    },
+    "relationship": {
+      "type": "string"
+    },
+    "consent_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "consent_reviewed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "support_person_assisted": {
+      "type": "string",
+      "description": "Name of staff who assisted person in understanding consent"
+    },
+    "communication_method_used": {
+      "type": "string",
+      "enum": [
+        "Verbal",
+        "AAC Device",
+        "Picture Board",
+        "Written",
+        "Sign Language",
+        "Proxy Input"
+      ],
+      "default": "Verbal"
+    },
+    "access_categories": {
+      "type": "object",
+      "description": "Per-category consent flags",
+      "properties": {
+        "goal_progress": {
+          "type": "boolean",
+          "default": false
+        },
+        "session_highlights": {
+          "type": "boolean",
+          "default": false
+        },
+        "health_updates": {
+          "type": "boolean",
+          "default": false
+        },
+        "incident_notifications": {
+          "type": "boolean",
+          "default": false
+        },
+        "schedule_information": {
+          "type": "boolean",
+          "default": false
+        },
+        "photo_sharing": {
+          "type": "boolean",
+          "default": false
+        },
+        "financial_information": {
+          "type": "boolean",
+          "default": false
+        },
+        "weekly_highlight_report": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "person_involvement_preference": {
+      "type": "string",
+      "enum": [
+        "Copied on everything",
+        "Notified when something is sent",
+        "Not involved",
+        "Involved in specific categories only"
+      ],
+      "default": "Notified when something is sent"
+    },
+    "requires_person_review_before_sharing": {
+      "type": "boolean",
+      "default": false
+    },
+    "guardianship_in_place": {
+      "type": "boolean",
+      "default": false
+    },
+    "guardianship_authority_areas": {
+      "type": "string",
+      "description": "Specific areas where guardian has legal decision-making authority"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Revoked",
+        "Pending Review"
+      ],
+      "default": "Active"
+    },
+    "revocation_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "portal_user_id",
+    "consent_date"
+  ]
+}

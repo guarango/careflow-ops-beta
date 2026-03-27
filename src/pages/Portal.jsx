@@ -8,6 +8,12 @@ import PortalGoals from "@/components/portal/PortalGoals";
 import PortalDocuments from "@/components/portal/PortalDocuments";
 import PortalMessages from "@/components/portal/PortalMessages";
 import PortalClientView from "@/components/portal/PortalClientView";
+import PortalWeeklyReport from "@/components/portal/PortalWeeklyReport";
+import PortalISPInput from "@/components/portal/PortalISPInput";
+import PortalGrievancePage from "@/components/portal/PortalGrievance";
+import PortalConsentView from "@/components/portal/PortalConsentView";
+import PortalMemoryStream from "@/components/portal/PortalMemoryStream";
+import PortalMilestones from "@/components/portal/PortalMilestones";
 
 // Portal context – simulates a logged-in portal session (separate from staff auth)
 export const PortalContext = React.createContext(null);
@@ -89,6 +95,30 @@ export default function Portal() {
         <Route
           path="/my-care"
           element={portalUser ? <PortalShell><PortalClientView /></PortalShell> : <Navigate to="/portal" replace />}
+        />
+        <Route
+          path="/weekly-reports"
+          element={portalUser ? <PortalShell><PortalWeeklyReport /></PortalShell> : <Navigate to="/portal" replace />}
+        />
+        <Route
+          path="/milestones"
+          element={portalUser ? <PortalShell><PortalMilestones /></PortalShell> : <Navigate to="/portal" replace />}
+        />
+        <Route
+          path="/isp-input"
+          element={portalUser ? <PortalShell><PortalISPInput /></PortalShell> : <Navigate to="/portal" replace />}
+        />
+        <Route
+          path="/concerns"
+          element={portalUser ? <PortalShell><PortalGrievancePage /></PortalShell> : <Navigate to="/portal" replace />}
+        />
+        <Route
+          path="/my-access"
+          element={portalUser ? <PortalShell><PortalConsentView /></PortalShell> : <Navigate to="/portal" replace />}
+        />
+        <Route
+          path="/memories"
+          element={portalUser ? <PortalShell><PortalMemoryStream /></PortalShell> : <Navigate to="/portal" replace />}
         />
         <Route path="*" element={<Navigate to="/portal" replace />} />
       </Routes>

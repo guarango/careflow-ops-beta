@@ -1,0 +1,49 @@
+{
+  "name": "FamilySatisfactionSurvey",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "portal_user_id": {
+      "type": "string"
+    },
+    "portal_user_name": {
+      "type": "string"
+    },
+    "survey_quarter": {
+      "type": "string",
+      "description": "e.g. Q1-2025"
+    },
+    "submitted_date": {
+      "type": "string"
+    },
+    "feel_informed": {
+      "type": "number",
+      "description": "1-5: Do you feel informed about the care and services?"
+    },
+    "feel_heard": {
+      "type": "number",
+      "description": "1-5: Do you feel heard by the team?"
+    },
+    "trust_team": {
+      "type": "number",
+      "description": "1-5: Do you trust the team supporting your family member?"
+    },
+    "would_recommend": {
+      "type": "number",
+      "description": "1-5: Would you recommend this agency to another family?"
+    },
+    "open_feedback": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "portal_user_id",
+    "survey_quarter"
+  ]
+}

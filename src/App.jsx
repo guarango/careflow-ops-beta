@@ -37,6 +37,7 @@ import BSP from './pages/BSP';
 import ISP from './pages/ISP';
 import Training from './pages/Training';
 import QoL from './pages/QoL';
+import FamilyPortalAdmin from './pages/FamilyPortalAdmin';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -85,6 +86,7 @@ const AuthenticatedApp = () => {
         <Route path="/isp" element={<ISP />} />
         <Route path="/training" element={<Training />} />
         <Route path="/qol" element={<QoL />} />
+        <Route path="/family-portal-admin" element={<FamilyPortalAdmin />} />
       </Route>
       {/* Mobile PWA — dedicated layout */}
       <Route path="/mobile" element={<MobileApp />} />
