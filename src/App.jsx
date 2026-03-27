@@ -17,7 +17,7 @@ import EMAR from './pages/EMAR';
 import Timecards from './pages/Timecards';
 import Compliance from './pages/Compliance';
 import Billing from './pages/Billing';
-import Goals from './pages/Goals';
+import Goals from './pages/Goals.jsx';
 import Schedule from './pages/Schedule';
 import ServiceCodes from './pages/ServiceCodes';
 import UserManagement from './pages/UserManagement';
