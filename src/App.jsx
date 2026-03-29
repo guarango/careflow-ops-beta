@@ -8,6 +8,7 @@ import { RolePreviewProvider } from '@/lib/RolePreviewContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 import AppLayout from './components/layout/AppLayout';
+import RouteGuard from './components/shared/RouteGuard';
 import Dashboard from './pages/Dashboard';
 import Staff from './pages/Staff';
 import Clients from './pages/Clients';
@@ -63,30 +64,30 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/staff" element={<Staff />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/session-notes" element={<SessionNotes />} />
-        <Route path="/incidents" element={<Incidents />} />
-        <Route path="/emar" element={<EMAR />} />
-        <Route path="/timecards" element={<Timecards />} />
-        <Route path="/compliance" element={<Compliance />} />
-        <Route path="/billing" element={<Billing />} />
-        <Route path="/goals" element={<Goals />} />
-        <Route path="/schedule" element={<Schedule />} />
-        <Route path="/service-codes" element={<ServiceCodes />} />
-        <Route path="/users" element={<UserManagement />} />
-        <Route path="/payroll" element={<Payroll />} />
-        <Route path="/role-preview" element={<RolePreview />} />
-        <Route path="/evv" element={<EVV />} />
-        <Route path="/hr" element={<HR />} />
-        <Route path="/agency-admin" element={<AgencyAdmin />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/ai-hub" element={<AIHub />} />
-        <Route path="/bsp" element={<BSP />} />
-        <Route path="/isp" element={<ISP />} />
-        <Route path="/training" element={<Training />} />
-        <Route path="/qol" element={<QoL />} />
-        <Route path="/family-portal-admin" element={<FamilyPortalAdmin />} />
+        <Route path="/staff" element={<RouteGuard path="/staff"><Staff /></RouteGuard>} />
+        <Route path="/clients" element={<RouteGuard path="/clients"><Clients /></RouteGuard>} />
+        <Route path="/session-notes" element={<RouteGuard path="/session-notes"><SessionNotes /></RouteGuard>} />
+        <Route path="/incidents" element={<RouteGuard path="/incidents"><Incidents /></RouteGuard>} />
+        <Route path="/emar" element={<RouteGuard path="/emar"><EMAR /></RouteGuard>} />
+        <Route path="/timecards" element={<RouteGuard path="/timecards"><Timecards /></RouteGuard>} />
+        <Route path="/compliance" element={<RouteGuard path="/compliance"><Compliance /></RouteGuard>} />
+        <Route path="/billing" element={<RouteGuard path="/billing"><Billing /></RouteGuard>} />
+        <Route path="/goals" element={<RouteGuard path="/goals"><Goals /></RouteGuard>} />
+        <Route path="/schedule" element={<RouteGuard path="/schedule"><Schedule /></RouteGuard>} />
+        <Route path="/service-codes" element={<RouteGuard path="/service-codes"><ServiceCodes /></RouteGuard>} />
+        <Route path="/users" element={<RouteGuard path="/users"><UserManagement /></RouteGuard>} />
+        <Route path="/payroll" element={<RouteGuard path="/payroll"><Payroll /></RouteGuard>} />
+        <Route path="/role-preview" element={<RouteGuard path="/role-preview"><RolePreview /></RouteGuard>} />
+        <Route path="/evv" element={<RouteGuard path="/evv"><EVV /></RouteGuard>} />
+        <Route path="/hr" element={<RouteGuard path="/hr"><HR /></RouteGuard>} />
+        <Route path="/agency-admin" element={<RouteGuard path="/agency-admin"><AgencyAdmin /></RouteGuard>} />
+        <Route path="/reports" element={<RouteGuard path="/reports"><Reports /></RouteGuard>} />
+        <Route path="/ai-hub" element={<RouteGuard path="/ai-hub"><AIHub /></RouteGuard>} />
+        <Route path="/bsp" element={<RouteGuard path="/bsp"><BSP /></RouteGuard>} />
+        <Route path="/isp" element={<RouteGuard path="/isp"><ISP /></RouteGuard>} />
+        <Route path="/training" element={<RouteGuard path="/training"><Training /></RouteGuard>} />
+        <Route path="/qol" element={<RouteGuard path="/qol"><QoL /></RouteGuard>} />
+        <Route path="/family-portal-admin" element={<RouteGuard path="/family-portal-admin"><FamilyPortalAdmin /></RouteGuard>} />
       </Route>
       {/* Mobile PWA — dedicated layout */}
       <Route path="/mobile" element={<MobileApp />} />
