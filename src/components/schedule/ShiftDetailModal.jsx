@@ -3,11 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Repeat, Trash2, Pencil } from "lucide-react";
+import { AlertTriangle, Repeat, Trash2, Pencil, LogIn, LogOut, Clock } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { formatTimeRange } from "./scheduleUtils";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 const STATUSES = ["Scheduled", "In Progress", "Completed", "Missed", "Cancelled"];
 const STATUS_COLORS = {
@@ -31,6 +32,16 @@ export default function ShiftDetailModal({ shift, conflictInfo, canEdit, onClose
     mutationFn: (id) => base44.entities.ShiftSchedule.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["shifts"] }); onClose(); },
   });
+
+  const handleClockIn = () => {
+    const now = format(new Date(), "HH:mm");
+    updateMutation.mutate({ id: shift.id, data: { evv_clock_in: now, status: "In Progress" } });
+  };
+
+  const handleClockOut = () => {
+    const now = format(new Date(), "HH:mm");
+    updateMutation.mutate({ id: shift.id, data: { evv_clock_out: now, status: "Completed" } });
+  };
 
   const handleStatusUpdate = () => {
     updateMutation.mutate({ id: shift.id, data: { status } });
@@ -69,6 +80,40 @@ export default function ShiftDetailModal({ shift, conflictInfo, canEdit, onClose
               This is part of a recurring series.
             </div>
           )}
+
+          {/* EVV Clock In/Out */}
+          <div className="border-t pt-3">
+            <p className="text-xs text-muted-foreground mb-2 font-medium flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" />EVV — Clock In / Out
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-muted/40 rounded-lg px-3 py-2 text-center">
+                <p className="text-[10px] text-muted-foreground mb-0.5">Clock In</p>
+                <p className="text-sm font-semibold">{shift.evv_clock_in || "—"}</p>
+              </div>
+              <div className="bg-muted/40 rounded-lg px-3 py-2 text-center">
+                <p className="text-[10px] text-muted-foreground mb-0.5">Clock Out</p>
+                <p className="text-sm font-semibold">{shift.evv_clock_out || "—"}</p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-2">
+              {!shift.evv_clock_in && (
+                <Button size="sm" variant="outline" className="flex-1 gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50" onClick={handleClockIn} disabled={updateMutation.isPending}>
+                  <LogIn className="w-3.5 h-3.5" />Clock In Now
+                </Button>
+              )}
+              {shift.evv_clock_in && !shift.evv_clock_out && (
+                <Button size="sm" variant="outline" className="flex-1 gap-1.5 text-red-700 border-red-300 hover:bg-red-50" onClick={handleClockOut} disabled={updateMutation.isPending}>
+                  <LogOut className="w-3.5 h-3.5" />Clock Out Now
+                </Button>
+              )}
+              {shift.evv_clock_in && shift.evv_clock_out && (
+                <p className="text-xs text-emerald-600 font-medium flex items-center gap-1 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Visit verified
+                </p>
+              )}
+            </div>
+          </div>
 
           <div className="border-t pt-3">
             <p className="text-xs text-muted-foreground mb-1.5 font-medium">Status</p>

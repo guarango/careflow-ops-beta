@@ -29,33 +29,31 @@ export const ROLES = {
 
 // Merged nav paths — what each sidebar item links to
 // Paths shown in sidebar per role
+//
+// Role tiers for MVP:
+//  DSP:         Clinical Care + Schedule/EVV only
+//  Coordinator: Clinical Care + Health & Safety + Staff & Operations
+//  Admin:       Everything
 export const NAV_ACCESS = {
-  "/":                    ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "billing", "hr", "lead_dsp", "dsp"],
-  "/clients":             ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "lead_dsp"],
-  "/goals":               ["admin", "program_director", "supervisor", "case_manager", "bcba", "lead_dsp", "dsp"],
-  "/session-notes":       ["admin", "program_director", "supervisor", "case_manager", "bcba", "lead_dsp", "dsp"],
-  "/bsp":                 ["admin", "program_director", "supervisor", "case_manager", "bcba", "lead_dsp"],
-  "/isp":                 ["admin", "program_director", "supervisor", "case_manager"],
-  "/qol":                 ["admin", "program_director", "supervisor", "case_manager", "bcba"],
-  "/emar":                ["admin", "program_director", "supervisor", "nurse", "lead_dsp", "dsp"],
-  "/incidents":           ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "lead_dsp", "dsp"],
-  "/staff":               ["admin", "program_director", "supervisor", "case_manager", "hr"],
-  "/schedule":            ["admin", "program_director", "supervisor", "case_manager", "hr", "lead_dsp", "dsp"],
-  "/evv":                 ["admin", "program_director", "supervisor", "case_manager", "hr", "lead_dsp", "dsp"],
-  "/training":            ["admin", "program_director", "supervisor", "case_manager", "hr", "lead_dsp"],
-  "/family-portal-admin": ["admin", "program_director", "supervisor", "case_manager"],
-  "/billing":             ["admin", "program_director", "billing"],
-  "/service-codes":       ["admin", "program_director", "billing"],
-  "/timecards":           ["admin", "program_director", "supervisor", "billing", "hr", "lead_dsp", "dsp"],
-  "/payroll":             ["admin", "program_director", "billing", "hr"],
-  "/compliance":          ["admin", "program_director", "supervisor", "billing", "hr"],
-  "/reports":             ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "billing", "hr"],
-  "/hr":                  ["admin", "program_director", "hr"],
-  "/users":               ["admin"],
-  "/agency-admin":        ["admin"],
-  "/ai-hub":              ["admin"],
-  "/role-preview":        ["admin"],
-  "/super-admin":         ["admin"],
+  "/":             ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "billing", "hr", "lead_dsp", "dsp"],
+  "/clients":      ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "lead_dsp", "dsp"],
+  "/goals":        ["admin", "program_director", "supervisor", "case_manager", "bcba", "lead_dsp", "dsp"],
+  "/session-notes":["admin", "program_director", "supervisor", "case_manager", "bcba", "lead_dsp", "dsp"],
+  "/bsp":          ["admin", "program_director", "supervisor", "case_manager", "bcba", "lead_dsp", "dsp"],
+  "/isp":          ["admin", "program_director", "supervisor", "case_manager"],
+  "/emar":         ["admin", "program_director", "supervisor", "nurse", "lead_dsp", "dsp"],
+  "/incidents":    ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "lead_dsp", "dsp"],
+  "/staff":        ["admin", "program_director", "supervisor", "case_manager", "hr"],
+  "/schedule":     ["admin", "program_director", "supervisor", "case_manager", "hr", "lead_dsp", "dsp"],
+  "/timecards":    ["admin", "program_director", "supervisor", "billing", "hr", "lead_dsp", "dsp"],
+  "/hr":           ["admin", "program_director", "supervisor", "hr"],
+  "/compliance":   ["admin", "program_director", "supervisor", "billing", "hr"],
+  "/finance":      ["admin", "program_director", "billing"],
+  "/reports":      ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "billing", "hr"],
+  "/users":        ["admin"],
+  "/agency-admin": ["admin"],
+  "/role-preview": ["admin"],
+  "/super-admin":  ["admin"],
 };
 
 // Feature-level permissions

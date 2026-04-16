@@ -8,9 +8,9 @@ import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, UserCheck, ClipboardList, AlertTriangle,
-  Pill, Clock, ShieldCheck, DollarSign, Target, Calendar, Code2,
-  UsersRound, ReceiptText, Briefcase, Settings, Bot,
-  Eye, ChevronDown, Menu, X, GraduationCap, HeartHandshake, FileText, Stethoscope
+  Pill, Clock, ShieldCheck, DollarSign, Target, Calendar,
+  UsersRound, ReceiptText, Briefcase, Settings,
+  Eye, ChevronDown, Menu, X, FileText, Stethoscope, Brain
 } from "lucide-react";
 
 const ALL_NAV = [
@@ -21,9 +21,8 @@ const ALL_NAV = [
       { path: "/clients", label: "Clients", icon: Users },
       { path: "/goals", label: "Goals", icon: Target },
       { path: "/session-notes", label: "Session Notes", icon: ClipboardList },
-      { path: "/bsp", label: "Behavior Support", icon: ShieldCheck },
+      { path: "/bsp", label: "Behavior Support", icon: Brain },
       { path: "/isp", label: "ISP Plans", icon: FileText },
-      { path: "/qol", label: "Quality of Life", icon: HeartHandshake },
     ],
   },
   {
@@ -38,29 +37,23 @@ const ALL_NAV = [
     items: [
       { path: "/staff", label: "Staff", icon: UserCheck },
       { path: "/schedule", label: "Schedule & EVV", icon: Calendar },
-      { path: "/evv", label: "EVV", icon: Calendar },
-      { path: "/training", label: "Training", icon: GraduationCap },
       { path: "/timecards", label: "Timecards", icon: Clock },
-      { path: "/hr", label: "HR", icon: Briefcase },
+      { path: "/hr", label: "HR & Compliance", icon: Briefcase },
       { path: "/compliance", label: "Compliance", icon: ShieldCheck },
     ],
   },
   {
     section: "Finance",
     items: [
-      { path: "/billing", label: "Billing", icon: DollarSign },
-      { path: "/service-codes", label: "Service Codes", icon: Code2 },
-      { path: "/payroll", label: "Payroll", icon: ReceiptText },
+      { path: "/finance", label: "Finance", icon: DollarSign },
       { path: "/reports", label: "Reports", icon: ClipboardList },
     ],
   },
   {
     section: "Agency",
     items: [
-      { path: "/family-portal-admin", label: "Family Portal", icon: HeartHandshake },
       { path: "/users", label: "Users", icon: UsersRound },
       { path: "/agency-admin", label: "Settings & Admin", icon: Settings },
-      { path: "/ai-hub", label: "AI Hub", icon: Bot },
       { path: "/role-preview", label: "Role Preview", icon: Eye },
     ],
   },

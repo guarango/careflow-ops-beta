@@ -1,0 +1,40 @@
+{
+  "name": "OnboardingDocument",
+  "type": "object",
+  "properties": {
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "document_name": {
+      "type": "string"
+    },
+    "sent_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "signed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Signed",
+        "Returned",
+        "Voided"
+      ],
+      "default": "Pending"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "staff_id",
+    "document_name"
+  ]
+}

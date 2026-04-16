@@ -1,0 +1,94 @@
+{
+  "name": "ShiftSchedule",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "service_code_id": {
+      "type": "string"
+    },
+    "service_code": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string"
+    },
+    "rate_type": {
+      "type": "string",
+      "enum": [
+        "Hourly",
+        "Daily",
+        "Per Unit",
+        "Monthly"
+      ]
+    },
+    "rate": {
+      "type": "number"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "start_time": {
+      "type": "string"
+    },
+    "end_time": {
+      "type": "string"
+    },
+    "total_hours": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Scheduled",
+        "In Progress",
+        "Completed",
+        "Cancelled",
+        "No Show"
+      ],
+      "default": "Scheduled"
+    },
+    "evv_clock_in": {
+      "type": "string",
+      "description": "Actual clock-in time recorded by staff (EVV)"
+    },
+    "evv_clock_out": {
+      "type": "string",
+      "description": "Actual clock-out time recorded by staff (EVV)"
+    },
+    "evv_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "billing_created": {
+      "type": "boolean",
+      "default": false
+    },
+    "billing_record_id": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "staff_id",
+    "date",
+    "start_time"
+  ]
+}
