@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, Plus, Search, ArrowLeft, ChevronRight, AlertTriangle, Clock } from "lucide-react";
+import { Target, Plus, Search, ArrowLeft, ChevronRight, AlertTriangle, Clock, LayoutGrid, List } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import ClientGoalCard from "@/components/goals/ClientGoalCard";
 import GoalFormDialog from "@/components/goals/GoalFormDialog";
 import GoalDetailView from "@/components/goals/GoalDetailView";
 import GoalAlerts from "@/components/goals/GoalAlerts";
+import GoalListView from "@/components/goals/GoalListView";
 import { cn } from "@/lib/utils";
 import { differenceInDays, parseISO, isValid } from "date-fns";
 
@@ -78,6 +79,7 @@ export default function Goals() {
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
 
   const queryClient = useQueryClient();
 
@@ -228,16 +230,36 @@ export default function Goals() {
 
       <Card className="mb-4">
         <CardContent className="py-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
+            </div>
+            <div className="flex items-center border rounded-lg p-0.5 bg-muted/50">
+              <Button
+                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => setViewMode("grid")}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => setViewMode("list")}
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {filteredClients.length === 0 ? (
         <EmptyState icon={Target} title="No clients found" description="Add ISP goals to start tracking client progress." action={<Button onClick={() => openNew()} size="sm"><Plus className="w-4 h-4 mr-1" />Add Goal</Button>} />
-      ) : (
+      ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredClients.map(client => (
             <ClientGoalCard
@@ -248,6 +270,18 @@ export default function Goals() {
             />
           ))}
         </div>
+      ) : (
+        <GoalListView
+          goals={visibleGoals.filter(g => {
+            const client = clients.find(c => c.id === g.client_id);
+            if (!client) return false;
+            return `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchLower);
+          })}
+          clients={clients}
+          onSelectClient={setSelectedClient}
+          onSelectGoal={setSelectedGoal}
+          onEdit={openEdit}
+        />
       )}
 
       <GoalFormDialog
