@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import PageHeader from "@/components/shared/PageHeader";
@@ -7,29 +7,58 @@ import EmptyState from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Clock, Plus, Search, CheckCircle, XCircle, MapPin, AlertCircle } from "lucide-react";
+import { Clock, Plus, Search, CheckCircle, XCircle, MapPin, AlertCircle, Lock, Unlock, AlertTriangle } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/lib/AuthContext";
 import EVVCapturePanel from "@/components/evv/EVVCapturePanel";
+import PayrollExportPanel from "@/components/timecards/PayrollExportPanel";
+import PayrollPreviewModal from "@/components/timecards/PayrollPreviewModal";
+import { computeOvertimeMap, filterByPeriod } from "@/lib/overtimeUtils";
+import { exportCSV, exportPDF } from "@/components/timecards/payrollExportUtils";
+import { useToast } from "@/components/ui/use-toast";
+import AccessDenied from "@/components/shared/AccessDenied";
 
-const tcStatuses = ["Pending", "Approved", "Rejected"];
+const emptyTC = {
+  staff_id: "", staff_name: "", date: "", clock_in: "", clock_out: "",
+  total_hours: 0, break_minutes: 0, status: "Pending", notes: "",
+  evv_location_in: null, evv_location_out: null, service_code_id: "", service_type: ""
+};
 
-const emptyTC = { staff_id: "", staff_name: "", date: "", clock_in: "", clock_out: "", total_hours: 0, break_minutes: 0, status: "Pending", notes: "", evv_location_in: null, evv_location_out: null, service_code_id: "", service_type: "" };
+const PAYROLL_ROLES = ["admin", "hr", "billing", "program_director", "supervisor"];
 
 export default function Timecards() {
-  const { can } = useRole();
+  const { role, can } = useRole();
+  const { user: currentUser } = useAuth();
+  const { toast } = useToast();
+
+  const canExport = ["admin", "hr"].includes(role);
+  const isAdmin = role === "admin";
+  const isAdminOrHR = ["admin", "hr"].includes(role);
+
   const [showDialog, setShowDialog] = useState(false);
   const [form, setForm] = useState(emptyTC);
   const [search, setSearch] = useState("");
   const [evvError, setEvvError] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("All");
+
+  // Payroll export state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewParams, setPreviewParams] = useState(null);
+  const [lockConfirmOpen, setLockConfirmOpen] = useState(false);
+  const [lockParams, setLockParams] = useState(null);
+  const [otOverrideOpen, setOtOverrideOpen] = useState(false);
+  const [otOverrideTarget, setOtOverrideTarget] = useState(null);
 
   const queryClient = useQueryClient();
+
   const { data: timecards = [], isLoading } = useQuery({
     queryKey: ["timecards"],
-    queryFn: () => base44.entities.Timecard.list("-created_date"),
+    queryFn: () => base44.entities.Timecard.list("-date"),
   });
 
   const { data: staff = [] } = useQuery({
@@ -44,13 +73,32 @@ export default function Timecards() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Timecard.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["timecards"] }); setShowDialog(false); setForm(emptyTC); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timecards"] });
+      setShowDialog(false);
+      setForm(emptyTC);
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Timecard.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["timecards"] }),
   });
+
+  const bulkUpdateMutation = useMutation({
+    mutationFn: async (updates) => {
+      for (const { id, data } of updates) {
+        await base44.entities.Timecard.update(id, data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timecards"] });
+      toast({ title: "Pay period locked", description: "All selected timecards have been locked." });
+    },
+  });
+
+  // Overtime computation for ALL timecards
+  const otMap = useMemo(() => computeOvertimeMap(timecards), [timecards]);
 
   const handleStaffSelect = (staffId) => {
     const s = staff.find(st => st.id === staffId);
@@ -89,25 +137,174 @@ export default function Timecards() {
     createMutation.mutate({ ...form, total_hours: hours });
   };
 
-  const filtered = timecards.filter(t =>
-    `${t.staff_name} ${t.date} ${t.status}`.toLowerCase().includes(search.toLowerCase())
-  );
+  // Status filter chips
+  const STATUS_CHIPS = ["All", "Pending", "Approved", "Rejected", "Locked"];
+
+  const filtered = useMemo(() => {
+    return timecards.filter(t => {
+      const matchesSearch = `${t.staff_name} ${t.date} ${t.status}`.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "All"
+        ? true
+        : statusFilter === "Locked" ? t.locked
+        : t.status === statusFilter && !t.locked;
+      return matchesSearch && matchesStatus;
+    });
+  }, [timecards, search, statusFilter]);
+
+  // Payroll export handlers
+  const getFilteredTCsForExport = ({ period, staffIds, statuses }) => {
+    let tcs = filterByPeriod(timecards, period.start, period.end);
+    tcs = tcs.filter(tc => staffIds.includes(tc.staff_id));
+    if (!statuses.includes("All")) {
+      tcs = tcs.filter(tc => statuses.includes(tc.status));
+    }
+    return tcs;
+  };
+
+  const handlePreview = (params) => {
+    setPreviewParams(params);
+    setPreviewOpen(true);
+  };
+
+  const handleExportCSV = (params) => {
+    const tcs = getFilteredTCsForExport(params);
+    exportCSV(tcs, params.period);
+    logExport({ ...params, format: "CSV", tcs });
+    toast({ title: "CSV exported", description: `${tcs.length} timecard entries exported.` });
+  };
+
+  const handleExportPDF = (params) => {
+    const tcs = getFilteredTCsForExport(params);
+    exportPDF(tcs, params.period, params.frequency, currentUser, "CareFlow Ops");
+    logExport({ ...params, format: "PDF", tcs });
+    toast({ title: "PDF opened", description: "Use your browser print dialog to save as PDF." });
+  };
+
+  const handleLockPeriod = (params) => {
+    setLockParams(params);
+    setLockConfirmOpen(true);
+  };
+
+  const confirmLock = () => {
+    const tcs = getFilteredTCsForExport(lockParams);
+    const updates = tcs.map(tc => ({
+      id: tc.id,
+      data: {
+        locked: true,
+        locked_by: currentUser?.full_name || currentUser?.email || "System",
+        locked_at: new Date().toISOString(),
+        pay_period_label: lockParams.period.label,
+      }
+    }));
+    bulkUpdateMutation.mutate(updates);
+    setLockConfirmOpen(false);
+    setLockParams(null);
+  };
+
+  const handleOTOverride = (tc) => {
+    const otInfo = otMap[tc.id];
+    setOtOverrideTarget({ tc, otInfo });
+    setOtOverrideOpen(true);
+  };
+
+  const confirmOTOverride = () => {
+    if (!otOverrideTarget) return;
+    updateMutation.mutate({ id: otOverrideTarget.tc.id, data: { status: "Approved" } });
+    setOtOverrideOpen(false);
+    setOtOverrideTarget(null);
+    toast({ title: "Approved with OT override", description: `Timecard approved for ${otOverrideTarget.tc.staff_name}.` });
+  };
+
+  // Silently log exports
+  const logExport = ({ period, staffIds, format: fmt, tcs }) => {
+    try {
+      const locked = tcs.every(tc => tc.locked);
+      base44.entities.AuditLog.create({
+        action: `Payroll Export (${fmt})`,
+        entity: "Timecard",
+        details: JSON.stringify({
+          pay_period: period.label,
+          employees: staffIds.length,
+          entries: tcs.length,
+          format: fmt,
+          period_locked: locked,
+          exported_by: currentUser?.email,
+          exported_at: new Date().toISOString(),
+        }),
+        performed_by: currentUser?.email || "unknown",
+      }).catch(() => {}); // silent
+    } catch (_) {}
+  };
+
+  if (!PAYROLL_ROLES.includes(role)) {
+    return <AccessDenied />;
+  }
 
   return (
     <div>
-      <PageHeader title="Timecards" subtitle={`${timecards.length} entries`} action={<Button onClick={() => { setForm(emptyTC); setShowDialog(true); }}><Plus className="w-4 h-4 mr-2" />New Entry</Button>} />
+      <PageHeader
+        title="Timecards"
+        subtitle={`${timecards.length} entries`}
+        action={
+          <Button onClick={() => { setForm(emptyTC); setShowDialog(true); }}>
+            <Plus className="w-4 h-4 mr-2" />New Entry
+          </Button>
+        }
+      />
 
+      {/* Payroll Export Panel (Admin / HR only) */}
+      {canExport && (
+        <PayrollExportPanel
+          staff={staff}
+          onPreview={handlePreview}
+          onExportCSV={handleExportCSV}
+          onExportPDF={handleExportPDF}
+          onLockPeriod={handleLockPeriod}
+        />
+      )}
+
+      {/* Search + Status Filter */}
       <Card className="mb-6">
-        <CardContent className="py-3">
+        <CardContent className="py-3 space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search timecards..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
+            <Input
+              placeholder="Search timecards..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 border-0 bg-transparent focus-visible:ring-0"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_CHIPS.map(chip => (
+              <button
+                key={chip}
+                onClick={() => setStatusFilter(chip)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                  statusFilter === chip
+                    ? chip === "Locked" ? "bg-slate-600 text-white border-slate-600"
+                      : chip === "Approved" ? "bg-accent text-white border-accent"
+                      : chip === "Pending" ? "bg-amber-500 text-white border-amber-500"
+                      : chip === "Rejected" ? "bg-destructive text-white border-destructive"
+                      : "bg-primary text-white border-primary"
+                    : "bg-background text-muted-foreground border-border hover:border-primary/40"
+                }`}
+              >
+                {chip}
+              </button>
+            ))}
           </div>
         </CardContent>
       </Card>
 
+      {/* Timecard Table */}
       {filtered.length === 0 && !isLoading ? (
-        <EmptyState icon={Clock} title="No timecards" description="Create your first timecard entry." action={<Button onClick={() => setShowDialog(true)} size="sm"><Plus className="w-4 h-4 mr-1" />New Entry</Button>} />
+        <EmptyState
+          icon={Clock}
+          title="No timecards"
+          description="Create your first timecard entry."
+          action={<Button onClick={() => setShowDialog(true)} size="sm"><Plus className="w-4 h-4 mr-1" />New Entry</Button>}
+        />
       ) : (
         <Card>
           <div className="overflow-x-auto">
@@ -124,34 +321,105 @@ export default function Timecards() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium">{t.staff_name || "—"}</TableCell>
-                    <TableCell className="text-sm">{t.date}</TableCell>
-                    <TableCell className="text-sm">{t.clock_in}</TableCell>
-                    <TableCell className="text-sm">{t.clock_out || "—"}</TableCell>
-                    <TableCell className="font-semibold">{t.total_hours ? `${t.total_hours}h` : "—"}</TableCell>
-                    <TableCell><StatusBadge status={t.status} /></TableCell>
-                    <TableCell>
-                      {can("approveTimecards") && t.status === "Pending" && (
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-accent" onClick={() => updateMutation.mutate({ id: t.id, data: { status: "Approved" } })}>
-                            <CheckCircle className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => updateMutation.mutate({ id: t.id, data: { status: "Rejected" } })}>
-                            <XCircle className="w-4 h-4" />
-                          </Button>
+                {filtered.map((t) => {
+                  const otInfo = otMap[t.id];
+                  const isOT = otInfo?.isOT;
+                  const isLocked = t.locked;
+
+                  return (
+                    <TableRow
+                      key={t.id}
+                      className={isLocked ? "bg-slate-50 opacity-80" : ""}
+                    >
+                      <TableCell className="font-medium">{t.staff_name || "—"}</TableCell>
+                      <TableCell className="text-sm">{t.date}</TableCell>
+                      <TableCell className="text-sm">{t.clock_in}</TableCell>
+                      <TableCell className="text-sm">{t.clock_out || "—"}</TableCell>
+                      <TableCell>
+                        <span className="font-semibold">{t.total_hours ? `${t.total_hours}h` : "—"}</span>
+                        {isOT && (
+                          <Badge className="ml-1.5 bg-orange-500 text-white text-xs px-1.5 py-0 h-4">OT</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          {isLocked && <Lock className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />}
+                          <StatusBadge status={isLocked ? "Locked" : t.status} />
                         </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>
+                        {isLocked ? (
+                          isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-slate-500 hover:text-primary"
+                              title="Unlock timecard"
+                              onClick={() => updateMutation.mutate({ id: t.id, data: { locked: false, locked_by: null, locked_at: null } })}
+                            >
+                              <Unlock className="w-4 h-4" />
+                            </Button>
+                          )
+                        ) : (
+                          can("approveTimecards") && t.status === "Pending" && (
+                            isOT ? (
+                              <div className="flex gap-1 items-center">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={!isAdminOrHR}
+                                  className={`h-7 text-xs px-2 ${isAdminOrHR ? "text-orange-600 hover:bg-orange-50" : "opacity-40 cursor-not-allowed"}`}
+                                  onClick={() => isAdminOrHR && handleOTOverride(t)}
+                                  title={isAdminOrHR ? "Override & Approve OT entry" : "OT Review Required — Admin/HR only"}
+                                >
+                                  {isAdminOrHR ? (
+                                    <><AlertTriangle className="w-3 h-3 mr-1" />Override</>
+                                  ) : (
+                                    "OT Review Required"
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive"
+                                  onClick={() => updateMutation.mutate({ id: t.id, data: { status: "Rejected" } })}
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-accent"
+                                  onClick={() => updateMutation.mutate({ id: t.id, data: { status: "Approved" } })}
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive"
+                                  onClick={() => updateMutation.mutate({ id: t.id, data: { status: "Rejected" } })}
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )
+                          )
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
         </Card>
       )}
 
+      {/* New Timecard Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>New Timecard Entry</DialogTitle></DialogHeader>
@@ -195,6 +463,67 @@ export default function Timecards() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
             <Button onClick={handleSave} disabled={!form.staff_id || !form.date || !form.clock_in}>Submit</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payroll Preview Modal */}
+      {previewOpen && previewParams && (
+        <PayrollPreviewModal
+          open={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          timecards={getFilteredTCsForExport(previewParams)}
+          period={previewParams.period}
+          frequency={previewParams.frequency || "semi-monthly"}
+          user={currentUser}
+          agencyName="CareFlow Ops"
+          onExportCSV={handleExportCSV}
+          onExportPDF={handleExportPDF}
+          params={previewParams}
+        />
+      )}
+
+      {/* Lock Confirmation Dialog */}
+      <Dialog open={lockConfirmOpen} onOpenChange={setLockConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5 text-amber-600" />
+              Lock Pay Period
+            </DialogTitle>
+            <DialogDescription>
+              Lock all timecards for <strong>{lockParams?.period?.label}</strong>?
+              This action cannot be undone without Admin access. Locked timecards cannot be edited.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLockConfirmOpen(false)}>Cancel</Button>
+            <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={confirmLock} disabled={bulkUpdateMutation.isPending}>
+              {bulkUpdateMutation.isPending ? "Locking..." : "Lock Pay Period"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* OT Override Confirmation Dialog */}
+      <Dialog open={otOverrideOpen} onOpenChange={setOtOverrideOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-500" />
+              Confirm OT Override Approval
+            </DialogTitle>
+            <DialogDescription>
+              This entry contributes to overtime for{" "}
+              <strong>{otOverrideTarget?.tc?.staff_name}</strong> during the week of{" "}
+              <strong>{otOverrideTarget?.otInfo?.weekLabel}</strong>. Confirm approval?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOtOverrideOpen(false)}>Cancel</Button>
+            <Button className="bg-orange-600 hover:bg-orange-700 text-white" onClick={confirmOTOverride}>
+              Override & Approve
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

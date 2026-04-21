@@ -29,6 +29,7 @@ const statusStyles = {
   Held: "bg-muted text-muted-foreground border-border",
   "Not Available": "bg-muted text-muted-foreground border-border",
   Missed: "bg-destructive/15 text-destructive border-destructive/20",
+  Locked: "bg-slate-500/15 text-slate-600 border-slate-400/30",
   Low: "bg-accent/15 text-accent border-accent/20",
   Medium: "bg-chart-4/15 text-chart-4 border-chart-4/20",
   High: "bg-destructive/15 text-destructive border-destructive/20",

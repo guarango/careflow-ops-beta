@@ -1,0 +1,63 @@
+{
+  "name": "Timecard",
+  "type": "object",
+  "properties": {
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "clock_in": {
+      "type": "string"
+    },
+    "clock_out": {
+      "type": "string"
+    },
+    "total_hours": {
+      "type": "number"
+    },
+    "break_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "overtime_hours": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Approved",
+        "Rejected"
+      ],
+      "default": "Pending"
+    },
+    "locked": {
+      "type": "boolean",
+      "default": false
+    },
+    "locked_by": {
+      "type": "string"
+    },
+    "locked_at": {
+      "type": "string"
+    },
+    "pay_period_label": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "staff_id",
+    "date",
+    "clock_in"
+  ]
+}

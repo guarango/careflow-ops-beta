@@ -45,7 +45,7 @@ export const NAV_ACCESS = {
   "/incidents":    ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "lead_dsp", "dsp"],
   "/staff":        ["admin", "program_director", "supervisor", "case_manager", "hr"],
   "/schedule":     ["admin", "program_director", "supervisor", "case_manager", "hr", "lead_dsp", "dsp"],
-  "/timecards":    ["admin", "program_director", "supervisor", "billing", "hr", "lead_dsp", "dsp"],
+  "/timecards":    ["admin", "hr", "billing", "program_director", "supervisor"],
   "/hr":           ["admin", "program_director", "supervisor", "hr"],
   "/compliance":   ["admin", "program_director", "supervisor", "billing", "hr"],
   "/finance":      ["admin", "program_director", "billing"],
@@ -73,6 +73,9 @@ export const CAN = {
   manageTraining:         ["admin", "program_director", "supervisor", "hr"],
   viewAllStaff:           ["admin", "program_director", "hr"],
   accessSettings:         ["admin"],
+  exportPayroll:          ["admin", "hr"],
+  lockPayPeriod:          ["admin", "hr"],
+  unlockTimecard:         ["admin"],
 };
 
 export function can(userRole, permission) {
