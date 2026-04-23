@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight, Printer, Download, Search } from "lucide-react";
 import { format, getDaysInMonth, startOfMonth, getDay } from "date-fns";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { useToast } from "@/components/ui/use-toast";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -85,7 +87,9 @@ export default function MARAdminSummary({ clients, medications, logs }) {
   const [month, setMonth] = useState(today.getMonth() + 1); // 1-based
   const [clientFilter, setClientFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [pdfLoading, setPdfLoading] = useState(false);
   const printRef = useRef(null);
+  const { toast } = useToast();
 
   const daysInMonth = getDaysInMonth(new Date(year, month - 1, 1));
   const dayNumbers = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -131,23 +135,32 @@ export default function MARAdminSummary({ clients, medications, logs }) {
     }
   });
 
-  // Print
+  // Print — opens a new window with landscape-optimised stylesheet
   const handlePrint = () => {
     const printContents = printRef.current?.innerHTML;
+    if (!printContents) return;
     const win = window.open("", "_blank");
     win.document.write(`
       <html><head><title>MAR Admin Summary - ${monthLabel}</title>
       <style>
-        body { font-family: Arial, sans-serif; font-size: 10px; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 3px 5px; text-align: center; font-size: 9px; }
+        @page { size: A4 landscape; margin: 10mm; }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 9px; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        table { border-collapse: collapse; width: 100%; table-layout: auto; }
+        th, td { border: 1px solid #ccc; padding: 2px 4px; text-align: center; font-size: 8px; white-space: nowrap; }
         th { background: #f0f0f0; font-weight: bold; }
-        .client-header { background: #1e3a5f; color: white; font-weight: bold; font-size: 11px; padding: 6px; }
-        .med-name { text-align: left; font-size: 9px; }
+        .client-header { background: #1e3a5f; color: white; font-weight: bold; font-size: 10px; padding: 5px 8px; }
+        .med-name { text-align: left; font-size: 8px; min-width: 120px; }
         .summary-row { background: #f8f8f8; font-weight: bold; }
-        .controlled { color: red; font-size: 8px; font-weight: bold; margin-left: 4px; }
-        .prn-label { color: #b45309; font-size: 8px; }
-        @media print { body { margin: 10px; } }
+        .controlled { color: red; font-size: 7px; font-weight: bold; margin-left: 3px; }
+        .prn-label { color: #b45309; font-size: 7px; }
+        .client-section { page-break-after: always; margin-bottom: 0; }
+        .client-section:last-child { page-break-after: avoid; }
+        @media print {
+          body { zoom: 0.65; }
+          .client-section { page-break-after: always; }
+          .client-section:last-child { page-break-after: avoid; }
+        }
       </style>
       </head><body>${printContents}</body></html>
     `);
@@ -155,18 +168,104 @@ export default function MARAdminSummary({ clients, medications, logs }) {
     win.print();
   };
 
-  // PDF Export
-  const handleExportPDF = () => {
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    doc.setFontSize(14);
-    doc.setFont(undefined, "bold");
-    doc.text(`Medication Administration Summary — ${monthLabel}`, 14, 16);
-    doc.setFontSize(9);
-    doc.setFont(undefined, "normal");
-    doc.text(`Generated: ${format(new Date(), "MM/dd/yyyy")}`, 14, 22);
-    doc.setFontSize(7);
-    doc.text("See printed grid report for full details. This PDF is a summary export.", 14, 28);
-    doc.save(`MAR_Admin_Summary_${monthLabel.replace(" ", "_")}.pdf`);
+  // PDF Export — captures the rendered grid via html2canvas
+  const handleExportPDF = async () => {
+    const gridEl = printRef.current;
+    if (!gridEl) {
+      toast({ title: "Export failed", description: "Please wait for the page to fully load and try again.", variant: "destructive" });
+      return;
+    }
+    setPdfLoading(true);
+    try {
+      // A4 landscape dimensions in mm / px at 96dpi
+      const PAGE_W_MM = 287; // 297 - 10mm margins
+      const PAGE_H_MM = 190; // 210 - 10mm margins
+      const MM_TO_PX = 3.7795; // 1mm ≈ 3.7795px at 96dpi
+
+      const canvas = await html2canvas(gridEl, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      if (canvas.width === 0 || canvas.height === 0) {
+        throw new Error("Grid canvas is empty");
+      }
+
+      const imgData = canvas.toDataURL("image/png");
+      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 10;
+      const contentW = pageW - margin * 2;
+      const contentH = pageH - margin * 2;
+      const headerH = 18; // space for title header
+
+      // Header on first page
+      doc.setFontSize(13);
+      doc.setFont(undefined, "bold");
+      doc.text(`Medication Administration Summary — ${monthLabel}`, margin, margin + 7);
+      doc.setFontSize(8);
+      doc.setFont(undefined, "normal");
+      doc.text(`Generated: ${format(new Date(), "MM/dd/yyyy")}`, margin, margin + 13);
+
+      // Scale image to fit page width
+      const imgW = canvas.width;
+      const imgH = canvas.height;
+      const scale = contentW / (imgW / 2); // divide by 2 because we captured at scale:2
+      const scaledW = contentW;
+      const scaledH = (imgH / 2) * scale;
+
+      const availH = contentH - headerH;
+      const startY = margin + headerH;
+
+      if (scaledH <= availH) {
+        // Fits on one page
+        doc.addImage(imgData, "PNG", margin, startY, scaledW, scaledH);
+      } else {
+        // Slice across multiple pages
+        const ratio = imgH / scaledH; // px per mm
+        let yOffset = 0;
+
+        // First page already has header
+        let pageAvailH = availH;
+        let pageStartY = startY;
+
+        while (yOffset < imgH / 2) {
+          const sliceHeightMM = pageAvailH;
+          const sliceHeightPx = sliceHeightMM * ratio * 2;
+
+          // Create a slice canvas
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = imgW;
+          sliceCanvas.height = Math.min(sliceHeightPx, imgH - yOffset * 2);
+          const ctx = sliceCanvas.getContext("2d");
+          const img = new Image();
+          await new Promise(res => { img.onload = res; img.src = imgData; });
+          ctx.drawImage(img, 0, yOffset * 2, imgW, sliceCanvas.height, 0, 0, imgW, sliceCanvas.height);
+          const sliceData = sliceCanvas.toDataURL("image/png");
+
+          const actualSliceH = (sliceCanvas.height / 2) * scale;
+          doc.addImage(sliceData, "PNG", margin, pageStartY, scaledW, actualSliceH);
+
+          yOffset += sliceCanvas.height / 2;
+          if (yOffset < imgH / 2) {
+            doc.addPage();
+            pageAvailH = contentH;
+            pageStartY = margin;
+          }
+        }
+      }
+
+      doc.save(`MAR_Admin_Summary_${monthLabel.replace(/ /g, "_")}.pdf`);
+    } catch (err) {
+      console.error("PDF export error:", err);
+      toast({ title: "Export failed", description: "Please wait for the page to fully load and try again.", variant: "destructive" });
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   return (
@@ -206,8 +305,8 @@ export default function MARAdminSummary({ clients, medications, logs }) {
           <Button variant="outline" size="sm" onClick={handlePrint} className="h-8 text-xs gap-1.5">
             <Printer className="w-3.5 h-3.5" /> Print
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-8 text-xs gap-1.5">
-            <Download className="w-3.5 h-3.5" /> PDF
+          <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={pdfLoading} className="h-8 text-xs gap-1.5">
+            <Download className="w-3.5 h-3.5" /> {pdfLoading ? "Exporting…" : "PDF"}
           </Button>
         </div>
       </div>
@@ -227,7 +326,7 @@ export default function MARAdminSummary({ clients, medications, logs }) {
             let totalScheduled = 0, totalAdministered = 0, totalMissed = 0;
 
             return (
-              <div key={client.id} className="mb-8 rounded-xl overflow-hidden border border-border">
+              <div key={client.id} className="mb-8 rounded-xl overflow-hidden border border-border client-section">
                 {/* Client header */}
                 <div className="bg-slate-800 text-white px-4 py-2.5 font-bold text-sm tracking-wide client-header">
                   {client.first_name} {client.last_name} — {monthLabel}
