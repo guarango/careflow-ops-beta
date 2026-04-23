@@ -307,7 +307,7 @@ export default function Timecards() {
         />
       ) : (
         <Card>
-          <div className="overflow-x-auto">
+          <div className="table-scroll">
             <Table>
               <TableHeader>
                 <TableRow>

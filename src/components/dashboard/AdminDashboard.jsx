@@ -79,15 +79,15 @@ export default function AdminDashboard({ user }) {
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="space-y-6">
-      {/* Greeting */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{greeting}, {firstName}</h1>
-        <p className="text-muted-foreground text-sm mt-1">{today} · <span className="text-destructive font-medium">3 items need your attention</span></p>
+    <div className="space-y-5 md:space-y-6">
+      {/* Greeting — pad left on mobile for hamburger button */}
+      <div className="pl-14 sm:pl-0">
+        <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">{greeting}, {firstName}</h1>
+        <p className="text-muted-foreground text-sm mt-1 truncate">{today} · <span className="text-destructive font-medium">3 items need your attention</span></p>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stat cards — always 2-col on mobile/tablet, 4-col on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <StatCard label="Active clients" value={activeClients || 24} sub="2 new this month" icon={Heart} />
         <StatCard label="Staff on shift today" value={11} sub="of 18 scheduled" icon={Users} />
         <StatCard label="Open incidents" value={openIncidents || 3} sub="1 requires report" subColor="text-destructive" iconColor="text-destructive" icon={AlertTriangle} />
@@ -95,20 +95,20 @@ export default function AdminDashboard({ user }) {
       </div>
 
       {/* Alerts + Quick actions */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4 md:gap-6">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold">Alerts requiring action</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {ALERTS.map((a, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="pt-0.5"><Pill color={a.color} label={a.badge} /></div>
+              <div key={i} className="flex items-start gap-2 py-1 min-h-[44px]">
+                <div className="pt-0.5 shrink-0"><Pill color={a.color} label={a.badge} /></div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">{a.title}</p>
-                  <p className="text-xs text-muted-foreground">{a.meta}</p>
+                  <p className="text-sm font-medium text-foreground leading-tight">{a.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{a.meta}</p>
                 </div>
-                <span className={`text-xs font-medium whitespace-nowrap ${a.color === "red" ? "text-destructive" : a.color === "amber" ? "text-amber-600" : "text-blue-600"}`}>{a.note}</span>
+                <span className={`text-xs font-medium shrink-0 ${a.color === "red" ? "text-destructive" : a.color === "amber" ? "text-amber-600" : "text-blue-600"}`}>{a.note}</span>
               </div>
             ))}
           </CardContent>
@@ -122,7 +122,7 @@ export default function AdminDashboard({ user }) {
             <div className="grid grid-cols-2 gap-2">
               {QUICK_ACTIONS.map((a) => (
                 <Link key={a.path} to={a.path}>
-                  <Button variant="outline" size="sm" className="w-full justify-start text-xs h-9">{a.label}</Button>
+                  <Button variant="outline" size="sm" className="w-full justify-start text-xs h-11 md:h-9">{a.label}</Button>
                 </Link>
               ))}
             </div>
@@ -131,18 +131,18 @@ export default function AdminDashboard({ user }) {
       </div>
 
       {/* Today's visits + Billing snapshot */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4 md:gap-6">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold">Today's visits</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-1">
             {VISITS.map((v, i) => (
-              <div key={i} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
-                <span className="text-xs font-mono text-muted-foreground w-16 flex-shrink-0">{v.time}</span>
+              <div key={i} className="flex items-center gap-2 py-2 min-h-[44px] border-b border-border last:border-0">
+                <span className="text-xs font-mono text-muted-foreground w-14 flex-shrink-0">{v.time}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{v.client}</p>
-                  <p className="text-xs text-muted-foreground truncate">{v.staff} · {v.service} · {v.duration}</p>
+                  <p className="text-xs text-muted-foreground truncate">{v.staff} · {v.service}</p>
                 </div>
                 <Pill color={v.statusColor} label={v.status} />
               </div>
@@ -153,16 +153,16 @@ export default function AdminDashboard({ user }) {
         <Card>
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold">Billing snapshot — March</CardTitle>
-            <Link to="/billing"><Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-7">View <ArrowRight className="w-3 h-3 ml-1" /></Button></Link>
+            <Link to="/billing"><Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-7 shrink-0">View <ArrowRight className="w-3 h-3 ml-1" /></Button></Link>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-1">
             {[
               { label: "Billed this month", value: "$18,420", color: "text-foreground" },
               { label: "Pending claims", value: "$4,210", color: "text-amber-600" },
               { label: "Paid / remitted", value: "$14,210", color: "text-green-600" },
               { label: "Timecards pending approval", value: "7", color: "text-destructive" },
             ].map((row, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+              <div key={i} className="flex items-center justify-between py-2 min-h-[44px] border-b border-border last:border-0">
                 <span className="text-sm text-muted-foreground">{row.label}</span>
                 <span className={`text-sm font-bold ${row.color}`}>{row.value}</span>
               </div>
