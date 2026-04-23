@@ -91,23 +91,23 @@ export default function Sidebar() {
   const sidebarContent = (
     <nav className="flex flex-col h-full">
       {/* Logo / Brand */}
-      <div className="px-4 py-5 border-b border-sidebar-border shrink-0">
+      <div className="px-4 py-5 border-b border-[#1E293B] shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-sidebar-primary flex items-center justify-center shrink-0">
-            <Stethoscope className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-[#1E293B] flex items-center justify-center shrink-0">
+            <Stethoscope className="w-4 h-4 text-[#38BDF8]" />
           </div>
           <div>
-            <p className="text-sm font-bold text-sidebar-foreground leading-tight">CareOps Pro</p>
-            <p className="text-[10px] text-sidebar-foreground/50 leading-tight">IDD Management</p>
+            <p className="text-sm font-bold text-[#F1F5F9] leading-tight">CareOps Pro</p>
+            <p className="text-[11px] text-[#64748B] leading-tight">IDD Management</p>
           </div>
         </div>
       </div>
 
-      {/* Nav Items — scroll container is isolated so clicks don't reset position */}
-      <div className="flex-1 overflow-y-auto py-3 space-y-4 min-h-0">
+      {/* Nav Items */}
+      <div className="flex-1 overflow-y-auto py-3 space-y-1 min-h-0 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:transparent [&::-webkit-scrollbar-thumb]:bg-[#334155] [&::-webkit-scrollbar-thumb:hover]:bg-[#475569] [&::-webkit-scrollbar-thumb]:rounded-full">
         {visibleSections.map((section) => (
           <div key={section.section}>
-            <p className="px-4 mb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+            <p className="px-[14px] pt-4 pb-1.5 text-[10px] font-semibold uppercase text-[#475569] tracking-[0.08em]">
               {section.section}
             </p>
             <div className="space-y-0.5 px-2">
@@ -120,14 +120,22 @@ export default function Sidebar() {
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileOpen(false)}
+                    style={active ? { boxShadow: "0 2px 8px rgba(14, 165, 233, 0.35)" } : {}}
                     className={cn(
-                      "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      "flex items-center gap-3 px-[14px] rounded-lg text-sm transition-all duration-150 min-h-[44px]",
                       active
-                        ? "bg-sidebar-primary text-white"
-                        : "text-sidebar-foreground hover:text-white hover:bg-sidebar-accent"
+                        ? "bg-[#0EA5E9] text-white font-semibold"
+                        : "text-[#CBD5E1] font-normal hover:bg-[#1E293B] hover:text-[#F1F5F9] cursor-pointer"
                     )}
                   >
-                    <Icon className="w-4 h-4 shrink-0" />
+                    <Icon
+                      className="shrink-0"
+                      style={{
+                        width: 18,
+                        height: 18,
+                        color: active ? "#FFFFFF" : undefined,
+                      }}
+                    />
                     <span className="flex-1">{item.label}</span>
                     {badgeCount > 0 && (
                       <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
@@ -138,24 +146,24 @@ export default function Sidebar() {
                 );
               })}
             </div>
-            <div className="mx-4 mt-4 border-t border-sidebar-border/50" />
+            <div className="mx-4 mt-3 border-t border-[#1E293B]" />
           </div>
         ))}
       </div>
 
       {/* Role indicator / switcher (admin only) */}
-      <div className="px-3 py-3 border-t border-sidebar-border shrink-0">
+      <div className="px-3 py-3 border-t border-[#1E293B] shrink-0">
         {realRole === "admin" ? (
           <div className="relative">
             <button
               onClick={() => setRolePickerOpen((v) => !v)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-sidebar-accent hover:bg-sidebar-accent/80 transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-[#1E293B] hover:bg-[#334155] transition-colors"
             >
-              <Eye className="w-3.5 h-3.5 text-sidebar-foreground/60 shrink-0" />
-              <span className="flex-1 text-left text-xs text-sidebar-foreground/70">
+              <Eye className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
+              <span className="flex-1 text-left text-xs text-[#94A3B8]">
                 {previewRole ? `Viewing as ${getRoleLabel(previewRole)}` : "Preview Role"}
               </span>
-              <ChevronDown className={cn("w-3.5 h-3.5 text-sidebar-foreground/50 transition-transform", rolePickerOpen && "rotate-180")} />
+              <ChevronDown className={cn("w-3.5 h-3.5 text-[#64748B] transition-transform", rolePickerOpen && "rotate-180")} />
             </button>
             {rolePickerOpen && (
               <div className="absolute bottom-full left-0 right-0 mb-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
@@ -194,7 +202,7 @@ export default function Sidebar() {
     <>
       {/* Mobile toggle */}
       <button
-        className="lg:hidden fixed top-3 left-3 z-50 p-2 rounded-md bg-sidebar-background text-sidebar-foreground shadow"
+        className="lg:hidden fixed top-3 left-3 z-50 p-2 rounded-md bg-[#0F172A] text-[#CBD5E1] shadow"
         onClick={() => setMobileOpen((v) => !v)}
       >
         {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -210,7 +218,7 @@ export default function Sidebar() {
 
       {/* Sidebar panel */}
       <aside className={cn(
-        "fixed top-0 left-0 h-full w-[240px] bg-sidebar-background z-40 transition-transform duration-300",
+        "fixed top-0 left-0 h-full w-[240px] bg-[#0F172A] z-40 transition-transform duration-300",
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         {sidebarContent}
