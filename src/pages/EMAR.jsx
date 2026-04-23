@@ -18,6 +18,7 @@ import { useAssignedClients } from "@/hooks/useAssignedClients";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import { useRole } from "@/hooks/useRole";
 import ClientGridCard from "@/components/emar/ClientGridCard";
+import MedTabContent from "@/components/emar/MedTabContent";
 import MedScheduleSection from "@/components/emar/MedScheduleSection";
 import MedAutocomplete from "@/components/emar/MedAutocomplete";
 import MARScheduledView from "@/components/emar/MARScheduledView";
@@ -186,49 +187,15 @@ export default function EMAR() {
               <button type="button" onClick={() => setSelectedClient(null)} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors">
                 <ArrowLeft className="w-4 h-4" /> Back to all clients
               </button>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">{currentClient.first_name} {currentClient.last_name}</h2>
-                {canEdit && <Button size="sm" onClick={() => openAddForClient(currentClient)}><Plus className="w-4 h-4 mr-1.5" />Add Medication</Button>}
-              </div>
-              {visibleMeds.filter(m => m.client_id === currentClient.id).length === 0 ? (
-                <div className="border border-dashed border-border rounded-xl py-12 text-center text-muted-foreground text-sm">
-                  No medications on file.
-                  {canEdit && <button type="button" onClick={() => openAddForClient(currentClient)} className="ml-2 text-primary hover:underline">+ Add one</button>}
-                </div>
-              ) : (
-                <div className="border border-border rounded-xl overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        <TableHead>Medication</TableHead>
-                        <TableHead>Dosage</TableHead>
-                        <TableHead className="hidden sm:table-cell">Frequency</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {visibleMeds.filter(m => m.client_id === currentClient.id).map(med => (
-                        <TableRow key={med.id} className={cn(med.status !== "Active" && "opacity-60")}>
-                          <TableCell className="font-medium text-sm">
-                            {med.medication_name}
-                            {med.is_controlled && <span className="ml-2 text-[10px] font-bold text-red-600 bg-red-100 px-1 rounded">C2</span>}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{med.dosage}</TableCell>
-                          <TableCell className="text-sm hidden sm:table-cell">{med.frequency}</TableCell>
-                          <TableCell><StatusBadge status={med.status || "Active"} /></TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex gap-1 justify-end">
-                              {med.status === "Active" && <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openLogForMed(med)}>Administer</Button>}
-                              {canEdit && <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openEdit(med)}>Edit</Button>}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
+              <h2 className="text-xl font-bold mb-4">{currentClient.first_name} {currentClient.last_name}</h2>
+              <MedTabContent
+                client={currentClient}
+                medications={visibleMeds.filter(m => m.client_id === currentClient.id)}
+                canEdit={canEdit}
+                onAdd={openAddForClient}
+                onEdit={openEdit}
+                onAdminister={openLogForMed}
+              />
             </div>
           ) : filteredClients.length === 0 ? (
             <EmptyState icon={Pill} title="No clients found" description="No clients match your search." />
