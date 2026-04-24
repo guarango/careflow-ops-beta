@@ -9,11 +9,14 @@ import HealthSafetyFlags from "./HealthSafetyFlags";
 import GoalDataCard from "./GoalDataCard";
 import { cn } from "@/lib/utils";
 import { useOffline } from "@/hooks/useOffline";
+import { format } from "date-fns";
 
 const LOCATIONS = ["Day Program", "Community Outing", "Residence", "Vocational Site", "Telehealth", "Other"];
 
 export default function SessionEntryForm({ client, goals, existingNote, staffName, onSave, onCancel, saving }) {
   const isOffline = useOffline();
+  const [sigChecked, setSigChecked] = useState(false);
+  const [sigTimestamp, setSigTimestamp] = useState("");
   const today = new Date().toISOString().split("T")[0];
   const now = new Date().toTimeString().slice(0, 5);
 
@@ -71,7 +74,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
   const totalGoals = form.goal_data.length;
 
   const handleSubmit = () => {
-    onSave({ ...form, status: "Submitted" });
+    onSave({ ...form, status: "Submitted", signature_timestamp: sigTimestamp });
   };
   const handleDraft = () => {
     onSave({ ...form, status: "Draft" });
@@ -202,6 +205,35 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
             <strong>Thank you for the care you bring to this work.</strong> The data you enter today helps {client.first_name}'s team make better decisions about their support. Your observations matter — every note is a gift to {client.first_name}'s future.
           </p>
         </div>
+
+        {/* Signature confirmation — required before submit */}
+        <div className="bg-muted/40 border border-border rounded-xl p-4 space-y-2">
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={sigChecked}
+              onChange={e => {
+                const checked = e.target.checked;
+                setSigChecked(checked);
+                if (checked) {
+                  const now = new Date();
+                  const name = form.staff_name || staffName || "Staff";
+                  const ts = `Documented by ${name} on ${format(now, "MM/dd/yyyy")} at ${format(now, "h:mm aa")}`;
+                  setSigTimestamp(ts);
+                } else {
+                  setSigTimestamp("");
+                }
+              }}
+              className="w-4 h-4 accent-primary mt-0.5 cursor-pointer"
+            />
+            <span className="text-sm text-foreground leading-snug">
+              I confirm this note is accurate
+            </span>
+          </label>
+          {sigTimestamp && (
+            <p className="text-[11px] text-muted-foreground pl-6">{sigTimestamp}</p>
+          )}
+        </div>
       </div>
 
       {/* Sticky bottom actions */}
@@ -209,7 +241,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
         <Button variant="outline" size="sm" onClick={handleDraft} disabled={saving} className="gap-1.5">
           <Save className="w-4 h-4" />Save Draft
         </Button>
-        <Button size="sm" onClick={handleSubmit} disabled={saving || !form.client_id || !form.date || !form.staff_name} className="gap-1.5">
+        <Button size="sm" onClick={handleSubmit} disabled={saving || !form.client_id || !form.date || !form.staff_name || !sigChecked} className="gap-1.5">
           <CheckCircle2 className="w-4 h-4" />
           {saving ? "Submitting..." : "Submit Session Note"}
         </Button>

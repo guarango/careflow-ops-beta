@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertTriangle, Plus, Search, Lock } from "lucide-react";
+import { format } from "date-fns";
 import { useRole } from "@/hooks/useRole";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
@@ -31,6 +32,8 @@ export default function Incidents() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyIncident);
   const [search, setSearch] = useState("");
+  const [sigChecked, setSigChecked] = useState(false);
+  const [sigTimestamp, setSigTimestamp] = useState("");
 
   const queryClient = useQueryClient();
   const { data: incidents = [], isLoading } = useQuery({
@@ -53,12 +56,12 @@ export default function Incidents() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["incidents"] }); closeDialog(); },
   });
 
-  const closeDialog = () => { setShowDialog(false); setEditing(null); setForm(emptyIncident); };
-  const openNew = () => { setForm(emptyIncident); setEditing(null); setShowDialog(true); };
-  const openEdit = (i) => { setForm(i); setEditing(i); setShowDialog(true); };
+  const closeDialog = () => { setShowDialog(false); setEditing(null); setForm(emptyIncident); setSigChecked(false); setSigTimestamp(""); };
+  const openNew = () => { setForm(emptyIncident); setEditing(null); setSigChecked(false); setSigTimestamp(""); setShowDialog(true); };
+  const openEdit = (i) => { setForm(i); setEditing(i); setSigChecked(!!i.signature_timestamp); setSigTimestamp(i.signature_timestamp || ""); setShowDialog(true); };
 
   const handleSave = () => {
-    const data = { ...form };
+    const data = { ...form, signature_timestamp: sigTimestamp };
     // DSPs always submit as "Pending Review" — they cannot set status
     if (isDSP && !editing) data.status = "Under Review";
     if (editing) updateMutation.mutate({ id: editing.id, data });
@@ -188,9 +191,46 @@ export default function Incidents() {
               <div className="col-span-2"><Label>Follow-up Notes</Label><Textarea value={form.follow_up_notes} onChange={(e) => setForm({...form, follow_up_notes: e.target.value})} rows={2} /></div>
             )}
           </div>
+
+          {/* Signature confirmation — required for new submissions */}
+          {!editing && (
+            <div className="bg-muted/40 border border-border rounded-lg p-3 space-y-2 mt-4">
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sigChecked}
+                  onChange={e => {
+                    const checked = e.target.checked;
+                    setSigChecked(checked);
+                    if (checked) {
+                      const now = new Date();
+                      const name = form.reported_by_name || "Staff";
+                      const ts = `Submitted by ${name} on ${format(now, "MM/dd/yyyy")} at ${format(now, "h:mm aa")}`;
+                      setSigTimestamp(ts);
+                    } else {
+                      setSigTimestamp("");
+                    }
+                  }}
+                  className="w-4 h-4 accent-primary mt-0.5 cursor-pointer"
+                />
+                <span className="text-sm text-foreground leading-snug">
+                  I confirm this incident report is accurate and complete to the best of my knowledge
+                </span>
+              </label>
+              {sigTimestamp && (
+                <p className="text-[11px] text-muted-foreground pl-6">{sigTimestamp}</p>
+              )}
+            </div>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!form.client_id || !form.date || !form.type || !form.severity || !form.description}>{editing ? "Update" : "Submit"}</Button>
+            <Button
+              onClick={handleSave}
+              disabled={!form.client_id || !form.date || !form.type || !form.severity || !form.description || (!editing && !sigChecked)}
+            >
+              {editing ? "Update" : "Submit"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

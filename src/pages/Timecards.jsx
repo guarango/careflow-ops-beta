@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Clock, Plus, Search, CheckCircle, XCircle, MapPin, AlertCircle, Lock, Unlock, AlertTriangle } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
@@ -53,6 +54,10 @@ export default function Timecards() {
   const [lockParams, setLockParams] = useState(null);
   const [otOverrideOpen, setOtOverrideOpen] = useState(false);
   const [otOverrideTarget, setOtOverrideTarget] = useState(null);
+  const [approveConfirmOpen, setApproveConfirmOpen] = useState(false);
+  const [approveTarget, setApproveTarget] = useState(null);
+  const [approveSigChecked, setApproveSigChecked] = useState(false);
+  const [approveSigTimestamp, setApproveSigTimestamp] = useState("");
 
   const queryClient = useQueryClient();
 
@@ -215,6 +220,25 @@ export default function Timecards() {
     toast({ title: "Approved with OT override", description: `Timecard approved for ${otOverrideTarget.tc.staff_name}.` });
   };
 
+  const handleApproveClick = (tc) => {
+    setApproveTarget(tc);
+    setApproveSigChecked(false);
+    setApproveSigTimestamp("");
+    setApproveConfirmOpen(true);
+  };
+
+  const confirmApproval = () => {
+    if (!approveTarget) return;
+    updateMutation.mutate({
+      id: approveTarget.id,
+      data: { status: "Approved", approval_timestamp: approveSigTimestamp }
+    });
+    setApproveConfirmOpen(false);
+    setApproveTarget(null);
+    setApproveSigChecked(false);
+    setApproveSigTimestamp("");
+  };
+
   // Silently log exports
   const logExport = ({ period, staffIds, format: fmt, tcs }) => {
     try {
@@ -342,9 +366,14 @@ export default function Timecards() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          {isLocked && <Lock className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />}
-                          <StatusBadge status={isLocked ? "Locked" : t.status} />
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-1.5">
+                            {isLocked && <Lock className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />}
+                            <StatusBadge status={isLocked ? "Locked" : t.status} />
+                          </div>
+                          {t.approval_timestamp && t.status === "Approved" && (
+                            <span className="text-[10px] text-muted-foreground leading-tight">{t.approval_timestamp}</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -393,7 +422,7 @@ export default function Timecards() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-7 w-7 text-accent"
-                                  onClick={() => updateMutation.mutate({ id: t.id, data: { status: "Approved" } })}
+                                  onClick={() => handleApproveClick(t)}
                                 >
                                   <CheckCircle className="w-4 h-4" />
                                 </Button>
@@ -500,6 +529,58 @@ export default function Timecards() {
             <Button variant="outline" onClick={() => setLockConfirmOpen(false)}>Cancel</Button>
             <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={confirmLock} disabled={bulkUpdateMutation.isPending}>
               {bulkUpdateMutation.isPending ? "Locking..." : "Lock Pay Period"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Timecard Approval Confirmation Dialog */}
+      <Dialog open={approveConfirmOpen} onOpenChange={setApproveConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-accent" />
+              Approve Timecard
+            </DialogTitle>
+            <DialogDescription>
+              Approving timecard for <strong>{approveTarget?.staff_name}</strong> on <strong>{approveTarget?.date}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-muted/40 border border-border rounded-lg p-3 space-y-2">
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={approveSigChecked}
+                onChange={e => {
+                  const checked = e.target.checked;
+                  setApproveSigChecked(checked);
+                  if (checked) {
+                    const now = new Date();
+                    const name = currentUser?.full_name || currentUser?.email || "Supervisor";
+                    const ts = `Approved by ${name} on ${format(now, "MM/dd/yyyy")} at ${format(now, "h:mm aa")}`;
+                    setApproveSigTimestamp(ts);
+                  } else {
+                    setApproveSigTimestamp("");
+                  }
+                }}
+                className="w-4 h-4 accent-primary mt-0.5 cursor-pointer"
+              />
+              <span className="text-sm text-foreground leading-snug">
+                I confirm these hours are accurate and approved
+              </span>
+            </label>
+            {approveSigTimestamp && (
+              <p className="text-[11px] text-muted-foreground pl-6">{approveSigTimestamp}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproveConfirmOpen(false)}>Cancel</Button>
+            <Button
+              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              onClick={confirmApproval}
+              disabled={!approveSigChecked || updateMutation.isPending}
+            >
+              Confirm Approval
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -17,6 +17,7 @@ import { Pill, Plus, Search, LayoutGrid, List, ArrowLeft } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import { useRole } from "@/hooks/useRole";
+import { format } from "date-fns";
 import ClientGridCard from "@/components/emar/ClientGridCard";
 import MedTabContent from "@/components/emar/MedTabContent";
 import MedScheduleSection from "@/components/emar/MedScheduleSection";
@@ -38,7 +39,8 @@ const emptyMed = {
 };
 const emptyLog = {
   medication_id: "", client_id: "", client_name: "", medication_name: "",
-  administered_by_name: "", date: "", time: "", status: "Administered", notes: "",
+  administered_by: "", administered_by_name: "", date: "", time: "", status: "Administered", notes: "",
+  signature_timestamp: "",
 };
 
 export default function EMAR() {
@@ -55,6 +57,9 @@ export default function EMAR() {
   const [editingMed, setEditingMed] = useState(null);
   const [medForm, setMedForm] = useState(emptyMed);
   const [logForm, setLogForm] = useState(emptyLog);
+  const [logClientId, setLogClientId] = useState("");
+  const [logSigChecked, setLogSigChecked] = useState(false);
+  const [logSigTimestamp, setLogSigTimestamp] = useState("");
   const [search, setSearch] = useState("");
 
   const queryClient = useQueryClient();
@@ -62,6 +67,7 @@ export default function EMAR() {
   const { data: medications = [] } = useQuery({ queryKey: ["medications"], queryFn: () => base44.entities.Medication.list() });
   const { data: logs = [] } = useQuery({ queryKey: ["med-logs"], queryFn: () => base44.entities.MedicationLog.list("-created_date") });
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: () => base44.entities.Client.list() });
+  const { data: staffList = [] } = useQuery({ queryKey: ["staff"], queryFn: () => base44.entities.StaffMember.list() });
 
   const createMedMutation = useMutation({
     mutationFn: (data) => base44.entities.Medication.create(data),
@@ -73,7 +79,14 @@ export default function EMAR() {
   });
   const createLogMutation = useMutation({
     mutationFn: (data) => base44.entities.MedicationLog.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["med-logs"] }); setShowLogDialog(false); setLogForm(emptyLog); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["med-logs"] });
+      setShowLogDialog(false);
+      setLogForm(emptyLog);
+      setLogClientId("");
+      setLogSigChecked(false);
+      setLogSigTimestamp("");
+    },
   });
 
   const closeMedDialog = () => { setShowMedDialog(false); setEditingMed(null); setMedForm(emptyMed); };
@@ -91,8 +104,28 @@ export default function EMAR() {
   };
 
   const openLogForMed = (med) => {
-    setLogForm({ ...emptyLog, medication_id: med.id, client_id: med.client_id, client_name: med.client_name, medication_name: med.medication_name, date: new Date().toISOString().split("T")[0] });
+    // Per spec: do NOT pre-fill either field
+    setLogForm({ ...emptyLog, date: new Date().toISOString().split("T")[0] });
+    setLogClientId("");
+    setLogSigChecked(false);
+    setLogSigTimestamp("");
     setShowLogDialog(true);
+  };
+
+  const openLogDialog = () => {
+    setLogForm({ ...emptyLog, date: new Date().toISOString().split("T")[0] });
+    setLogClientId("");
+    setLogSigChecked(false);
+    setLogSigTimestamp("");
+    setShowLogDialog(true);
+  };
+
+  const closeLogDialog = () => {
+    setShowLogDialog(false);
+    setLogForm(emptyLog);
+    setLogClientId("");
+    setLogSigChecked(false);
+    setLogSigTimestamp("");
   };
 
   const saveMed = () => {
@@ -239,7 +272,7 @@ export default function EMAR() {
             </CardContent>
           </Card>
           <div className="flex justify-end mb-3">
-            <Button size="sm" onClick={() => setShowLogDialog(true)}><Plus className="w-4 h-4 mr-1.5" />Log Administration</Button>
+            <Button size="sm" onClick={openLogDialog}><Plus className="w-4 h-4 mr-1.5" />Log Administration</Button>
           </div>
           {filteredLogs.length === 0 ? (
             <EmptyState icon={Pill} title="No logs" description="No medication administration logs yet." />
@@ -345,29 +378,133 @@ export default function EMAR() {
       )}
 
       {/* Log Administration Dialog */}
-      <Dialog open={showLogDialog} onOpenChange={setShowLogDialog}>
-        <DialogContent className="max-w-md">
+      <Dialog open={showLogDialog} onOpenChange={closeLogDialog}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Log Medication Administration</DialogTitle></DialogHeader>
           <div className="space-y-4">
+
+            {/* 1. Client */}
             <div>
-              <Label>Medication</Label>
-              <Select value={logForm.medication_id} onValueChange={v => {
-                const med = medications.find(m => m.id === v);
-                setLogForm(f => ({ ...f, medication_id: v, client_id: med?.client_id, client_name: med?.client_name, medication_name: med?.medication_name }));
+              <Label>Client *</Label>
+              <Select value={logClientId} onValueChange={v => {
+                setLogClientId(v);
+                const c = clients.find(cl => cl.id === v);
+                setLogForm(f => ({ ...f, client_id: v, client_name: c ? `${c.first_name} ${c.last_name}` : "", medication_id: "", medication_name: "" }));
+                // reset signature if client changes
+                setLogSigChecked(false);
+                setLogSigTimestamp("");
               }}>
-                <SelectTrigger><SelectValue placeholder="Select medication" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select client..." /></SelectTrigger>
                 <SelectContent>
-                  {visibleMeds.filter(m => m.status === "Active").map(m => (
-                    <SelectItem key={m.id} value={m.id}>{m.client_name} — {m.medication_name}</SelectItem>
-                  ))}
+                  {[...visibleClients.filter(c => c.status !== "Discharged")]
+                    .sort((a, b) => a.last_name.localeCompare(b.last_name))
+                    .map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* 2. Medication (dependent on client) */}
+            <div>
+              <Label>Medication *</Label>
+              <Select
+                value={logForm.medication_id}
+                onValueChange={v => {
+                  const med = medications.find(m => m.id === v);
+                  setLogForm(f => ({ ...f, medication_id: v, medication_name: med?.medication_name || "" }));
+                }}
+                disabled={!logClientId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={logClientId ? "Select medication..." : "Select client first..."} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(() => {
+                    const clientMeds = medications.filter(m => m.client_id === logClientId);
+                    const active = clientMeds.filter(m => m.status === "Active");
+                    const discontinued = clientMeds.filter(m => m.status === "Discontinued");
+                    return (
+                      <>
+                        {active.map(m => (
+                          <SelectItem key={m.id} value={m.id}>{m.medication_name} {m.dosage} — Active</SelectItem>
+                        ))}
+                        {discontinued.length > 0 && active.length > 0 && (
+                          <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-t border-border mt-1 pt-2">Discontinued</div>
+                        )}
+                        {discontinued.map(m => (
+                          <SelectItem key={m.id} value={m.id} className="text-muted-foreground">{m.medication_name} {m.dosage} — Discontinued</SelectItem>
+                        ))}
+                      </>
+                    );
+                  })()}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 3. Date & Time */}
             <div className="grid grid-cols-2 gap-4">
               <div><Label>Date *</Label><Input type="date" value={logForm.date} onChange={e => setLogForm(f => ({ ...f, date: e.target.value }))} /></div>
               <div><Label>Time</Label><Input type="time" value={logForm.time} onChange={e => setLogForm(f => ({ ...f, time: e.target.value }))} /></div>
             </div>
-            <div><Label>Administered By</Label><Input value={logForm.administered_by_name} onChange={e => setLogForm(f => ({ ...f, administered_by_name: e.target.value }))} /></div>
+
+            {/* 4. Administered By — staff dropdown */}
+            <div>
+              <Label>Administered By *</Label>
+              <Select value={logForm.administered_by} onValueChange={v => {
+                const s = staffList.find(st => st.id === v);
+                const name = s ? `${s.first_name} ${s.last_name}` : "";
+                setLogForm(f => ({ ...f, administered_by: v, administered_by_name: name }));
+                // reset signature when staff changes
+                setLogSigChecked(false);
+                setLogSigTimestamp("");
+              }}>
+                <SelectTrigger><SelectValue placeholder="Select staff..." /></SelectTrigger>
+                <SelectContent>
+                  {[...staffList.filter(s => s.status === "Active")]
+                    .sort((a, b) => a.last_name.localeCompare(b.last_name))
+                    .map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.first_name} {s.last_name}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 5. Signature confirmation */}
+            <div className="bg-muted/40 border border-border rounded-lg p-3 space-y-2">
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={logSigChecked}
+                  disabled={!logForm.administered_by}
+                  onChange={e => {
+                    const checked = e.target.checked;
+                    setLogSigChecked(checked);
+                    if (checked && logForm.administered_by_name) {
+                      const now = new Date();
+                      const ts = `Confirmed by ${logForm.administered_by_name} on ${format(now, "MM/dd/yyyy")} at ${format(now, "h:mm aa")}`;
+                      setLogSigTimestamp(ts);
+                      setLogForm(f => ({ ...f, signature_timestamp: ts }));
+                    } else {
+                      setLogSigTimestamp("");
+                      setLogForm(f => ({ ...f, signature_timestamp: "" }));
+                    }
+                  }}
+                  className="w-4 h-4 accent-primary mt-0.5 cursor-pointer"
+                />
+                <span className="text-sm text-foreground leading-snug">
+                  I confirm this medication was administered as recorded
+                </span>
+              </label>
+              {logSigTimestamp && (
+                <p className="text-[11px] text-muted-foreground pl-6">{logSigTimestamp}</p>
+              )}
+              {!logForm.administered_by && (
+                <p className="text-[11px] text-muted-foreground pl-6">Select a staff member above to enable confirmation.</p>
+              )}
+            </div>
+
+            {/* 6. Status */}
             <div>
               <Label>Status *</Label>
               <Select value={logForm.status} onValueChange={v => setLogForm(f => ({ ...f, status: v }))}>
@@ -375,11 +512,19 @@ export default function EMAR() {
                 <SelectContent>{logStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+
+            {/* 7. Notes */}
             <div><Label>Notes</Label><Textarea value={logForm.notes} onChange={e => setLogForm(f => ({ ...f, notes: e.target.value }))} rows={2} /></div>
           </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLogDialog(false)}>Cancel</Button>
-            <Button onClick={() => createLogMutation.mutate(logForm)} disabled={!logForm.medication_id || !logForm.date}>Log</Button>
+            <Button variant="outline" onClick={closeLogDialog}>Cancel</Button>
+            <Button
+              onClick={() => createLogMutation.mutate(logForm)}
+              disabled={!logClientId || !logForm.medication_id || !logForm.date || !logForm.administered_by || !logSigChecked}
+            >
+              Log
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
