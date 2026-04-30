@@ -21,7 +21,7 @@ const ROUTE_MAP = {
   goal: "/goals",
 };
 
-export default function NotificationBell({ currentUser }) {
+export default function NotificationBell({ currentUser, dark = true }) {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
   const [ackModal, setAckModal] = useState(null); // { notif }
@@ -63,7 +63,7 @@ export default function NotificationBell({ currentUser }) {
   }, [open]);
 
   const unreadCount = notifications.filter(n => n.status === "unread").length;
-  const visible = notifications.filter(n => n.status !== "dismissed");
+  const visible = notifications.filter(n => n.status !== "dismissed").slice(0, 10);
 
   const markRead = async (notif) => {
     if (notif.status === "unread") {
@@ -115,13 +115,16 @@ export default function NotificationBell({ currentUser }) {
       {/* Bell Button */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="relative p-2 rounded-full hover:bg-sidebar-accent transition-colors"
+        className={cn(
+          "relative p-2 rounded-full transition-colors",
+          dark ? "hover:bg-sidebar-accent" : "hover:bg-muted"
+        )}
         aria-label="Notifications"
       >
-        <Bell className="w-5 h-5 text-sidebar-foreground" />
+        <Bell className={cn("w-5 h-5", dark ? "text-sidebar-foreground" : "text-foreground")} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-            {unreadCount > 9 ? "9+" : unreadCount}
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none px-1">
+            {unreadCount > 99 ? "99+" : unreadCount > 9 ? unreadCount : unreadCount}
           </span>
         )}
       </button>
@@ -210,16 +213,14 @@ export default function NotificationBell({ currentUser }) {
             )}
           </div>
 
-          {isAdmin && (
-            <div className="border-t border-border px-4 py-2.5 bg-muted/20">
-              <button
-                onClick={() => { setOpen(false); navigate("/notifications"); }}
-                className="text-xs text-primary hover:underline font-medium"
-              >
-                View Notification Center →
-              </button>
-            </div>
-          )}
+          <div className="border-t border-border px-4 py-2.5 bg-muted/20">
+            <button
+              onClick={() => { setOpen(false); navigate("/notifications"); }}
+              className="text-xs text-primary hover:underline font-medium"
+            >
+              {isAdmin ? "View Notification Center →" : "View all notifications →"}
+            </button>
+          </div>
         </div>
       )}
 

@@ -12,7 +12,6 @@ import {
   UsersRound, ReceiptText, Briefcase, Settings,
   Eye, ChevronDown, ChevronRight, Menu, X, FileText, Stethoscope, Brain, Bell
 } from "lucide-react";
-import NotificationBell from "@/components/notifications/NotificationBell";
 
 const ALL_NAV = [
   {
@@ -126,9 +125,7 @@ export default function Sidebar() {
             <p className="text-sm font-bold text-[#F1F5F9] leading-tight">CareOps Pro</p>
             <p className="text-[11px] text-[#64748B] leading-tight">IDD Management</p>
           </div>
-          {currentUser && (
-            <NotificationBell currentUser={currentUser} />
-          )}
+
         </div>
       </div>
 
