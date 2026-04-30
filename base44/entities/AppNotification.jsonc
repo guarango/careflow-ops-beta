@@ -1,0 +1,93 @@
+{
+  "name": "AppNotification",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "emar_reminder",
+        "emar_missed",
+        "goal_missed"
+      ]
+    },
+    "recipient_user_id": {
+      "type": "string"
+    },
+    "recipient_email": {
+      "type": "string"
+    },
+    "recipient_role": {
+      "type": "string",
+      "enum": [
+        "staff",
+        "admin"
+      ]
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "related_record_id": {
+      "type": "string"
+    },
+    "related_record_type": {
+      "type": "string",
+      "enum": [
+        "emar",
+        "goal"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unread",
+        "read",
+        "acknowledged",
+        "dismissed"
+      ],
+      "default": "unread"
+    },
+    "acknowledged_note": {
+      "type": "string"
+    },
+    "trigger_stage": {
+      "type": "string",
+      "description": "pre_window | at_time | missed | goal_clock_out | goal_escalation"
+    },
+    "is_controlled_substance": {
+      "type": "boolean",
+      "default": false
+    },
+    "unscheduled_delivery": {
+      "type": "boolean",
+      "default": false
+    },
+    "email_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "read_at": {
+      "type": "string"
+    },
+    "acknowledged_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "recipient_user_id",
+    "message",
+    "status"
+  ]
+}

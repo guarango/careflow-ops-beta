@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useRole } from "@/hooks/useRole";
 import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
@@ -10,8 +10,9 @@ import {
   LayoutDashboard, Users, UserCheck, ClipboardList, AlertTriangle,
   Pill, Clock, ShieldCheck, DollarSign, Target, Calendar,
   UsersRound, ReceiptText, Briefcase, Settings,
-  Eye, ChevronDown, ChevronRight, Menu, X, FileText, Stethoscope, Brain
+  Eye, ChevronDown, ChevronRight, Menu, X, FileText, Stethoscope, Brain, Bell
 } from "lucide-react";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 const ALL_NAV = [
   {
@@ -53,6 +54,7 @@ const ALL_NAV = [
     section: "Agency",
     items: [
       { path: "/users", label: "Users", icon: UsersRound },
+      { path: "/notifications", label: "Notification Center", icon: Bell },
       { path: "/agency-admin", label: "Settings & Admin", icon: Settings },
       { path: "/role-preview", label: "Role Preview", icon: Eye },
     ],
@@ -91,6 +93,9 @@ export default function Sidebar() {
   const [tabletExpanded, setTabletExpanded] = useState(false);
   const [rolePickerOpen, setRolePickerOpen] = useState(false);
 
+  const [currentUser, setCurrentUser] = useState(null);
+  useEffect(() => { base44.auth.me().then(setCurrentUser).catch(() => {}); }, []);
+
   const showBadge = can("viewIncidentBadge");
   const { data: incidents = [] } = useQuery({
     queryKey: ["open-incidents-badge"],
@@ -117,10 +122,13 @@ export default function Sidebar() {
           <div className="w-8 h-8 rounded-lg bg-[#1E293B] flex items-center justify-center shrink-0">
             <Stethoscope className="w-4 h-4 text-[#38BDF8]" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-[#F1F5F9] leading-tight">CareOps Pro</p>
             <p className="text-[11px] text-[#64748B] leading-tight">IDD Management</p>
           </div>
+          {currentUser && (
+            <NotificationBell currentUser={currentUser} />
+          )}
         </div>
       </div>
 
