@@ -1,0 +1,101 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "Male",
+        "Female",
+        "Non-binary",
+        "Other"
+      ]
+    },
+    "diagnosis": {
+      "type": "string"
+    },
+    "guardian_name": {
+      "type": "string"
+    },
+    "guardian_phone": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "insurance_id": {
+      "type": "string"
+    },
+    "insurance_provider": {
+      "type": "string"
+    },
+    "service_enrollments": {
+      "type": "array",
+      "description": "One entry per service type/schedule the client is enrolled in",
+      "items": {
+        "type": "object",
+        "properties": {
+          "service_type": {
+            "type": "string"
+          },
+          "service_code_id": {
+            "type": "string"
+          },
+          "service_code": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "number"
+          },
+          "rate_type": {
+            "type": "string"
+          },
+          "schedule_days": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "schedule_start_time": {
+            "type": "string"
+          },
+          "schedule_end_time": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "assigned_staff": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Inactive",
+        "Discharged"
+      ],
+      "default": "Active"
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "first_name",
+    "last_name"
+  ]
+}

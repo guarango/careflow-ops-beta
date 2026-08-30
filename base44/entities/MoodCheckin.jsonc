@@ -1,0 +1,46 @@
+{
+  "name": "MoodCheckin",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "portal_user_id": {
+      "type": "string"
+    },
+    "mood_score": {
+      "type": "number",
+      "description": "1-5 scale: 1=very sad, 5=very happy"
+    },
+    "mood_label": {
+      "type": "string",
+      "enum": [
+        "Very Sad",
+        "Sad",
+        "Okay",
+        "Happy",
+        "Very Happy"
+      ]
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional note from client"
+    },
+    "checked_in_at": {
+      "type": "string"
+    },
+    "viewed_by_staff": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "mood_score",
+    "mood_label"
+  ]
+}

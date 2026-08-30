@@ -1,0 +1,70 @@
+{
+  "name": "TurnoverRiskScore",
+  "type": "object",
+  "properties": {
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "low"
+    },
+    "risk_score": {
+      "type": "number",
+      "description": "0-100 composite risk score"
+    },
+    "tenure_factor": {
+      "type": "number"
+    },
+    "overtime_factor": {
+      "type": "number"
+    },
+    "doc_compliance_factor": {
+      "type": "number"
+    },
+    "performance_factor": {
+      "type": "number"
+    },
+    "training_factor": {
+      "type": "number"
+    },
+    "schedule_factor": {
+      "type": "number"
+    },
+    "ai_explanation": {
+      "type": "string"
+    },
+    "recommended_interventions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "predicted_at": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "still_active",
+        "resigned",
+        "terminated",
+        "on_leave"
+      ]
+    }
+  },
+  "required": [
+    "staff_id",
+    "staff_name",
+    "risk_score",
+    "risk_level"
+  ]
+}

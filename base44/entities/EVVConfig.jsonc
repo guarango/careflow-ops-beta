@@ -1,0 +1,47 @@
+{
+  "name": "EVVConfig",
+  "type": "object",
+  "properties": {
+    "agency_name": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "evv_model": {
+      "type": "string",
+      "enum": [
+        "Open Model",
+        "Closed Model"
+      ],
+      "default": "Open Model"
+    },
+    "aggregator": {
+      "type": "string",
+      "enum": [
+        "Sandata",
+        "HHAeXchange",
+        "Authenticare",
+        "Other",
+        "State System"
+      ]
+    },
+    "api_endpoint": {
+      "type": "string"
+    },
+    "api_key": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "agency_name",
+    "state"
+  ]
+}

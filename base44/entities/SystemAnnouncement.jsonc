@@ -1,0 +1,43 @@
+{
+  "name": "SystemAnnouncement",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warning",
+        "maintenance",
+        "critical"
+      ],
+      "default": "info"
+    },
+    "target_agencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Empty = all agencies"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "message"
+  ]
+}

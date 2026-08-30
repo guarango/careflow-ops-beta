@@ -1,0 +1,284 @@
+{
+  "name": "ClientGoal",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "goal_title": {
+      "type": "string",
+      "description": "Observable, measurable goal in SMART format"
+    },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "Communication",
+        "Activities of Daily Living",
+        "Community Integration",
+        "Social Skills",
+        "Vocational/Employment",
+        "Health & Wellness",
+        "Behavioral Support",
+        "Self-Advocacy",
+        "Mobility & Motor Skills",
+        "Leisure & Recreation",
+        "Other"
+      ]
+    },
+    "goal_type": {
+      "type": "string",
+      "enum": [
+        "Acquisition",
+        "Maintenance",
+        "Generalization",
+        "Reduction"
+      ],
+      "description": "Acquisition=learning new, Maintenance=keeping skill, Generalization=new settings, Reduction=decreasing behavior"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "High",
+        "Medium",
+        "Low"
+      ],
+      "default": "Medium"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Mastered",
+        "Discontinued",
+        "On Hold"
+      ],
+      "default": "Active"
+    },
+    "connection_to_personal_outcome": {
+      "type": "string",
+      "description": "How this goal connects to the person's broader life vision"
+    },
+    "persons_own_words": {
+      "type": "string",
+      "description": "What does this goal mean to them, in their language"
+    },
+    "personal_strengths": {
+      "type": "string",
+      "description": "Relevant strengths the person brings to this goal"
+    },
+    "preferred_strategies": {
+      "type": "string",
+      "description": "Preferred engagement strategies and known reinforcers"
+    },
+    "preferred_people": {
+      "type": "string",
+      "description": "Who the person wants involved \u2014 staff, family, natural supports"
+    },
+    "best_times_settings": {
+      "type": "string",
+      "description": "Best time of day or settings where person is most successful"
+    },
+    "trauma_considerations": {
+      "type": "string",
+      "description": "Trauma-informed considerations or known triggers to avoid"
+    },
+    "baseline_description": {
+      "type": "string",
+      "description": "Current performance level at time of goal writing"
+    },
+    "baseline_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "baseline_assessed_by": {
+      "type": "string"
+    },
+    "objectives": {
+      "type": "array",
+      "description": "Short-term milestone objectives toward the main goal",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "target_date": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Not Started",
+              "In Progress",
+              "Met",
+              "Not Met"
+            ]
+          }
+        }
+      }
+    },
+    "mastery_criteria": {
+      "type": "string",
+      "description": "e.g. 80% accuracy across 3 consecutive sessions with 2 different staff"
+    },
+    "prompt_level_baseline": {
+      "type": "string",
+      "enum": [
+        "Full Physical Assist",
+        "Hand-Over-Hand",
+        "Physical Prompt",
+        "Gestural Prompt",
+        "Verbal Prompt",
+        "Indirect Verbal Cue",
+        "Independent"
+      ],
+      "description": "Support intensity at baseline"
+    },
+    "prompt_fading_plan": {
+      "type": "string",
+      "description": "Expected trajectory of prompt fading"
+    },
+    "goal_narrative": {
+      "type": "string",
+      "description": "Plain language narrative suitable for reading aloud at a care team meeting"
+    },
+    "primary_measurement_method": {
+      "type": "string",
+      "enum": [
+        "Frequency Count",
+        "Duration Recording",
+        "Percentage of Trials",
+        "Momentary Time Sampling",
+        "Partial Interval Recording",
+        "Task Analysis Step Count",
+        "Likert-Scale Rating",
+        "Anecdotal/Observational"
+      ]
+    },
+    "secondary_measurement_method": {
+      "type": "string"
+    },
+    "minimum_trials_per_session": {
+      "type": "number",
+      "description": "Minimum trials before session data is considered valid"
+    },
+    "data_collection_schedule": {
+      "type": "string",
+      "enum": [
+        "Every Session",
+        "Daily",
+        "Weekly",
+        "Monthly",
+        "As Natural Opportunity Arises"
+      ]
+    },
+    "data_collector_role": {
+      "type": "string",
+      "enum": [
+        "DSP",
+        "Job Coach",
+        "Nurse",
+        "Behavior Analyst",
+        "Teacher",
+        "Any Staff"
+      ]
+    },
+    "data_collection_instructions": {
+      "type": "string",
+      "description": "Plain-language guidance written for DSP with no clinical background"
+    },
+    "goal_author": {
+      "type": "string"
+    },
+    "supervising_clinician": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "next_review_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "regulatory_framework": {
+      "type": "string",
+      "enum": [
+        "HCBS Waiver",
+        "ICF/IDD",
+        "State-Funded",
+        "School IEP Transition",
+        "Vocational Rehab",
+        "Private Pay",
+        "Other"
+      ]
+    },
+    "team_notes": {
+      "type": "string",
+      "description": "Meeting minutes or team decisions"
+    },
+    "frequency": {
+      "type": "string",
+      "description": "Legacy tracking frequency field"
+    },
+    "method": {
+      "type": "string",
+      "description": "Legacy method field"
+    },
+    "baseline": {
+      "type": "string",
+      "description": "Legacy baseline field"
+    },
+    "target": {
+      "type": "string",
+      "description": "Legacy target field"
+    },
+    "description": {
+      "type": "string"
+    },
+    "progress_entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "score": {
+            "type": "string"
+          },
+          "prompt_level": {
+            "type": "string"
+          },
+          "trials_correct": {
+            "type": "number"
+          },
+          "trials_total": {
+            "type": "number"
+          },
+          "setting": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "recorded_by": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "client_id",
+    "goal_title",
+    "domain"
+  ]
+}

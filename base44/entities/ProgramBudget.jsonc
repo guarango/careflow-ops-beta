@@ -1,0 +1,58 @@
+{
+  "name": "ProgramBudget",
+  "type": "object",
+  "properties": {
+    "program_name": {
+      "type": "string"
+    },
+    "fiscal_year": {
+      "type": "string"
+    },
+    "period": {
+      "type": "string",
+      "enum": [
+        "Monthly",
+        "Quarterly",
+        "Annual"
+      ],
+      "default": "Monthly"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "revenue_budget": {
+      "type": "number",
+      "default": 0
+    },
+    "labor_budget": {
+      "type": "number",
+      "default": 0
+    },
+    "overhead_budget": {
+      "type": "number",
+      "default": 0
+    },
+    "alert_threshold_pct": {
+      "type": "number",
+      "default": 110,
+      "description": "Alert when actual exceeds budget by this %"
+    },
+    "funding_source": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "program_name",
+    "fiscal_year",
+    "period_start",
+    "period_end"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "name": "BillingRecord",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string",
+      "enum": [
+        "Residential",
+        "Day Program",
+        "Community Living",
+        "Respite",
+        "Supported Employment"
+      ]
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "hours": {
+      "type": "number"
+    },
+    "rate": {
+      "type": "number"
+    },
+    "total_amount": {
+      "type": "number"
+    },
+    "insurance_provider": {
+      "type": "string"
+    },
+    "claim_number": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Submitted",
+        "Paid",
+        "Denied",
+        "Appealed"
+      ],
+      "default": "Pending"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "service_type",
+    "date"
+  ]
+}

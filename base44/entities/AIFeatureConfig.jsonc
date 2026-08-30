@@ -1,0 +1,40 @@
+{
+  "name": "AIFeatureConfig",
+  "type": "object",
+  "properties": {
+    "agency_id": {
+      "type": "string",
+      "description": "null = platform-wide default"
+    },
+    "feature_key": {
+      "type": "string",
+      "description": "Unique feature identifier"
+    },
+    "feature_name": {
+      "type": "string"
+    },
+    "is_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "override_level": {
+      "type": "string",
+      "enum": [
+        "platform",
+        "agency"
+      ],
+      "default": "agency"
+    },
+    "settings": {
+      "type": "object",
+      "description": "Feature-specific configuration"
+    },
+    "updated_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "feature_key",
+    "feature_name"
+  ]
+}

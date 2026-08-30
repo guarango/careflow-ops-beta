@@ -1,0 +1,66 @@
+{
+  "name": "PortalMessage",
+  "type": "object",
+  "properties": {
+    "thread_id": {
+      "type": "string",
+      "description": "Groups messages into a thread"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "sender_id": {
+      "type": "string"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "sender_type": {
+      "type": "string",
+      "enum": [
+        "Portal User",
+        "Staff"
+      ],
+      "default": "Portal User"
+    },
+    "recipient_id": {
+      "type": "string"
+    },
+    "recipient_name": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "sent_at": {
+      "type": "string"
+    },
+    "read_at": {
+      "type": "string"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_archived": {
+      "type": "boolean",
+      "default": false
+    },
+    "thread_subject": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "sender_name",
+    "body",
+    "sender_type"
+  ]
+}

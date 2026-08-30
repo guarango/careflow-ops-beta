@@ -1,0 +1,98 @@
+{
+  "name": "PerformanceReview",
+  "type": "object",
+  "properties": {
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "review_type": {
+      "type": "string",
+      "enum": [
+        "Annual",
+        "Semi-Annual",
+        "90-Day Probationary",
+        "PIP",
+        "Other"
+      ]
+    },
+    "review_period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "review_period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "reviewer_id": {
+      "type": "string"
+    },
+    "reviewer_name": {
+      "type": "string"
+    },
+    "overall_rating": {
+      "type": "string",
+      "enum": [
+        "Exceeds Expectations",
+        "Meets Expectations",
+        "Needs Improvement",
+        "Unsatisfactory"
+      ]
+    },
+    "goals": {
+      "type": "string"
+    },
+    "strengths": {
+      "type": "string"
+    },
+    "areas_for_improvement": {
+      "type": "string"
+    },
+    "self_assessment": {
+      "type": "string"
+    },
+    "manager_comments": {
+      "type": "string"
+    },
+    "pip_milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "milestone": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "In Progress",
+        "Completed",
+        "Signed"
+      ],
+      "default": "Draft"
+    },
+    "signed_at": {
+      "type": "string"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "staff_id",
+    "review_type"
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "name": "ServiceCode",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Service code (e.g. T2016, H2015)"
+    },
+    "description": {
+      "type": "string"
+    },
+    "rate_type": {
+      "type": "string",
+      "enum": [
+        "Hourly",
+        "Daily",
+        "Per Unit",
+        "Monthly"
+      ],
+      "default": "Hourly"
+    },
+    "rate": {
+      "type": "number",
+      "description": "State payout rate"
+    },
+    "unit_minutes": {
+      "type": "number",
+      "description": "Minutes per unit (for Per Unit billing)",
+      "default": 15
+    },
+    "funding_source": {
+      "type": "string",
+      "enum": [
+        "Medicaid",
+        "Medicaid Waiver",
+        "State",
+        "Private",
+        "Other"
+      ],
+      "default": "Medicaid Waiver"
+    },
+    "service_type": {
+      "type": "string",
+      "enum": [
+        "Residential",
+        "Day Program",
+        "Community Living",
+        "Respite",
+        "Supported Employment",
+        "Behavioral Support",
+        "Nursing",
+        "Other"
+      ]
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "code",
+    "description",
+    "rate_type",
+    "rate"
+  ]
+}

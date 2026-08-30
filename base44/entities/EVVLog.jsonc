@@ -1,0 +1,82 @@
+{
+  "name": "EVVLog",
+  "type": "object",
+  "properties": {
+    "timecard_id": {
+      "type": "string"
+    },
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string"
+    },
+    "service_code": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "clock_in": {
+      "type": "string"
+    },
+    "clock_out": {
+      "type": "string"
+    },
+    "location_in_lat": {
+      "type": "number"
+    },
+    "location_in_lng": {
+      "type": "number"
+    },
+    "location_in_address": {
+      "type": "string"
+    },
+    "location_out_lat": {
+      "type": "number"
+    },
+    "location_out_lng": {
+      "type": "number"
+    },
+    "location_out_address": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Submitted",
+        "Accepted",
+        "Rejected"
+      ],
+      "default": "Pending"
+    },
+    "aggregator_response": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string"
+    },
+    "missing_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "staff_id",
+    "date",
+    "service_type"
+  ]
+}

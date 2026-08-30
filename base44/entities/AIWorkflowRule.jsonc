@@ -1,0 +1,76 @@
+{
+  "name": "AIWorkflowRule",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "session_note_submitted",
+        "incident_filed",
+        "certification_expires",
+        "timecard_approved",
+        "evv_rejected",
+        "auth_expiring",
+        "goal_not_collected",
+        "note_unsigned"
+      ]
+    },
+    "trigger_config": {
+      "type": "object"
+    },
+    "condition_field": {
+      "type": "string"
+    },
+    "condition_operator": {
+      "type": "string"
+    },
+    "condition_value": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "send_notification",
+        "create_task",
+        "send_email",
+        "update_field",
+        "generate_report"
+      ]
+    },
+    "action_config": {
+      "type": "object"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_template": {
+      "type": "boolean",
+      "default": false
+    },
+    "execution_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_executed_at": {
+      "type": "string"
+    },
+    "agency_id": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "trigger",
+    "action"
+  ]
+}

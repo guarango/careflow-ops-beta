@@ -1,0 +1,37 @@
+{
+  "name": "DocumentRequest",
+  "type": "object",
+  "properties": {
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "document_type": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Responded"
+      ],
+      "default": "Pending"
+    },
+    "admin_note": {
+      "type": "string"
+    },
+    "responded_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "staff_id",
+    "document_type"
+  ]
+}

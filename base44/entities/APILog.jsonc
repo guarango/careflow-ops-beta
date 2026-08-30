@@ -1,0 +1,45 @@
+{
+  "name": "APILog",
+  "type": "object",
+  "properties": {
+    "agency_id": {
+      "type": "string"
+    },
+    "api_key_prefix": {
+      "type": "string"
+    },
+    "endpoint": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    "status_code": {
+      "type": "number"
+    },
+    "response_time_ms": {
+      "type": "number"
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "agency_id",
+    "endpoint",
+    "method"
+  ]
+}

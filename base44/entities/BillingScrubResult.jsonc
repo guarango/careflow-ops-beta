@@ -1,0 +1,83 @@
+{
+  "name": "BillingScrubResult",
+  "type": "object",
+  "properties": {
+    "claim_id": {
+      "type": "string"
+    },
+    "claim_number": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "service_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "confidence_level": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "default": "high"
+    },
+    "confidence_score": {
+      "type": "number",
+      "description": "0-100"
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "auto_corrected": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "auto_corrections_applied": {
+      "type": "number",
+      "default": 0
+    },
+    "override_reason": {
+      "type": "string"
+    },
+    "overridden_by": {
+      "type": "string"
+    },
+    "overridden_at": {
+      "type": "string"
+    },
+    "scrub_status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "review",
+        "fail",
+        "override"
+      ],
+      "default": "pass"
+    },
+    "scrubbed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "claim_id",
+    "confidence_level",
+    "scrub_status"
+  ]
+}

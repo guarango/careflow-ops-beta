@@ -1,0 +1,68 @@
+{
+  "name": "ReportArchive",
+  "type": "object",
+  "properties": {
+    "report_name": {
+      "type": "string"
+    },
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "Executive Dashboard",
+        "Clinical Outcomes",
+        "Workforce Analytics",
+        "Financial",
+        "Compliance Audit",
+        "Funder Report",
+        "State Report",
+        "Custom"
+      ]
+    },
+    "generated_by": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "parameters": {
+      "type": "string",
+      "description": "JSON string of filters used"
+    },
+    "recipient": {
+      "type": "string"
+    },
+    "submission_status": {
+      "type": "string",
+      "enum": [
+        "Generated",
+        "Submitted",
+        "Confirmed",
+        "Failed"
+      ],
+      "default": "Generated"
+    },
+    "confirmation_number": {
+      "type": "string"
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "PDF",
+        "CSV",
+        "Excel"
+      ],
+      "default": "PDF"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "report_name",
+    "report_type",
+    "generated_by"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "name": "AccreditationRecord",
+  "type": "object",
+  "properties": {
+    "body": {
+      "type": "string",
+      "enum": [
+        "CARF",
+        "CQL",
+        "Joint Commission",
+        "State Licensure",
+        "Other"
+      ]
+    },
+    "survey_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "next_survey_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Accredited",
+        "Conditionally Accredited",
+        "In Progress",
+        "Expired",
+        "Denied"
+      ],
+      "default": "In Progress"
+    },
+    "outcome_summary": {
+      "type": "string"
+    },
+    "corrective_action_plan": {
+      "type": "string"
+    },
+    "cap_due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "cap_completed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "body",
+    "survey_date"
+  ]
+}

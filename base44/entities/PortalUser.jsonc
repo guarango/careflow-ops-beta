@@ -1,0 +1,86 @@
+{
+  "name": "PortalUser",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "The client this portal user is associated with"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "portal_role": {
+      "type": "string",
+      "enum": [
+        "Guardian",
+        "Client",
+        "Case Manager"
+      ],
+      "default": "Guardian"
+    },
+    "relationship": {
+      "type": "string",
+      "description": "e.g. Mother, Father, Legal Guardian, Case Manager"
+    },
+    "agency_id": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "messaging_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "access_level": {
+      "type": "string",
+      "enum": [
+        "Full",
+        "Schedule Only",
+        "Goals Only",
+        "Read Only"
+      ],
+      "default": "Full",
+      "description": "For client users \u2014 controls what they can see"
+    },
+    "mfa_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "last_login": {
+      "type": "string"
+    },
+    "session_timeout_minutes": {
+      "type": "number",
+      "default": 30
+    },
+    "invite_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "invite_sent_at": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "full_name",
+    "email",
+    "portal_role"
+  ]
+}

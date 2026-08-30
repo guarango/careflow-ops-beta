@@ -1,0 +1,51 @@
+{
+  "name": "MedicationLog",
+  "type": "object",
+  "properties": {
+    "medication_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "medication_name": {
+      "type": "string"
+    },
+    "administered_by": {
+      "type": "string"
+    },
+    "administered_by_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "time": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Administered",
+        "Refused",
+        "Held",
+        "Not Available",
+        "Missed"
+      ],
+      "default": "Administered"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "medication_id",
+    "client_id",
+    "date",
+    "status"
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "name": "FunderReport",
+  "type": "object",
+  "properties": {
+    "report_name": {
+      "type": "string"
+    },
+    "funder_name": {
+      "type": "string"
+    },
+    "funder_type": {
+      "type": "string",
+      "enum": [
+        "State Agency",
+        "Managed Care Org",
+        "Grant Maker",
+        "Private Funder",
+        "Other"
+      ]
+    },
+    "date_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "date_to": {
+      "type": "string",
+      "format": "date"
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Selected metric keys"
+    },
+    "program_filter": {
+      "type": "string"
+    },
+    "include_branding": {
+      "type": "boolean",
+      "default": true
+    },
+    "schedule": {
+      "type": "string",
+      "enum": [
+        "One-Time",
+        "Weekly",
+        "Monthly",
+        "Quarterly"
+      ],
+      "default": "One-Time"
+    },
+    "next_due": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Active",
+        "Paused"
+      ],
+      "default": "Draft"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "report_name",
+    "funder_name",
+    "date_from",
+    "date_to"
+  ]
+}

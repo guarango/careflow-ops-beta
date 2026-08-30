@@ -1,0 +1,271 @@
+{
+  "name": "StaffMember",
+  "type": "object",
+  "properties": {
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date"
+    },
+    "ssn_last4": {
+      "type": "string",
+      "description": "Last 4 digits of SSN only"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "Male",
+        "Female",
+        "Non-binary",
+        "Prefer not to say"
+      ]
+    },
+    "marital_status": {
+      "type": "string",
+      "enum": [
+        "Single",
+        "Married",
+        "Divorced",
+        "Widowed",
+        "Other"
+      ]
+    },
+    "address_street": {
+      "type": "string"
+    },
+    "address_city": {
+      "type": "string"
+    },
+    "address_state": {
+      "type": "string"
+    },
+    "address_zip": {
+      "type": "string"
+    },
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_phone": {
+      "type": "string"
+    },
+    "emergency_contact_relation": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "DSP",
+        "Nurse",
+        "QIDP",
+        "Supervisor",
+        "Admin",
+        "Behavioral Specialist",
+        "Mental Health Pro",
+        "Contractor",
+        "Volunteer",
+        "Non-Client Facing",
+        "Other"
+      ]
+    },
+    "staff_type": {
+      "type": "string",
+      "enum": [
+        "Regular",
+        "Probationary"
+      ],
+      "default": "Regular"
+    },
+    "employment_type": {
+      "type": "string",
+      "enum": [
+        "Full Time",
+        "Part Time"
+      ]
+    },
+    "employee_class": {
+      "type": "string",
+      "enum": [
+        "Non-Exempt",
+        "Exempt"
+      ]
+    },
+    "contract_areas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "DSPD",
+          "DCFS",
+          "Private Pay",
+          "Licensed Program",
+          "Foster Care"
+        ]
+      },
+      "description": "Contract areas this employee works in"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "On Leave",
+        "Inactive",
+        "Terminated"
+      ],
+      "default": "Active"
+    },
+    "hire_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "termination_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "background_check_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "background_check_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Cleared",
+        "Failed",
+        "Expired"
+      ]
+    },
+    "background_check_notes": {
+      "type": "string"
+    },
+    "i9_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "i9_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "drug_screen_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "drug_screen_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Passed",
+        "Failed",
+        "Expired"
+      ]
+    },
+    "tb_test_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "tb_test_result": {
+      "type": "string",
+      "enum": [
+        "Negative",
+        "Positive",
+        "Pending"
+      ]
+    },
+    "tb_test_expiry": {
+      "type": "string",
+      "format": "date"
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "certifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "issue_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "expiry_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Current",
+              "Expiring Soon",
+              "Expired"
+            ]
+          }
+        }
+      }
+    },
+    "training_hours": {
+      "type": "number",
+      "default": 0
+    },
+    "orientation_completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "orientation_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "assigned_client_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Client IDs assigned to this staff member",
+      "default": []
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "first_name",
+    "last_name",
+    "role"
+  ]
+}

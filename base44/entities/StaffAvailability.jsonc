@@ -1,0 +1,55 @@
+{
+  "name": "StaffAvailability",
+  "type": "object",
+  "properties": {
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "availability": {
+      "type": "array",
+      "description": "Weekly availability slots",
+      "items": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "enum": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ]
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "end_time": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "max_hours_per_week": {
+      "type": "number"
+    },
+    "preferred_clients": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Preferred client IDs"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "staff_id"
+  ]
+}

@@ -1,0 +1,195 @@
+{
+  "name": "Agency",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Agency legal name"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Custom platform name shown to users"
+    },
+    "subdomain": {
+      "type": "string",
+      "description": "Unique subdomain slug (e.g. sunrisecares)"
+    },
+    "custom_domain": {
+      "type": "string",
+      "description": "Custom domain mapping (e.g. app.theiragency.com)"
+    },
+    "npi": {
+      "type": "string"
+    },
+    "medicaid_provider_id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "waiver_programs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "address_street": {
+      "type": "string"
+    },
+    "address_city": {
+      "type": "string"
+    },
+    "address_state": {
+      "type": "string"
+    },
+    "address_zip": {
+      "type": "string"
+    },
+    "primary_contact_name": {
+      "type": "string"
+    },
+    "primary_contact_email": {
+      "type": "string"
+    },
+    "primary_contact_phone": {
+      "type": "string"
+    },
+    "billing_contact_name": {
+      "type": "string"
+    },
+    "billing_contact_email": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "favicon_url": {
+      "type": "string"
+    },
+    "primary_color": {
+      "type": "string",
+      "default": "#0ea5e9"
+    },
+    "secondary_color": {
+      "type": "string",
+      "default": "#10b981"
+    },
+    "email_sender_name": {
+      "type": "string"
+    },
+    "email_reply_to": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "trial",
+        "suspended",
+        "churned",
+        "onboarding"
+      ],
+      "default": "onboarding"
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "starter",
+        "professional",
+        "enterprise"
+      ],
+      "default": "starter"
+    },
+    "billing_cycle": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "annual"
+      ],
+      "default": "monthly"
+    },
+    "stripe_customer_id": {
+      "type": "string"
+    },
+    "stripe_subscription_id": {
+      "type": "string"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "current",
+        "past_due",
+        "canceled",
+        "trialing"
+      ],
+      "default": "trialing"
+    },
+    "trial_ends_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "next_billing_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "mrr": {
+      "type": "number",
+      "default": 0
+    },
+    "onboarding_step": {
+      "type": "number",
+      "default": 1
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "evv_model": {
+      "type": "string",
+      "enum": [
+        "Open Model",
+        "Closed Model"
+      ]
+    },
+    "evv_aggregator": {
+      "type": "string"
+    },
+    "evv_api_endpoint": {
+      "type": "string"
+    },
+    "notification_settings": {
+      "type": "object"
+    },
+    "api_key": {
+      "type": "string"
+    },
+    "api_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "webhook_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "last_activity": {
+      "type": "string"
+    },
+    "user_count": {
+      "type": "number",
+      "default": 0
+    },
+    "client_count": {
+      "type": "number",
+      "default": 0
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "subdomain"
+  ]
+}

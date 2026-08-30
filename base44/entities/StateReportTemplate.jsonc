@@ -1,0 +1,110 @@
+{
+  "name": "StateReportTemplate",
+  "type": "object",
+  "properties": {
+    "state_code": {
+      "type": "string",
+      "description": "2-letter state code e.g. UT, CO, TX"
+    },
+    "state_name": {
+      "type": "string"
+    },
+    "report_name": {
+      "type": "string"
+    },
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "Service Delivery",
+        "Incident",
+        "Claims",
+        "EVV",
+        "Waiver Documentation",
+        "Provider Portal",
+        "Custom"
+      ]
+    },
+    "clearinghouse": {
+      "type": "string",
+      "enum": [
+        "Sandata",
+        "HHAeXchange",
+        "Authenticare",
+        "DXC Technology",
+        "Tellus",
+        "eMedNY",
+        "Direct State",
+        "Other"
+      ]
+    },
+    "file_format": {
+      "type": "string",
+      "enum": [
+        "837P EDI",
+        "837I EDI",
+        "835 ERA",
+        "270/271 EDI",
+        "CSV",
+        "XML",
+        "PDF",
+        "JSON",
+        "Custom"
+      ]
+    },
+    "submission_protocol": {
+      "type": "string",
+      "enum": [
+        "SFTP",
+        "API",
+        "Web Portal Upload",
+        "Direct EDI",
+        "Manual"
+      ]
+    },
+    "api_endpoint_template": {
+      "type": "string"
+    },
+    "required_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "Daily",
+        "Weekly",
+        "Monthly",
+        "Quarterly",
+        "As Needed"
+      ]
+    },
+    "regulatory_authority": {
+      "type": "string",
+      "description": "e.g. DSPD, HHSC, DODD, OPWDD"
+    },
+    "description": {
+      "type": "string"
+    },
+    "config_json": {
+      "type": "string",
+      "description": "JSON blob of state-specific configuration parameters"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "version": {
+      "type": "string",
+      "default": "1.0"
+    }
+  },
+  "required": [
+    "state_code",
+    "state_name",
+    "report_name",
+    "report_type",
+    "file_format"
+  ]
+}

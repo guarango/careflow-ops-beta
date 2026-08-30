@@ -1,0 +1,53 @@
+{
+  "name": "PortalNotification",
+  "type": "object",
+  "properties": {
+    "portal_user_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "session_note",
+        "incident",
+        "goal_update",
+        "document",
+        "visit_clockin",
+        "visit_complete",
+        "message",
+        "auth_alert"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "link_type": {
+      "type": "string"
+    },
+    "link_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "portal_user_id",
+    "client_id",
+    "type",
+    "title"
+  ]
+}

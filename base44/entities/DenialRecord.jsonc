@@ -1,0 +1,93 @@
+{
+  "name": "DenialRecord",
+  "type": "object",
+  "properties": {
+    "claim_id": {
+      "type": "string"
+    },
+    "claim_number": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "service_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "payer": {
+      "type": "string"
+    },
+    "amount_denied": {
+      "type": "number"
+    },
+    "denial_code": {
+      "type": "string"
+    },
+    "denial_reason": {
+      "type": "string"
+    },
+    "denial_category": {
+      "type": "string",
+      "enum": [
+        "Eligibility",
+        "Authorization",
+        "EVV",
+        "Timely Filing",
+        "Duplicate",
+        "Coding Error",
+        "Other"
+      ]
+    },
+    "date_denied": {
+      "type": "string",
+      "format": "date"
+    },
+    "appeal_deadline": {
+      "type": "string",
+      "format": "date"
+    },
+    "appeal_status": {
+      "type": "string",
+      "enum": [
+        "Needs Review",
+        "Appeal In Progress",
+        "Appeal Submitted",
+        "Overturn Won",
+        "Overturn Denied"
+      ],
+      "default": "Needs Review"
+    },
+    "appeal_notes": {
+      "type": "string"
+    },
+    "supporting_docs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs to attached documents"
+    },
+    "amount_recovered": {
+      "type": "number",
+      "default": 0
+    },
+    "resolved_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "claim_id",
+    "client_name",
+    "service_date",
+    "payer",
+    "amount_denied",
+    "denial_code",
+    "denial_reason",
+    "denial_category"
+  ]
+}

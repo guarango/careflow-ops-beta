@@ -1,0 +1,69 @@
+{
+  "name": "EligibilityCheck",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "client_medicaid_id": {
+      "type": "string"
+    },
+    "check_date": {
+      "type": "string"
+    },
+    "checked_by": {
+      "type": "string"
+    },
+    "payer": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "is_eligible": {
+      "type": "boolean"
+    },
+    "waiver_active": {
+      "type": "boolean"
+    },
+    "waiver_programs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "coverage_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "coverage_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "response_raw": {
+      "type": "string",
+      "description": "Raw 271 response or API JSON"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Inactive",
+        "Not Found",
+        "Error"
+      ],
+      "default": "Active"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "check_date"
+  ]
+}

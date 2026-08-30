@@ -1,0 +1,163 @@
+{
+  "name": "Claim",
+  "type": "object",
+  "properties": {
+    "claim_number": {
+      "type": "string"
+    },
+    "claim_type": {
+      "type": "string",
+      "enum": [
+        "837P",
+        "837I"
+      ],
+      "default": "837P"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "client_medicaid_id": {
+      "type": "string"
+    },
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "service_code": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string"
+    },
+    "procedure_code": {
+      "type": "string"
+    },
+    "modifier": {
+      "type": "string"
+    },
+    "service_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "units_billed": {
+      "type": "number"
+    },
+    "rate": {
+      "type": "number"
+    },
+    "amount_billed": {
+      "type": "number"
+    },
+    "amount_paid": {
+      "type": "number",
+      "default": 0
+    },
+    "amount_adjusted": {
+      "type": "number",
+      "default": 0
+    },
+    "payer": {
+      "type": "string"
+    },
+    "insurance_provider": {
+      "type": "string"
+    },
+    "authorization_id": {
+      "type": "string"
+    },
+    "auth_number": {
+      "type": "string"
+    },
+    "evv_log_id": {
+      "type": "string"
+    },
+    "evv_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "billing_record_id": {
+      "type": "string"
+    },
+    "timecard_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Validation Failed",
+        "Ready",
+        "Submitted",
+        "Pending",
+        "Paid",
+        "Denied",
+        "Appealed",
+        "Adjusted"
+      ],
+      "default": "Draft"
+    },
+    "validation_errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "submission_date": {
+      "type": "string"
+    },
+    "submission_method": {
+      "type": "string",
+      "enum": [
+        "Direct",
+        "EDI Export",
+        "Clearinghouse"
+      ],
+      "default": "Direct"
+    },
+    "clearinghouse": {
+      "type": "string"
+    },
+    "edi_file_content": {
+      "type": "string"
+    },
+    "denial_code": {
+      "type": "string"
+    },
+    "denial_reason": {
+      "type": "string"
+    },
+    "denial_category": {
+      "type": "string",
+      "enum": [
+        "Eligibility",
+        "Authorization",
+        "EVV",
+        "Timely Filing",
+        "Duplicate",
+        "Coding Error",
+        "Other"
+      ]
+    },
+    "remittance_id": {
+      "type": "string"
+    },
+    "era_trace_number": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "service_code",
+    "service_date",
+    "units_billed",
+    "amount_billed"
+  ]
+}

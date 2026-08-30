@@ -1,0 +1,17 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "hr",
+        "dsp"
+      ],
+      "default": "dsp",
+      "description": "admin = full access, hr = staff/compliance management, dsp = direct support worker"
+    }
+  },
+  "required": []
+}

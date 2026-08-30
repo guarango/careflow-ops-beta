@@ -1,0 +1,60 @@
+{
+  "name": "IntegrationLog",
+  "type": "object",
+  "properties": {
+    "agency_id": {
+      "type": "string"
+    },
+    "integration_key": {
+      "type": "string"
+    },
+    "integration_name": {
+      "type": "string"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "inbound",
+        "outbound",
+        "bidirectional"
+      ]
+    },
+    "record_type": {
+      "type": "string"
+    },
+    "record_count": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "error",
+        "partial"
+      ]
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "error_details": {
+      "type": "object"
+    },
+    "triggered_by": {
+      "type": "string",
+      "description": "user email or 'scheduler'"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "payload_summary": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "agency_id",
+    "integration_key",
+    "direction",
+    "status"
+  ]
+}

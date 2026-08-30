@@ -1,0 +1,107 @@
+{
+  "name": "Integration",
+  "type": "object",
+  "properties": {
+    "agency_id": {
+      "type": "string"
+    },
+    "integration_key": {
+      "type": "string",
+      "description": "e.g. adp_workforce, epic_fhir, relias"
+    },
+    "integration_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "mmis",
+        "ehr",
+        "payroll",
+        "accounting",
+        "background_check",
+        "lms",
+        "communication",
+        "document",
+        "fax",
+        "other"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "disconnected",
+        "connected",
+        "error",
+        "pending"
+      ],
+      "default": "disconnected"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "credentials": {
+      "type": "object",
+      "description": "Encrypted credentials map"
+    },
+    "field_mappings": {
+      "type": "object"
+    },
+    "webhook_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sync_schedule": {
+      "type": "string",
+      "enum": [
+        "realtime",
+        "hourly",
+        "daily",
+        "manual"
+      ],
+      "default": "daily"
+    },
+    "last_sync_at": {
+      "type": "string"
+    },
+    "last_sync_status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "error",
+        "partial"
+      ]
+    },
+    "total_records_synced": {
+      "type": "number",
+      "default": 0
+    },
+    "error_count_24h": {
+      "type": "number",
+      "default": 0
+    },
+    "records_synced_24h": {
+      "type": "number",
+      "default": 0
+    },
+    "baa_signed": {
+      "type": "boolean",
+      "default": false
+    },
+    "baa_signed_at": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "agency_id",
+    "integration_key",
+    "integration_name",
+    "category"
+  ]
+}

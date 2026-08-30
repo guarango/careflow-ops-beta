@@ -1,0 +1,50 @@
+{
+  "name": "ComplianceDocument",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Policy",
+        "License",
+        "Certification",
+        "Inspection",
+        "Training Record",
+        "ISP",
+        "Assessment",
+        "Other"
+      ]
+    },
+    "related_to": {
+      "type": "string",
+      "description": "Staff or client name/ID this document relates to"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Current",
+        "Expiring Soon",
+        "Expired",
+        "Pending Review"
+      ],
+      "default": "Current"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "category"
+  ]
+}

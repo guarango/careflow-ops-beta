@@ -1,0 +1,72 @@
+{
+  "name": "Signature",
+  "type": "object",
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "description": "ID of the document/record being signed"
+    },
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "SessionNote",
+        "IncidentReport",
+        "MedicationLog",
+        "ClientGoal",
+        "ComplianceDocument",
+        "OfferLetter",
+        "Policy"
+      ]
+    },
+    "signer_id": {
+      "type": "string"
+    },
+    "signer_name": {
+      "type": "string"
+    },
+    "signer_role": {
+      "type": "string"
+    },
+    "signer_email": {
+      "type": "string"
+    },
+    "signature_type": {
+      "type": "string",
+      "enum": [
+        "check",
+        "drawn",
+        "typed"
+      ]
+    },
+    "signature_data": {
+      "type": "string",
+      "description": "Base64 drawn signature or typed name"
+    },
+    "signed_at": {
+      "type": "string"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "device_type": {
+      "type": "string"
+    },
+    "is_guardian": {
+      "type": "boolean",
+      "default": false
+    },
+    "guardian_token": {
+      "type": "string",
+      "description": "Token for external guardian signing link"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "record_id",
+    "record_type",
+    "signer_name",
+    "signature_type"
+  ]
+}

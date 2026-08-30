@@ -1,0 +1,78 @@
+{
+  "name": "Remittance",
+  "type": "object",
+  "properties": {
+    "era_file_name": {
+      "type": "string"
+    },
+    "trace_number": {
+      "type": "string"
+    },
+    "payer_name": {
+      "type": "string"
+    },
+    "payer_id": {
+      "type": "string"
+    },
+    "check_number": {
+      "type": "string"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "total_paid": {
+      "type": "number",
+      "default": 0
+    },
+    "total_billed": {
+      "type": "number",
+      "default": 0
+    },
+    "total_denied": {
+      "type": "number",
+      "default": 0
+    },
+    "total_adjusted": {
+      "type": "number",
+      "default": 0
+    },
+    "claims_paid": {
+      "type": "number",
+      "default": 0
+    },
+    "claims_denied": {
+      "type": "number",
+      "default": 0
+    },
+    "claims_adjusted": {
+      "type": "number",
+      "default": 0
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Received",
+        "Processing",
+        "Posted",
+        "Error"
+      ],
+      "default": "Received"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "payer_name",
+    "payment_date"
+  ]
+}
