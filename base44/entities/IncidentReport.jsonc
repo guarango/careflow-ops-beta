@@ -8,6 +8,10 @@
     "client_name": {
       "type": "string"
     },
+    "house_name": {
+      "type": "string",
+      "description": "Denormalized house/location name for trend grouping"
+    },
     "reported_by": {
       "type": "string"
     },
@@ -21,9 +25,26 @@
     "time": {
       "type": "string"
     },
+    "location": {
+      "type": "string",
+      "enum": [
+        "Day Program",
+        "Community Outing",
+        "Residence",
+        "Vocational Site",
+        "Telehealth",
+        "Other"
+      ]
+    },
+    "location_detail": {
+      "type": "string"
+    },
     "type": {
       "type": "string",
       "enum": [
+        "Abuse",
+        "Neglect",
+        "Exploitation",
         "Behavioral",
         "Medical",
         "Fall",
@@ -32,25 +53,61 @@
         "Medication Error",
         "Injury",
         "Other"
-      ]
+      ],
+      "description": "Incident category"
     },
     "severity": {
       "type": "string",
       "enum": [
+        "Critical",
+        "Non-critical",
         "Low",
         "Medium",
-        "High",
-        "Critical"
-      ]
+        "High"
+      ],
+      "description": "Utah DSPD: Critical or Non-critical"
     },
     "description": {
       "type": "string"
     },
-    "actions_taken": {
+    "staff_involved": {
       "type": "string"
     },
     "witnesses": {
       "type": "string"
+    },
+    "injuries_occurred": {
+      "type": "boolean",
+      "default": false
+    },
+    "injuries_description": {
+      "type": "string"
+    },
+    "medical_treatment_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "law_enforcement_involved": {
+      "type": "boolean",
+      "default": false
+    },
+    "restrictive_intervention_used": {
+      "type": "boolean",
+      "default": false
+    },
+    "restrictive_intervention_description": {
+      "type": "string"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Privately stored photo file URIs"
+    },
+    "actions_taken": {
+      "type": "string",
+      "description": "Immediate actions taken"
     },
     "follow_up_required": {
       "type": "boolean",
@@ -68,6 +125,81 @@
         "Closed"
       ],
       "default": "Open"
+    },
+    "signature_timestamp": {
+      "type": "string"
+    },
+    "dspd_reported_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date reported to DSPD online system"
+    },
+    "dspd_confirmation_number": {
+      "type": "string"
+    },
+    "guardian_notified_at": {
+      "type": "string",
+      "description": "Timestamp guardian/parent was notified"
+    },
+    "support_coordinator_notified_at": {
+      "type": "string",
+      "description": "Timestamp support coordinator was notified"
+    },
+    "aps_dcfs_reported": {
+      "type": "boolean",
+      "default": false
+    },
+    "aps_dcfs_reported_to": {
+      "type": "string",
+      "enum": [
+        "APS",
+        "DCFS"
+      ],
+      "description": "APS for adults, DCFS for minors"
+    },
+    "aps_dcfs_reported_at": {
+      "type": "string"
+    },
+    "law_enforcement_reported_at": {
+      "type": "string"
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string"
+    },
+    "follow_up_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "responsible_party": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "escalated_to_admin": {
+      "type": "boolean",
+      "default": false
+    },
+    "escalated_at": {
+      "type": "string"
     }
   },
   "required": [

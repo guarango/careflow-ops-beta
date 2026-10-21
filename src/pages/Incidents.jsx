@@ -6,35 +6,26 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import EmptyState from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, Plus, Search, Lock } from "lucide-react";
-import { format } from "date-fns";
+import { AlertTriangle, Plus, Search, Lock, BarChart3 } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
+import { useAuth } from "@/lib/AuthContext";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
-import DictationButton from "@/components/shared/DictationButton";
-
-const types = ["Behavioral", "Medical", "Fall", "Elopement", "Property Damage", "Medication Error", "Injury", "Other"];
-const severities = ["Low", "Medium", "High", "Critical"];
-const incidentStatuses = ["Open", "Under Review", "Resolved", "Closed"];
-
-const emptyIncident = { client_id: "", client_name: "", reported_by_name: "", date: "", time: "", type: "", severity: "", description: "", actions_taken: "", witnesses: "", follow_up_required: false, follow_up_notes: "", status: "Open" };
+import IncidentForm from "@/components/incidents/IncidentForm";
+import IncidentDetailDialog from "@/components/incidents/IncidentDetailDialog";
+import IncidentTrends from "@/components/incidents/IncidentTrends";
 
 export default function Incidents() {
-  const { can, isDSP, role } = useRole();
+  const { can, isDSP, isAdmin } = useRole();
   const { isDSPMode, assignedClientIds } = useAssignedClients();
-  const [showDialog, setShowDialog] = useState(false);
+  const { user } = useAuth();
+  const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState(emptyIncident);
+  const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState("");
-  const [sigChecked, setSigChecked] = useState(false);
-  const [sigTimestamp, setSigTimestamp] = useState("");
+  const [showTrends, setShowTrends] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: incidents = [], isLoading } = useQuery({
@@ -47,55 +38,74 @@ export default function Incidents() {
     queryFn: () => base44.entities.Client.list(),
   });
 
+  const { data: houses = [] } = useQuery({
+    queryKey: ["houses"],
+    queryFn: () => base44.entities.House.list(),
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.IncidentReport.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["incidents"] }); closeDialog(); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["incidents"] }); setShowForm(false); setEditing(null); },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.IncidentReport.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["incidents"] }); closeDialog(); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      setSelected(null);
+      setEditing(null);
+      setShowForm(false);
+    },
   });
 
-  const closeDialog = () => { setShowDialog(false); setEditing(null); setForm(emptyIncident); setSigChecked(false); setSigTimestamp(""); };
-  const openNew = () => { setForm(emptyIncident); setEditing(null); setSigChecked(false); setSigTimestamp(""); setShowDialog(true); };
-  const openEdit = (i) => { setForm(i); setEditing(i); setSigChecked(!!i.signature_timestamp); setSigTimestamp(i.signature_timestamp || ""); setShowDialog(true); };
+  const openNew = () => { setEditing(null); setShowForm(true); };
+  const openDetail = (i) => setSelected(i);
+  const openEdit = () => { setEditing(selected); setShowForm(true); };
 
-  const handleSave = () => {
-    const data = { ...form, signature_timestamp: sigTimestamp };
-    // DSPs always submit as "Pending Review" — they cannot set status
-    if (isDSP && !editing) data.status = "Under Review";
+  const handleSave = (data) => {
     if (editing) updateMutation.mutate({ id: editing.id, data });
     else createMutation.mutate(data);
   };
 
-  const handleClientSelect = (clientId) => {
-    const client = clients.find(c => c.id === clientId);
-    setForm({ ...form, client_id: clientId, client_name: client ? `${client.first_name} ${client.last_name}` : "" });
+  const handleDetailUpdate = (data) => {
+    updateMutation.mutate({ id: selected.id, data });
+    setSelected({ ...selected, ...data });
   };
 
   const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;
   const visibleIncidents = isDSPMode ? incidents.filter(i => assignedClientIds.includes(i.client_id)) : incidents;
-
   const filtered = visibleIncidents.filter(i =>
     `${i.client_name} ${i.type} ${i.severity} ${i.status}`.toLowerCase().includes(search.toLowerCase())
   );
+  const canReview = can("changeIncidentStatus");
 
   if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
 
   return (
     <div>
       <PageHeader
-    title="Incident Reports"
-    subtitle={isDSP ? "Your submitted reports" : `${incidents.length} reports`}
-    action={<Button onClick={openNew} className="bg-destructive hover:bg-destructive/90"><Plus className="w-4 h-4 mr-2" />Report Incident</Button>}
-  />
-  {isDSP && (
-    <div className="flex items-center gap-2 mb-4 bg-chart-4/10 border border-chart-4/20 rounded-lg px-4 py-2.5 text-sm text-chart-4">
-      <Lock className="w-4 h-4 flex-shrink-0" />
-      <span>Incidents you submit will be sent to your supervisor for review. You cannot change the status of a submitted report.</span>
-    </div>
-  )}
+        title="Incident Reports"
+        subtitle={isDSP ? "Your submitted reports" : `${incidents.length} reports`}
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowTrends(!showTrends)}><BarChart3 className="w-4 h-4 mr-2" />Trends</Button>
+            <Button onClick={openNew} className="bg-destructive hover:bg-destructive/90"><Plus className="w-4 h-4 mr-2" />Report Incident</Button>
+          </div>
+        }
+      />
+
+      {isDSP && (
+        <div className="flex items-center gap-2 mb-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm text-amber-700">
+          <Lock className="w-4 h-4 flex-shrink-0" />
+          <span>Incidents you submit are sent to your supervisor for review. You cannot change the status of a submitted report.</span>
+        </div>
+      )}
+
+      {showTrends && (
+        <div className="mb-6">
+          <IncidentTrends incidents={visibleIncidents} />
+        </div>
+      )}
 
       <Card className="mb-6">
         <CardContent className="py-3">
@@ -115,7 +125,7 @@ export default function Incidents() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Client</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Category</TableHead>
                   <TableHead>Severity</TableHead>
                   <TableHead className="hidden md:table-cell">Date</TableHead>
                   <TableHead>Status</TableHead>
@@ -123,7 +133,7 @@ export default function Incidents() {
               </TableHeader>
               <TableBody>
                 {filtered.map((i) => (
-                  <TableRow key={i.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(i)}>
+                  <TableRow key={i.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openDetail(i)}>
                     <TableCell className="font-medium">{i.client_name || "—"}</TableCell>
                     <TableCell className="text-sm">{i.type}</TableCell>
                     <TableCell><StatusBadge status={i.severity} /></TableCell>
@@ -137,122 +147,30 @@ export default function Incidents() {
         </Card>
       )}
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing ? "Edit Incident Report" : "Report Incident"}</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <Label>Client *</Label>
-              <Select value={form.client_id} onValueChange={handleClientSelect}>
-                <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                <SelectContent>{visibleClients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div><Label>Date *</Label><Input type="date" value={form.date} onChange={(e) => setForm({...form, date: e.target.value})} /></div>
-            <div><Label>Time</Label><Input type="time" value={form.time} onChange={(e) => setForm({...form, time: e.target.value})} /></div>
-            <div>
-              <Label>Type *</Label>
-              <Select value={form.type} onValueChange={(v) => setForm({...form, type: v})}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{types.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Severity *</Label>
-              <Select value={form.severity} onValueChange={(v) => setForm({...form, severity: v})}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{severities.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="col-span-2">
-              <Label>Description *</Label>
-              <div className="relative">
-                <Textarea value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} rows={3} className="pr-12" />
-                <div className="absolute right-2 top-2"><DictationButton value={form.description} onChange={(val) => setForm({...form, description: val})} /></div>
-              </div>
-            </div>
-            <div className="col-span-2">
-              <Label>Actions Taken</Label>
-              <div className="relative">
-                <Textarea value={form.actions_taken} onChange={(e) => setForm({...form, actions_taken: e.target.value})} rows={2} className="pr-12" />
-                <div className="absolute right-2 top-2"><DictationButton value={form.actions_taken} onChange={(val) => setForm({...form, actions_taken: val})} /></div>
-              </div>
-            </div>
-            <div><Label>Reported By</Label><Input value={form.reported_by_name} onChange={(e) => setForm({...form, reported_by_name: e.target.value})} /></div>
-            <div><Label>Witnesses</Label><Input value={form.witnesses} onChange={(e) => setForm({...form, witnesses: e.target.value})} /></div>
-            {can("changeIncidentStatus") ? (
-              <div>
-                <Label>Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({...form, status: v})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{incidentStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            ) : (
-              <div>
-                <Label>Status</Label>
-                <div className="flex h-9 items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">
-                  Under Review (set by supervisor)
-                </div>
-              </div>
-            )}
-            <div className="flex items-center gap-2 pt-6">
-              <Checkbox checked={form.follow_up_required} onCheckedChange={(v) => setForm({...form, follow_up_required: v})} />
-              <Label>Follow-up Required</Label>
-            </div>
-            {form.follow_up_required && (
-              <div className="col-span-2">
-                <Label>Follow-up Notes</Label>
-                <div className="relative">
-                  <Textarea value={form.follow_up_notes} onChange={(e) => setForm({...form, follow_up_notes: e.target.value})} rows={2} className="pr-12" />
-                  <div className="absolute right-2 top-2"><DictationButton value={form.follow_up_notes} onChange={(val) => setForm({...form, follow_up_notes: val})} /></div>
-                </div>
-              </div>
-            )}
-          </div>
+      {showForm && (
+        <IncidentForm
+          open={showForm}
+          onClose={() => { setShowForm(false); setEditing(null); }}
+          onSave={handleSave}
+          editing={editing}
+          clients={visibleClients}
+          houses={houses}
+          user={user}
+          saving={createMutation.isPending || updateMutation.isPending}
+        />
+      )}
 
-          {/* Signature confirmation — required for new submissions */}
-          {!editing && (
-            <div className="bg-muted/40 border border-border rounded-lg p-3 space-y-2 mt-4">
-              <label className="flex items-start gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={sigChecked}
-                  onChange={e => {
-                    const checked = e.target.checked;
-                    setSigChecked(checked);
-                    if (checked) {
-                      const now = new Date();
-                      const name = form.reported_by_name || "Staff";
-                      const ts = `Submitted by ${name} on ${format(now, "MM/dd/yyyy")} at ${format(now, "h:mm aa")}`;
-                      setSigTimestamp(ts);
-                    } else {
-                      setSigTimestamp("");
-                    }
-                  }}
-                  className="w-4 h-4 accent-primary mt-0.5 cursor-pointer"
-                />
-                <span className="text-sm text-foreground leading-snug">
-                  I confirm this incident report is accurate and complete to the best of my knowledge
-                </span>
-              </label>
-              {sigTimestamp && (
-                <p className="text-[11px] text-muted-foreground pl-6">{sigTimestamp}</p>
-              )}
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-            <Button
-              onClick={handleSave}
-              disabled={!form.client_id || !form.date || !form.type || !form.severity || !form.description || (!editing && !sigChecked)}
-            >
-              {editing ? "Update" : "Submit"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {selected && !showForm && (
+        <IncidentDetailDialog
+          open={!!selected}
+          incident={selected}
+          onClose={() => setSelected(null)}
+          onEdit={openEdit}
+          onUpdate={handleDetailUpdate}
+          canReview={canReview}
+          reviewerName={user?.full_name || user?.email || "Manager"}
+        />
+      )}
     </div>
   );
 }
