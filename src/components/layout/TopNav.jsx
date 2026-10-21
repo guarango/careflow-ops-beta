@@ -1,9 +1,13 @@
 import React from "react";
 import { useAuth } from "@/lib/AuthContext";
+import { useImpersonation } from "@/lib/ImpersonationContext";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 export default function TopNav() {
   const { user } = useAuth();
+  const { impersonation, returnToSelf } = useImpersonation();
 
   return (
     <div className="
@@ -34,6 +38,24 @@ export default function TopNav() {
           </div>
         )}
       </div>
+
+      {/* Impersonation banner */}
+      {impersonation && (
+        <div className="fixed top-14 left-0 right-0 z-20 h-10 bg-amber-500 text-white flex items-center justify-between px-4 md:ml-[64px] lg:ml-[240px]">
+          <span className="text-xs font-medium">
+            Login As: viewing as {impersonation.targetUser?.full_name || impersonation.targetUser?.email} — all actions are audited
+          </span>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-7 text-xs"
+            onClick={() => returnToSelf()}
+          >
+            <LogOut className="w-3 h-3 mr-1" />
+            Return to my account
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

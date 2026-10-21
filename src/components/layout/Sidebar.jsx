@@ -60,10 +60,7 @@ const ALL_NAV = [
   },
 ];
 
-const PREVIEW_ROLES = [
-  "admin", "program_director", "supervisor", "case_manager",
-  "bcba", "nurse", "billing", "hr", "lead_dsp", "dsp"
-];
+const PREVIEW_ROLES = ["dsp", "manager", "admin"];
 
 // Tooltip for collapsed icon-only sidebar (tablet)
 function NavTooltip({ label, children }) {
@@ -172,7 +169,7 @@ export default function Sidebar() {
 
       {/* Role switcher */}
       <div className="px-3 py-3 border-t border-[#1E293B] shrink-0">
-        {realRole === "admin" ? (
+        {(realRole === "admin" || realRole === "super_admin") ? (
           <div className="relative">
             <button
               onClick={() => setRolePickerOpen((v) => !v)}

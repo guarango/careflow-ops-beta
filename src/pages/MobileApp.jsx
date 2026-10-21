@@ -30,12 +30,12 @@ const SUPERVISOR_TABS = [
 
 export default function MobileApp() {
   const { user } = useAuth();
-  const { role } = useRole();
+  const { role, can } = useRole();
   const { isOnline, isSyncing, pendingCount } = useOffline();
   const [activeTab, setActiveTab] = useState("home");
   const [notifCount] = useState(3);
 
-  const isSupervisor = role === "admin" || role === "supervisor";
+  const isSupervisor = can("approveSessionNotes");
   const tabs = isSupervisor ? SUPERVISOR_TABS : DSP_TABS;
 
   const renderContent = () => {

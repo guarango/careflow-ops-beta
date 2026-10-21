@@ -1,123 +1,145 @@
 /**
- * Role-based permissions for CareOps Pro
+ * CareFlow — Single Permission Source
  *
- * Roles:
- *  admin        — full access to everything
- *  program_director — all clinical/ops/finance; no system config
- *  supervisor   — case manager view + eMAR, staff editing, compliance
- *  case_manager — clinical + ISP + QoL + family portal + reports
- *  bcba         — clients, goals, BSP, QoL, incidents, reports
- *  nurse        — clients, eMAR (full), incidents, reports
- *  billing      — billing, payroll/timecards, compliance, reports
- *  hr           — staff, training, payroll, compliance, reports
- *  lead_dsp     — dsp + clients, BSP (read), training
- *  dsp          — dashboard, goals/sessions, eMAR, incidents, schedule/evv
+ * Four roles: DSP, Manager, Admin, Super Admin.
+ * Super Admin is admin + is_super_admin=true (computed in useRole).
+ *
+ * Permission bundles (Admin only):
+ *   hr_bundle      — staff HR files, onboarding, e-signature, trainings, staff compliance
+ *   billing_bundle  — service code rates, authorizations, unit tracking, payroll/billing/EVV export
+ *
+ * Every page and query calls can(permissionCode) or canAccessPath(path) —
+ * never checks role names directly.
  */
 
 export const ROLES = {
-  ADMIN: "admin",
-  PROGRAM_DIRECTOR: "program_director",
-  SUPERVISOR: "supervisor",
-  CASE_MANAGER: "case_manager",
-  BCBA: "bcba",
-  NURSE: "nurse",
-  BILLING: "billing",
-  HR: "hr",
-  LEAD_DSP: "lead_dsp",
   DSP: "dsp",
+  MANAGER: "manager",
+  ADMIN: "admin",
+  SUPER_ADMIN: "super_admin",
 };
 
-// Merged nav paths — what each sidebar item links to
-// Paths shown in sidebar per role
-//
-// Role tiers for MVP:
-//  DSP:         Clinical Care + Schedule/EVV only
-//  Coordinator: Clinical Care + Health & Safety + Staff & Operations
-//  Admin:       Everything
+// ─── Navigation access per role ──────────────────────────────────────────
 export const NAV_ACCESS = {
-  "/":             ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "billing", "hr", "lead_dsp", "dsp"],
-  "/clients":      ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "lead_dsp", "dsp"],
-  "/goals":        ["admin", "program_director", "supervisor", "case_manager", "bcba", "lead_dsp", "dsp"],
-  "/session-notes":["admin", "program_director", "supervisor", "case_manager", "bcba", "lead_dsp", "dsp"],
-  "/bsp":          ["admin", "program_director", "supervisor", "case_manager", "bcba", "lead_dsp", "dsp"],
-  "/isp":          ["admin", "program_director", "supervisor", "case_manager"],
-  "/emar":         ["admin", "program_director", "supervisor", "nurse", "lead_dsp", "dsp"],
-  "/incidents":    ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "lead_dsp", "dsp"],
-  "/staff":        ["admin", "program_director", "supervisor", "case_manager", "hr"],
-  "/schedule":     ["admin", "program_director", "supervisor", "case_manager", "hr", "lead_dsp", "dsp"],
-  "/timecards":    ["admin", "hr", "billing", "program_director", "supervisor"],
-  "/hr":           ["admin", "program_director", "supervisor", "hr"],
-  "/compliance":   ["admin", "program_director", "supervisor", "billing", "hr"],
-  "/finance":      ["admin", "program_director", "billing"],
-  "/reports":      ["admin", "program_director", "supervisor", "case_manager", "bcba", "nurse", "billing", "hr"],
-  "/users":        ["admin"],
-  "/agency-admin": ["admin"],
-  "/role-preview": ["admin"],
-  "/super-admin":  ["admin"],
+  "/":             ["dsp", "manager", "admin", "super_admin"],
+  "/clients":      ["dsp", "manager", "admin", "super_admin"],
+  "/goals":        ["dsp", "manager", "admin", "super_admin"],
+  "/session-notes":["dsp", "manager", "admin", "super_admin"],
+  "/bsp":           ["dsp", "manager", "admin", "super_admin"],
+  "/isp":           ["manager", "admin", "super_admin"],
+  "/emar":          ["dsp", "manager", "admin", "super_admin"],
+  "/incidents":     ["dsp", "manager", "admin", "super_admin"],
+  "/staff":         ["manager", "admin", "super_admin"],
+  "/schedule":      ["dsp", "manager", "admin", "super_admin"],
+  "/timecards":     ["dsp", "manager", "admin", "super_admin"],
+  "/hr":            ["admin", "super_admin"],
+  "/compliance":   ["manager", "admin", "super_admin"],
+  "/finance":      ["admin", "super_admin"],
+  "/reports":      ["manager", "admin", "super_admin"],
+  "/users":        ["admin", "super_admin"],
+  "/agency-admin": ["admin", "super_admin"],
+  "/role-preview": ["admin", "super_admin"],
+  "/super-admin":  ["super_admin"],
 };
 
-// Feature-level permissions
+// Paths that require an Admin bundle (super_admin bypasses)
+const PATH_BUNDLES = {
+  "/hr":      "hr",
+  "/finance": "billing",
+};
+
+// ─── Feature-level permissions (codes) ───────────────────────────────────
+// Each code maps to roles. requires_bundle means an Admin must also have
+// the named bundle; super_admin always passes.
 export const CAN = {
-  approveTimecards:       ["admin", "program_director", "supervisor", "hr", "billing"],
-  viewAllTimecards:       ["admin", "program_director", "supervisor", "hr", "billing"],
-  approveSessionNotes:    ["admin", "program_director", "supervisor", "case_manager", "bcba"],
-  editStaff:              ["admin", "program_director", "supervisor", "hr"],
-  changeIncidentStatus:   ["admin", "program_director", "supervisor"],
-  viewAllIncidents:       ["admin", "program_director", "supervisor", "case_manager", "nurse"],
-  editClients:            ["admin", "program_director", "supervisor", "case_manager"],
-  accessBilling:          ["admin", "program_director", "billing"],
-  editServiceCodes:       ["admin", "billing"],
-  manageUsers:            ["admin"],
-  editGoals:              ["admin", "program_director", "supervisor", "case_manager", "bcba"],
-  viewIncidentBadge:      ["admin", "program_director", "supervisor"],
-  manageTraining:         ["admin", "program_director", "supervisor", "hr"],
-  viewAllStaff:           ["admin", "program_director", "hr"],
-  accessSettings:         ["admin"],
-  exportPayroll:          ["admin", "hr"],
-  lockPayPeriod:          ["admin", "hr"],
-  unlockTimecard:         ["admin"],
+  approveTimecards:       ["manager", "admin", "super_admin"],
+  viewAllTimecards:       ["manager", "admin", "super_admin"],
+  approveSessionNotes:    ["manager", "admin", "super_admin"],
+  editStaff:              ["admin", "super_admin"],
+  changeIncidentStatus:   ["manager", "admin", "super_admin"],
+  viewAllIncidents:       ["manager", "admin", "super_admin"],
+  editClients:            ["manager", "admin", "super_admin"],
+  accessBilling:          ["admin", "super_admin"],
+  editServiceCodes:       ["admin", "super_admin"],
+  manageUsers:            ["admin", "super_admin"],
+  editGoals:              ["manager", "admin", "super_admin"],
+  viewIncidentBadge:      ["manager", "admin", "super_admin"],
+  manageTraining:         ["manager", "admin", "super_admin"],
+  viewAllStaff:           ["manager", "admin", "super_admin"],
+  accessSettings:         ["admin", "super_admin"],
+  exportPayroll:          ["admin", "super_admin"],
+  lockPayPeriod:          ["admin", "super_admin"],
+  unlockTimecard:         ["admin", "super_admin"],
+  loginAs:                ["super_admin"],
+  scheduleBuild:          ["manager", "admin", "super_admin"],
+  emarEdit:               ["manager", "admin", "super_admin"],
+  verifyTraining:         ["manager", "admin", "super_admin"],
+  hrAccess:               ["admin", "super_admin"],
+  billingExport:          ["admin", "super_admin"],
+  evvExport:              ["admin", "super_admin"],
+  authorizationsManage:   ["admin", "super_admin"],
+  ispEdit:                ["admin", "super_admin"],
+  superAdminAccess:       ["super_admin"],
 };
 
-export function can(userRole, permission) {
+// Permissions that require a bundle (Admin only; super_admin bypasses)
+const BUNDLE_REQUIRED = {
+  editStaff:            "hr",
+  accessBilling:        "billing",
+  editServiceCodes:     "billing",
+  exportPayroll:        "billing",
+  billingExport:       "billing",
+  evvExport:           "billing",
+  authorizationsManage: "billing",
+  hrAccess:            "hr",
+};
+
+// ─── Permission check (single source) ───────────────────────────────────
+export function can(role, permission, bundles = {}) {
   const allowed = CAN[permission];
   if (!allowed) return false;
-  return allowed.includes(userRole);
+  if (!allowed.includes(role)) return false;
+  const requiredBundle = BUNDLE_REQUIRED[permission];
+  if (requiredBundle && role !== "super_admin") {
+    return bundles[requiredBundle] === true;
+  }
+  return true;
 }
 
-export function canAccessPath(userRole, path) {
-  // Strip query string for matching
+export function canAccessPath(role, path, bundles = {}) {
   const cleanPath = path.split("?")[0];
   const allowed = NAV_ACCESS[cleanPath];
-  if (!allowed) return userRole === "admin";
-  return allowed.includes(userRole);
+  if (!allowed) return role === "admin" || role === "super_admin";
+  if (!allowed.includes(role)) return false;
+  const requiredBundle = PATH_BUNDLES[cleanPath];
+  if (requiredBundle && role !== "super_admin") {
+    return bundles[requiredBundle] === true;
+  }
+  return true;
 }
 
 export function getRoleLabel(role) {
   return {
-    admin:            "Admin",
-    program_director: "Program Director",
-    supervisor:       "Supervisor",
-    case_manager:     "Case Manager",
-    bcba:             "BCBA",
-    nurse:            "Nurse",
-    billing:          "Billing",
-    hr:               "HR",
-    lead_dsp:         "Lead DSP",
-    dsp:              "DSP",
+    dsp:         "DSP",
+    manager:     "Manager",
+    admin:       "Admin",
+    super_admin: "Super Admin",
   }[role] || role;
 }
 
 export function getRoleBadgeColor(role) {
   return {
-    admin:            "bg-primary/10 text-primary border-primary/20",
-    program_director: "bg-violet-500/10 text-violet-500 border-violet-500/20",
-    supervisor:       "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    case_manager:     "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-    bcba:             "bg-purple-500/10 text-purple-500 border-purple-500/20",
-    nurse:            "bg-teal-500/10 text-teal-500 border-teal-500/20",
-    billing:          "bg-amber-500/10 text-amber-500 border-amber-500/20",
-    hr:               "bg-chart-3/10 text-chart-3 border-chart-3/20",
-    lead_dsp:         "bg-sky-500/10 text-sky-500 border-sky-500/20",
-    dsp:              "bg-accent/10 text-accent border-accent/20",
+    dsp:         "bg-blue-500/10 text-blue-600 border-blue-500/20",
+    manager:     "bg-violet-500/10 text-violet-600 border-violet-500/20",
+    admin:       "bg-primary/10 text-primary border-primary/20",
+    super_admin: "bg-destructive/10 text-destructive border-destructive/20",
   }[role] || "bg-muted text-muted-foreground border-muted";
 }
+
+// ─── Role descriptions for User Management cards ─────────────────────────
+export const ROLE_DESCRIPTIONS = {
+  dsp: "Sees only assigned clients. Clocks in/out, writes session notes, charts goals, passes meds, files incidents, views own schedule, timecard, and trainings. No admin access.",
+  manager: "Oversees assigned clients and houses. Approves notes and timecards, reviews incidents, builds schedules, verifies trainings for their team. No billing, rates, or agency settings.",
+  admin: "Full agency access. HR and Billing areas need the matching bundle.",
+  super_admin: "Platform owner; all agencies; Login As.",
+};

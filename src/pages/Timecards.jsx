@@ -37,9 +37,9 @@ export default function Timecards() {
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
 
-  const canExport = ["admin", "hr"].includes(role);
-  const isAdmin = role === "admin";
-  const isAdminOrHR = ["admin", "hr"].includes(role);
+  const canExport = can("exportPayroll");
+  const isAdmin = can("unlockTimecard");
+  const isAdminOrHR = can("approveTimecards");
 
   const [showDialog, setShowDialog] = useState(false);
   const [form, setForm] = useState(emptyTC);
@@ -260,7 +260,7 @@ export default function Timecards() {
     } catch (_) {}
   };
 
-  if (!PAYROLL_ROLES.includes(role)) {
+  if (!can("timecards.view")) {
     return <AccessDenied />;
   }
 

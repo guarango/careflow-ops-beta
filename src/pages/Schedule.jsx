@@ -28,9 +28,9 @@ const VIEWS = [
 
 export default function Schedule() {
   const { isDSPMode, assignedClientIds } = useAssignedClients();
-  const { role } = useRole();
-  const canEdit = role === "admin";
-  const canViewAll = role === "admin" || role === "hr";
+  const { can } = useRole();
+  const canEdit = can("scheduleBuild");
+  const canViewAll = can("viewAllStaff");
 
   // DSPs can only see day and week
   const allowedViews = isDSPMode ? ["day", "week"] : ["day", "week", "month", "staff"];

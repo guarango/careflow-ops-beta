@@ -45,8 +45,8 @@ const emptyLog = {
 
 export default function EMAR() {
   const { isDSPMode, assignedClientIds } = useAssignedClients();
-  const { role } = useRole();
-  const canEdit = role === "admin" || role === "hr";
+  const { can } = useRole();
+  const canEdit = can("emarEdit");
 
   const [tab, setTab] = useState("mar");       // "mar" | "medications" | "logs"
   const [viewMode, setViewMode] = useState("grid");

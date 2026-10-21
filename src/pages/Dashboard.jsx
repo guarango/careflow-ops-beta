@@ -9,7 +9,6 @@ export default function Dashboard() {
   const { role } = useRole();
   const { user } = useAuth();
 
-  if (role === "hr") return <HRDashboard user={user} />;
   if (role === "dsp") return <DSPDashboard user={user} />;
   return <AdminDashboard user={user} />;
 }

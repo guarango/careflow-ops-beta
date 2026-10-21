@@ -13,7 +13,7 @@ import HRSelfService from "@/components/hr/HRSelfService";
 import { useRole } from "@/hooks/useRole";
 
 export default function HR() {
-  const { isAdmin, isHR, isDSP } = useRole();
+  const { isAdmin, isDSP } = useRole();
   const [activeTab, setActiveTab] = useState(isDSP ? "self" : "overview");
 
   const { data: staff = [] } = useQuery({

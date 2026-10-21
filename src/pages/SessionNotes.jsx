@@ -21,9 +21,9 @@ import { cn } from "@/lib/utils";
 
 export default function SessionNotes() {
   const { isDSPMode, assignedClientIds } = useAssignedClients();
-  const { role } = useRole();
+  const { can } = useRole();
   const { user } = useAuth();
-  const isSupervisor = role === "admin" || role === "hr" || role === "supervisor";
+  const canApproveNotes = can("approveSessionNotes");
 
   const [view, setView] = useState("list"); // "list" | "entry" | "review"
   const [selectedClient, setSelectedClient] = useState(null);
@@ -127,7 +127,7 @@ export default function SessionNotes() {
         <TabsList className="mb-4">
           <TabsTrigger value="notes">All Notes</TabsTrigger>
           <TabsTrigger value="new">Start New</TabsTrigger>
-          {isSupervisor && (
+          {canApproveNotes && (
             <TabsTrigger value="review" className="relative">
               Supervisor Review
               {pendingReview.filter(n => n.status === "Submitted").length > 0 && (
@@ -245,7 +245,7 @@ export default function SessionNotes() {
         </TabsContent>
 
         {/* ── SUPERVISOR REVIEW TAB ─── */}
-        {isSupervisor && (
+        {canApproveNotes && (
           <TabsContent value="review">
             <SupervisorReviewPanel
               notes={pendingReview}

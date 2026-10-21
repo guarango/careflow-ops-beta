@@ -7,7 +7,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, Target, CalendarDays, Tag, UserCog,
-  TrendingUp, Check, X, Lock
+  TrendingUp, Check, X, Lock, Briefcase, Info
 } from "lucide-react";
 import { NAV_ACCESS, CAN, getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
 
@@ -22,9 +22,8 @@ const ALL_NAV = [
   { label: "eMAR", icon: Pill, path: "/emar" },
   { label: "Timecards", icon: Clock, path: "/timecards" },
   { label: "Compliance", icon: Shield, path: "/compliance" },
-  { label: "Service Codes", icon: Tag, path: "/service-codes" },
-  { label: "Payroll", icon: TrendingUp, path: "/payroll" },
-  { label: "Billing", icon: DollarSign, path: "/billing" },
+  { label: "Finance", icon: DollarSign, path: "/finance" },
+  { label: "HR & Compliance", icon: Briefcase, path: "/hr" },
   { label: "User Management", icon: UserCog, path: "/users" },
 ];
 
@@ -32,32 +31,49 @@ const FEATURE_LABELS = {
   approveTimecards:     "Approve Timecards",
   viewAllTimecards:     "View All Timecards",
   approveSessionNotes:  "Approve Session Notes",
-  editStaff:            "Edit Staff Records",
+  editStaff:            "Edit Staff Records (HR bundle)",
   changeIncidentStatus: "Change Incident Status",
   viewAllIncidents:     "View All Incidents",
   editClients:          "Edit Client Records",
-  accessBilling:        "Access Billing",
-  editServiceCodes:     "Edit Service Codes",
+  accessBilling:        "Access Billing (Billing bundle)",
+  editServiceCodes:     "Edit Service Codes (Billing bundle)",
   manageUsers:          "Manage Users",
   editGoals:            "Edit Goals",
+  viewIncidentBadge:    "View Incident Badge",
+  manageTraining:       "Manage Training",
+  viewAllStaff:         "View All Staff",
+  accessSettings:       "Access Settings",
+  exportPayroll:        "Export Payroll (Billing bundle)",
+  lockPayPeriod:        "Lock Pay Period",
+  unlockTimecard:       "Unlock Timecard",
+  loginAs:              "Login As (Super Admin only)",
 };
 
+const ROLES = ["dsp", "manager", "admin", "super_admin"];
+
 const ROLE_HEADER_COLORS = {
-  admin: "bg-primary text-primary-foreground",
-  hr:    "bg-violet-600 text-white",
-  dsp:   "bg-blue-500 text-white",
+  dsp:         "bg-blue-500 text-white",
+  manager:     "bg-violet-500 text-white",
+  admin:       "bg-primary text-primary-foreground",
+  super_admin: "bg-destructive text-white",
 };
 
 const ROLE_DESCRIPTIONS = {
-  admin: "Full access to all features and data",
-  hr:    "Dashboard, Staff, Schedule, Timecards, Compliance only",
-  dsp:   "Dashboard, own Clients, Schedule, Notes, eMAR, Timecards only",
+  dsp:         "Sees only assigned clients. Clocks in/out, writes session notes, charts goals, passes meds, files incidents, views own schedule, timecard, and trainings. No admin access.",
+  manager:     "Oversees assigned clients and houses. Approves notes and timecards, reviews incidents, builds schedules, verifies trainings for their team. No billing, rates, or agency settings.",
+  admin:       "Full agency access. HR and Billing areas need the matching bundle.",
+  super_admin: "Platform owner; all agencies; Login As.",
 };
 
-function MockSidebar({ role }) {
+function MockSidebar({ role, bundles }) {
   const visibleNav = ALL_NAV.filter(item => {
     const allowed = NAV_ACCESS[item.path];
-    return allowed ? allowed.includes(role) : role === "admin";
+    if (!allowed) return role === "admin" || role === "super_admin";
+    if (!allowed.includes(role)) return false;
+    // Check bundle requirements for /hr and /finance
+    if (item.path === "/hr" && role === "admin") return bundles.hr;
+    if (item.path === "/finance" && role === "admin") return bundles.billing;
+    return true;
   });
   const hiddenNav = ALL_NAV.filter(item => !visibleNav.includes(item));
 
@@ -93,11 +109,19 @@ function MockSidebar({ role }) {
   );
 }
 
-function FeatureMatrix({ role }) {
+function FeatureMatrix({ role, bundles }) {
   return (
     <div className="space-y-1.5">
       {Object.entries(FEATURE_LABELS).map(([key, label]) => {
-        const hasAccess = (CAN[key] || []).includes(role);
+        const hasAccess = (() => {
+          const allowed = CAN[key];
+          if (!allowed) return false;
+          if (!allowed.includes(role)) return false;
+          // Check bundle requirements
+          if (key === "editStaff" && role === "admin") return bundles.hr;
+          if ((key === "accessBilling" || key === "editServiceCodes" || key === "exportPayroll") && role === "admin") return bundles.billing;
+          return true;
+        })();
         return (
           <div key={key} className={`flex items-center justify-between px-3 py-2 rounded-md text-sm border ${hasAccess ? "bg-green-50 border-green-100" : "bg-red-50/40 border-red-100"}`}>
             <span className={hasAccess ? "text-foreground" : "text-muted-foreground"}>{label}</span>
@@ -113,6 +137,7 @@ function FeatureMatrix({ role }) {
 }
 
 function RoleCard({ role }) {
+  const bundles = role === "admin" ? { hr: true, billing: true } : { hr: false, billing: false };
   return (
     <Card className="overflow-hidden">
       <div className={`px-5 py-4 ${ROLE_HEADER_COLORS[role]}`}>
@@ -127,11 +152,11 @@ function RoleCard({ role }) {
       <CardContent className="p-5 space-y-6">
         <div>
           <h3 className="text-sm font-semibold mb-3">Navigation Access</h3>
-          <MockSidebar role={role} />
+          <MockSidebar role={role} bundles={bundles} />
         </div>
         <div>
           <h3 className="text-sm font-semibold mb-3">Feature Permissions</h3>
-          <FeatureMatrix role={role} />
+          <FeatureMatrix role={role} bundles={bundles} />
         </div>
       </CardContent>
     </Card>
@@ -145,7 +170,7 @@ export default function RolePreview() {
     <div>
       <PageHeader
         title="Role Preview"
-        subtitle="Exact permissions enforced for each role throughout the app"
+        subtitle="Permission model for DSP, Manager, Admin, and Super Admin"
         action={
           <div className="flex gap-2">
             <Button variant={compareMode === "side-by-side" ? "default" : "outline"} size="sm" onClick={() => setCompareMode("side-by-side")}>Side by Side</Button>
@@ -153,6 +178,14 @@ export default function RolePreview() {
           </div>
         }
       />
+
+      {/* Bundle note */}
+      <div className="mb-6 p-4 bg-muted rounded-lg flex items-start gap-2">
+        <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+        <p className="text-xs text-muted-foreground">
+          <strong>Bundles:</strong> Admin cards below show full access (both bundles enabled). An Admin without the HR or Billing bundle cannot open those areas.
+        </p>
+      </div>
 
       {/* Full comparison matrix */}
       <Card className="mb-6">
@@ -164,7 +197,7 @@ export default function RolePreview() {
             <thead>
               <tr className="border-b bg-muted/30">
                 <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Feature / Page</th>
-                {["admin", "hr", "dsp"].map(role => (
+                {ROLES.map(role => (
                   <th key={role} className="text-center px-6 py-2.5 font-medium">
                     <Badge variant="outline" className={getRoleBadgeColor(role)}>{getRoleLabel(role)}</Badge>
                   </th>
@@ -173,7 +206,7 @@ export default function RolePreview() {
             </thead>
             <tbody>
               <tr className="bg-muted/20 border-t">
-                <td className="px-4 py-2 font-semibold text-xs text-muted-foreground uppercase tracking-wider" colSpan={4}>Navigation Pages</td>
+                <td className="px-4 py-2 font-semibold text-xs text-muted-foreground uppercase tracking-wider" colSpan={5}>Navigation Pages</td>
               </tr>
               {ALL_NAV.map(item => (
                 <tr key={item.path} className="border-b last:border-0 hover:bg-muted/20">
@@ -183,9 +216,11 @@ export default function RolePreview() {
                       {item.label}
                     </div>
                   </td>
-                  {["admin", "hr", "dsp"].map(role => {
+                  {ROLES.map(role => {
                     const allowed = NAV_ACCESS[item.path];
-                    const hasAccess = allowed ? allowed.includes(role) : role === "admin";
+                    let hasAccess = allowed ? allowed.includes(role) : (role === "admin" || role === "super_admin");
+                    if (hasAccess && item.path === "/hr" && role === "admin") hasAccess = true; // shown with bundle in card
+                    if (hasAccess && item.path === "/finance" && role === "admin") hasAccess = true;
                     return (
                       <td key={role} className="px-4 py-2 text-center">
                         {hasAccess
@@ -198,13 +233,14 @@ export default function RolePreview() {
                 </tr>
               ))}
               <tr className="bg-muted/20 border-t-2">
-                <td className="px-4 py-2 font-semibold text-xs text-muted-foreground uppercase tracking-wider" colSpan={4}>Feature Permissions</td>
+                <td className="px-4 py-2 font-semibold text-xs text-muted-foreground uppercase tracking-wider" colSpan={5}>Feature Permissions</td>
               </tr>
               {Object.entries(FEATURE_LABELS).map(([key, label]) => (
                 <tr key={key} className="border-b last:border-0 hover:bg-muted/20">
                   <td className="px-4 py-2 text-muted-foreground">{label}</td>
-                  {["admin", "hr", "dsp"].map(role => {
-                    const hasAccess = (CAN[key] || []).includes(role);
+                  {ROLES.map(role => {
+                    const allowed = CAN[key];
+                    const hasAccess = allowed ? allowed.includes(role) : false;
                     return (
                       <td key={role} className="px-4 py-2 text-center">
                         {hasAccess
@@ -222,21 +258,15 @@ export default function RolePreview() {
       </Card>
 
       {compareMode === "side-by-side" ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <RoleCard role="admin" />
-          <RoleCard role="hr" />
-          <RoleCard role="dsp" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+          {ROLES.map(role => <RoleCard key={role} role={role} />)}
         </div>
       ) : (
-        <Tabs defaultValue="admin">
+        <Tabs defaultValue="dsp">
           <TabsList>
-            <TabsTrigger value="admin">Admin</TabsTrigger>
-            <TabsTrigger value="hr">HR Manager</TabsTrigger>
-            <TabsTrigger value="dsp">DSP</TabsTrigger>
+            {ROLES.map(role => <TabsTrigger key={role} value={role}>{getRoleLabel(role)}</TabsTrigger>)}
           </TabsList>
-          <TabsContent value="admin"><RoleCard role="admin" /></TabsContent>
-          <TabsContent value="hr"><RoleCard role="hr" /></TabsContent>
-          <TabsContent value="dsp"><RoleCard role="dsp" /></TabsContent>
+          {ROLES.map(role => <TabsContent key={role} value={role}><RoleCard role={role} /></TabsContent>)}
         </Tabs>
       )}
     </div>
