@@ -16,8 +16,11 @@ const SEVERITY_COLORS = { Mild: "bg-amber-100 text-amber-700", Moderate: "bg-ora
 
 const emptyIncident = {
   date: new Date().toISOString().split("T")[0],
+  data_type: "ABC",
   start_time: "", end_time: "", location: "", severity_tier: "",
-  antecedent: "", antecedent_other: "", staff_present: "",
+  antecedent: "", antecedent_detail: "", behavior_detail: "", consequence: "",
+  antecedent_other: "", staff_present: "",
+  frequency_count: null,
   replacement_prompted: null, intervention_used: "",
   outcome: "", restrictive_procedure_used: false, restrictive_procedure_detail: "",
   staff_observations: ""
@@ -41,7 +44,8 @@ export default function BSPIncidentLogger({ bsp, incidents, onLog, logging }) {
       client_name: bsp.client_name,
       target_behavior_id: targetBehaviorId,
       target_behavior_name: selectedBehavior?.name || "",
-      duration_minutes: dur,
+      duration_minutes: form.data_type === "Duration" ? dur : null,
+      frequency_count: form.data_type === "Frequency" ? form.frequency_count : null,
       supervisor_notified: form.restrictive_procedure_used,
     });
     setShowDialog(false);
@@ -55,7 +59,10 @@ export default function BSPIncidentLogger({ bsp, incidents, onLog, logging }) {
     return Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
   };
 
-  const isValid = targetBehaviorId && form.severity_tier && form.date && form.antecedent && form.outcome;
+  const isValid = targetBehaviorId && form.severity_tier && form.date &&
+    (form.data_type === "ABC" ? (form.antecedent && form.outcome) :
+     form.data_type === "Frequency" ? (form.frequency_count != null && form.frequency_count > 0) :
+     (form.start_time && form.end_time));
 
   return (
     <div>
@@ -87,9 +94,9 @@ export default function BSPIncidentLogger({ bsp, incidents, onLog, logging }) {
               <TableRow>
                 <TableHead>Date / Time</TableHead>
                 <TableHead>Behavior</TableHead>
+                <TableHead className="hidden md:table-cell">Type</TableHead>
                 <TableHead>Severity</TableHead>
-                <TableHead className="hidden md:table-cell">Antecedent</TableHead>
-                <TableHead className="hidden md:table-cell">Duration</TableHead>
+                <TableHead className="hidden md:table-cell">Data</TableHead>
                 <TableHead>Outcome</TableHead>
                 <TableHead className="hidden md:table-cell">Staff</TableHead>
               </TableRow>
@@ -104,9 +111,11 @@ export default function BSPIncidentLogger({ bsp, incidents, onLog, logging }) {
                       {inc.target_behavior_name || "—"}
                     </div>
                   </TableCell>
+                  <TableCell className="hidden md:table-cell"><Badge variant="outline" className="text-xs">{inc.data_type || "ABC"}</Badge></TableCell>
                   <TableCell><Badge className={cn("text-xs", SEVERITY_COLORS[inc.severity_tier])} variant="outline">{inc.severity_tier}</Badge></TableCell>
-                  <TableCell className="hidden md:table-cell text-xs">{inc.antecedent}</TableCell>
-                  <TableCell className="hidden md:table-cell text-xs">{inc.duration_minutes != null ? `${inc.duration_minutes} min` : "—"}</TableCell>
+                  <TableCell className="hidden md:table-cell text-xs">
+                    {inc.data_type === "Frequency" ? `${inc.frequency_count || 0}×` : inc.duration_minutes != null ? `${inc.duration_minutes} min` : inc.antecedent || "—"}
+                  </TableCell>
                   <TableCell className="text-xs">{inc.outcome}</TableCell>
                   <TableCell className="hidden md:table-cell text-xs">{inc.staff_present || "—"}</TableCell>
                 </TableRow>
@@ -131,6 +140,19 @@ export default function BSPIncidentLogger({ bsp, incidents, onLog, logging }) {
                 <SelectTrigger><SelectValue placeholder="Which behavior occurred?" /></SelectTrigger>
                 <SelectContent>{behaviors.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
               </Select>
+            </div>
+
+            {/* Data Type Selector */}
+            <div>
+              <Label>Data Type *</Label>
+              <div className="flex gap-2 mt-1">
+                {["ABC", "Frequency", "Duration"].map(t => (
+                  <button key={t} type="button" onClick={() => set("data_type", t)}
+                    className={cn("flex-1 py-1.5 rounded-lg border-2 text-xs font-semibold transition-all",
+                      form.data_type === t ? "border-primary bg-primary/10 text-primary" : "border-border bg-white text-muted-foreground"
+                    )}>{t}</button>
+                ))}
+              </div>
             </div>
 
             {selectedBehavior && (
@@ -175,16 +197,51 @@ export default function BSPIncidentLogger({ bsp, incidents, onLog, logging }) {
               </div>
             </div>
 
-            <div>
-              <Label>What happened right before? *</Label>
-              <Select value={form.antecedent} onValueChange={v => set("antecedent", v)}>
-                <SelectTrigger><SelectValue placeholder="Select antecedent" /></SelectTrigger>
-                <SelectContent>{ANTECEDENTS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
-              </Select>
-              {form.antecedent === "Other" && (
-                <Input value={form.antecedent_other} onChange={e => set("antecedent_other", e.target.value)} placeholder="Describe..." className="mt-2" />
-              )}
-            </div>
+            {form.data_type === "ABC" && (
+              <>
+                <div>
+                  <Label>Antecedent (A) — What happened right before? *</Label>
+                  <Select value={form.antecedent} onValueChange={v => set("antecedent", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select antecedent" /></SelectTrigger>
+                    <SelectContent>{ANTECEDENTS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
+                  </Select>
+                  {form.antecedent === "Other" && (
+                    <Input value={form.antecedent_other} onChange={e => set("antecedent_other", e.target.value)} placeholder="Describe..." className="mt-2" />
+                  )}
+                </div>
+                <div>
+                  <Label>Behavior (B) — Describe what happened</Label>
+                  <Textarea value={form.behavior_detail} onChange={e => set("behavior_detail", e.target.value)} rows={2} placeholder="Describe the behavior itself in detail..." className="text-sm" />
+                </div>
+                <div>
+                  <Label>Consequence (C) — What happened right after?</Label>
+                  <Textarea value={form.consequence} onChange={e => set("consequence", e.target.value)} rows={2} placeholder="Describe staff response and what happened after the behavior..." className="text-sm" />
+                </div>
+              </>
+            )}
+
+            {form.data_type === "Frequency" && (
+              <div>
+                <Label>Frequency Count *</Label>
+                <Input type="number" min={0} value={form.frequency_count || ""} onChange={e => set("frequency_count", e.target.value ? Number(e.target.value) : null)} placeholder="How many times did the behavior occur?" className="text-sm" />
+              </div>
+            )}
+
+            {form.data_type === "Duration" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Start Time *</Label>
+                  <Input type="time" value={form.start_time} onChange={e => set("start_time", e.target.value)} />
+                </div>
+                <div>
+                  <Label>End Time *</Label>
+                  <Input type="time" value={form.end_time} onChange={e => set("end_time", e.target.value)} />
+                </div>
+                {form.start_time && form.end_time && (
+                  <p className="col-span-2 text-xs text-primary">Duration: {calcDuration(form.start_time, form.end_time)} minutes</p>
+                )}
+              </div>
+            )}
 
             <div>
               <Label>Staff Present</Label>

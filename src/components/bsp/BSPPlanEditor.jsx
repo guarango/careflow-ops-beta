@@ -6,9 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Send, AlertTriangle, CheckCircle2, Plus, Trash2, Heart } from "lucide-react";
+import { ArrowLeft, Save, Send, AlertTriangle, CheckCircle2, Plus, Trash2, Heart, Upload, FileText } from "lucide-react";
 import BSPTargetBehaviorCard from "./BSPTargetBehaviorCard";
 import BSPReinforcementEditor from "./BSPReinforcementEditor";
+import HumanRightsRestrictionForm from "./HumanRightsRestrictionForm";
+import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 
 const CREDENTIALS = ["BCBA", "BCaBA", "Psychologist", "Licensed Clinical Supervisor", "LCSW", "Other Licensed Clinician"];
@@ -111,6 +113,8 @@ export default function BSPPlanEditor({ plan, clients, onSave, onCancel, saving 
           <TabsTrigger value="fba">FBA Summary</TabsTrigger>
           <TabsTrigger value="behaviors">Target Behaviors</TabsTrigger>
           <TabsTrigger value="reinforcement">Reinforcement</TabsTrigger>
+          <TabsTrigger value="rights">Human Rights</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="summary">Family Summary</TabsTrigger>
         </TabsList>
 
@@ -248,6 +252,75 @@ export default function BSPPlanEditor({ plan, clients, onSave, onCancel, saving 
             reinforcement={form.reinforcement_system || {}}
             onChange={v => set("reinforcement_system", v)}
           />
+        </TabsContent>
+
+        {/* ── HUMAN RIGHTS ── */}
+        <TabsContent value="rights">
+          <HumanRightsRestrictionForm
+            restrictions={form.human_rights_restrictions || []}
+            onChange={(updated) => set("human_rights_restrictions", updated)}
+            onUploadDoc={async (file) => {
+              const result = await base44.integrations.Core.UploadPrivateFile({ file });
+              return result;
+            }}
+          />
+        </TabsContent>
+
+        {/* ── DOCUMENTS ── */}
+        <TabsContent value="documents" className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2.5 text-xs text-blue-800">
+            Upload the signed BSP document and the Functional Behavior Assessment. These are stored privately and accessible to managers and admins.
+          </div>
+
+          {/* BSP Document */}
+          <div className="border border-border rounded-xl p-4">
+            <Label className="text-sm font-semibold">BSP Document</Label>
+            <p className="text-xs text-muted-foreground mb-2">The signed, final Behavior Support Plan.</p>
+            {form.bsp_document_url ? (
+              <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <span className="truncate">{form.bsp_document_url.split("/").pop()}</span>
+                </div>
+                <button type="button" onClick={() => set("bsp_document_url", "")} className="text-destructive"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 text-sm text-primary cursor-pointer hover:underline">
+                <Upload className="w-4 h-4" /> Upload BSP document
+                <input type="file" className="hidden" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const result = await base44.integrations.Core.UploadPrivateFile({ file });
+                  set("bsp_document_url", result.file_uri);
+                }} accept=".pdf,.doc,.docx" />
+              </label>
+            )}
+          </div>
+
+          {/* FBA Document */}
+          <div className="border border-border rounded-xl p-4">
+            <Label className="text-sm font-semibold">Functional Behavior Assessment</Label>
+            <p className="text-xs text-muted-foreground mb-2">The full FBA document.</p>
+            {form.fba_document_url ? (
+              <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <span className="truncate">{form.fba_document_url.split("/").pop()}</span>
+                </div>
+                <button type="button" onClick={() => set("fba_document_url", "")} className="text-destructive"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 text-sm text-primary cursor-pointer hover:underline">
+                <Upload className="w-4 h-4" /> Upload FBA document
+                <input type="file" className="hidden" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const result = await base44.integrations.Core.UploadPrivateFile({ file });
+                  set("fba_document_url", result.file_uri);
+                }} accept=".pdf,.doc,.docx" />
+              </label>
+            )}
+          </div>
         </TabsContent>
 
         {/* ── FAMILY SUMMARY ── */}

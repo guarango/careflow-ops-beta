@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Wand2, ArrowLeft, Save, Plus, Trash2, Heart, Shield } from "lucide-react";
 import { assembleISPDraft, DOMAINS } from "./ISPAssembler";
+import SupportStrategiesEditor from "./SupportStrategiesEditor";
 import { cn } from "@/lib/utils";
 
 const SUPPORT_LEVELS = ["No Support", "Intermittent", "Limited", "Extensive", "Pervasive"];
@@ -108,6 +109,7 @@ export default function ISPEditor({ plan, clients, onSave, onCancel, saving }) {
           <TabsTrigger value="domains">Life Domains</TabsTrigger>
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
+          <TabsTrigger value="strategies">Support Strategies</TabsTrigger>
           <TabsTrigger value="rights">Rights & Risks</TabsTrigger>
           <TabsTrigger value="team">Team Input</TabsTrigger>
           <TabsTrigger value="signatures">Signatures</TabsTrigger>
@@ -344,6 +346,16 @@ export default function ISPEditor({ plan, clients, onSave, onCancel, saving }) {
               </div>
             );
           })}
+        </TabsContent>
+
+        {/* ── SUPPORT STRATEGIES ── */}
+        <TabsContent value="strategies">
+          <SupportStrategiesEditor
+            strategies={form.support_strategies || []}
+            goals={goals}
+            services={form.service_grid || []}
+            onChange={(updated) => set("support_strategies", updated)}
+          />
         </TabsContent>
 
         {/* ── RIGHTS & RISKS ── */}

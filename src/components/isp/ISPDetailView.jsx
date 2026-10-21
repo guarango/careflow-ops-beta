@@ -8,6 +8,7 @@ import { ArrowLeft, Edit, FileText, Download, AlertTriangle, CheckCircle2, Clock
 import ISPGoalsSummary from "./ISPGoalsSummary";
 import ISPSignaturePanel from "./ISPSignaturePanel";
 import ISPPDFExport from "./ISPPDFExport";
+import { validateSupportStrategies } from "./SupportStrategiesEditor";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,40 @@ const STATUS_COLORS = {
   "Archived": "bg-slate-100 text-slate-500",
   "Amended": "bg-purple-100 text-purple-700",
 };
+
+function SupportStrategiesTab({ plan, goals }) {
+  const strategies = plan.support_strategies || [];
+  const flags = validateSupportStrategies(strategies, goals, plan.service_grid || []);
+
+  return (
+    <div className="space-y-4">
+      {flags.length > 0 && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
+          <p className="text-xs font-bold text-amber-800 flex items-center gap-1.5 mb-1"><AlertTriangle className="w-3.5 h-3.5" />{flags.length} item{flags.length !== 1 ? "s" : ""} without a support strategy</p>
+          {flags.map((f, i) => <p key={i} className="text-xs text-amber-700">• {f}</p>)}
+        </div>
+      )}
+      {strategies.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-8">No support strategies documented. Edit the plan to add them.</p>
+      ) : (
+        <div className="space-y-3">
+          {strategies.map((s, i) => (
+            <div key={i} className="border border-border rounded-xl p-4">
+              <p className="text-sm font-medium">{s.strategy_description}</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {s.linked_goal_title && <Badge variant="outline" className="text-xs bg-violet-50 text-violet-700">Goal: {s.linked_goal_title}</Badge>}
+                {s.linked_service_type && <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">Service: {s.linked_service_type}</Badge>}
+                {s.frequency && <Badge variant="outline" className="text-xs">{s.frequency}</Badge>}
+                {s.responsible_role && <Badge variant="outline" className="text-xs">{s.responsible_role}</Badge>}
+              </div>
+              {s.notes && <p className="text-xs text-muted-foreground mt-2">{s.notes}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ISPDetailView({ plan, onEdit, onBack, onUpdate, updating }) {
   const [activeTab, setActiveTab] = useState("overview");
@@ -122,6 +157,7 @@ export default function ISPDetailView({ plan, onEdit, onBack, onUpdate, updating
           <TabsTrigger value="goals">Goals</TabsTrigger>
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
+          <TabsTrigger value="strategies">Support Strategies</TabsTrigger>
           <TabsTrigger value="rights">Rights & Risks</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="signatures">
@@ -270,6 +306,11 @@ export default function ISPDetailView({ plan, onEdit, onBack, onUpdate, updating
               );
             })}
           </div>
+        </TabsContent>
+
+        {/* SUPPORT STRATEGIES */}
+        <TabsContent value="strategies">
+          <SupportStrategiesTab plan={plan} goals={goals} />
         </TabsContent>
 
         {/* RIGHTS & RISKS */}

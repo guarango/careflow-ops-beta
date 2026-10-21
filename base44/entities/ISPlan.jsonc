@@ -519,6 +519,39 @@
     "plain_language_version": {
       "type": "string"
     },
+    "support_strategies": {
+      "type": "array",
+      "description": "Each PCSP goal must have at least one support strategy; each service must be linked to at least one (exempt: ELS, MTP, PBA, Professional Medication Monitoring, Respite)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "strategy_description": {
+            "type": "string"
+          },
+          "linked_goal_id": {
+            "type": "string"
+          },
+          "linked_goal_title": {
+            "type": "string"
+          },
+          "linked_service_type": {
+            "type": "string"
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "responsible_role": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategy_description"
+        ]
+      }
+    },
     "notes": {
       "type": "string"
     }

@@ -4,12 +4,14 @@ import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, AlertTriangle, CheckCircle2, Heart } from "lucide-react";
+import { ArrowLeft, Edit, AlertTriangle, CheckCircle2, Heart, FileText } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
 import BSPIncidentLogger from "./BSPIncidentLogger";
 import BSPAnalytics from "./BSPAnalytics";
 import BSPStaffAcknowledgment from "./BSPStaffAcknowledgment";
 import BSPRevisionLog from "./BSPRevisionLog";
+import BSPDSPView from "./BSPDSPView";
+import HumanRightsRestrictionForm from "./HumanRightsRestrictionForm";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -192,18 +194,38 @@ export default function BSPDetailView({ bsp: initialBsp, onEdit, onBack }) {
 
       <Tabs defaultValue="plan">
         <TabsList className="flex-wrap h-auto gap-1 mb-5">
+          <TabsTrigger value="dsp">DSP Quick Reference</TabsTrigger>
           <TabsTrigger value="plan">Support Plan</TabsTrigger>
-          <TabsTrigger value="incidents">Incident Log ({incidents.length})</TabsTrigger>
+          <TabsTrigger value="data">Behavior Data ({incidents.length})</TabsTrigger>
+          <TabsTrigger value="rights">Human Rights</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="training">Staff Training</TabsTrigger>
           <TabsTrigger value="revisions">Revisions</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="dsp">
+          <BSPDSPView bsp={bsp} />
+        </TabsContent>
+
         <TabsContent value="plan">
           {/* FBA */}
           {(bsp.fba_reason_for_referral || bsp.fba_summary_narrative) && (
             <div className="mb-5 bg-white border border-border rounded-xl p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-3">Functional Behavior Assessment Summary</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Functional Behavior Assessment Summary</p>
+                <div className="flex gap-2">
+                  {bsp.bsp_document_url && (
+                    <a href="#" onClick={async (e) => { e.preventDefault(); const r = await base44.integrations.Core.CreateFileSignedUrl({ file_uri: bsp.bsp_document_url }); window.open(r.signed_url, "_blank"); }} className="text-xs text-primary hover:underline flex items-center gap-1">
+                      <FileText className="w-3 h-3" />BSP Doc
+                    </a>
+                  )}
+                  {bsp.fba_document_url && (
+                    <a href="#" onClick={async (e) => { e.preventDefault(); const r = await base44.integrations.Core.CreateFileSignedUrl({ file_uri: bsp.fba_document_url }); window.open(r.signed_url, "_blank"); }} className="text-xs text-primary hover:underline flex items-center gap-1">
+                      <FileText className="w-3 h-3" />FBA Doc
+                    </a>
+                  )}
+                </div>
+              </div>
               {bsp.fba_reason_for_referral && <div className="mb-3"><p className="text-xs font-semibold mb-1">Reason for Referral</p><p className="text-sm">{bsp.fba_reason_for_referral}</p></div>}
               {bsp.fba_diagnostic_context && <div className="mb-3"><p className="text-xs font-semibold mb-1">Diagnostic Context</p><p className="text-sm">{bsp.fba_diagnostic_context}</p></div>}
               {bsp.fba_assessment_methods?.length > 0 && <div className="mb-3"><p className="text-xs font-semibold mb-1">Assessment Methods</p><div className="flex flex-wrap gap-1">{bsp.fba_assessment_methods.map(m => <Badge key={m} variant="outline" className="text-xs">{m}</Badge>)}</div></div>}
@@ -229,8 +251,19 @@ export default function BSPDetailView({ bsp: initialBsp, onEdit, onBack }) {
           </div>
         </TabsContent>
 
-        <TabsContent value="incidents">
+        <TabsContent value="data">
           <BSPIncidentLogger bsp={bsp} incidents={incidents} onLog={(data) => logIncidentMutation.mutate(data)} logging={logIncidentMutation.isPending} />
+        </TabsContent>
+
+        <TabsContent value="rights">
+          <HumanRightsRestrictionForm
+            restrictions={bsp.human_rights_restrictions || []}
+            onChange={(updated) => updateBspMutation.mutate({ human_rights_restrictions: updated })}
+            onUploadDoc={async (file) => {
+              const result = await base44.integrations.Core.UploadPrivateFile({ file });
+              return result;
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="analytics">
