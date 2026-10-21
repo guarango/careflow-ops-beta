@@ -82,8 +82,23 @@
     },
     "alert_threshold_pct": {
       "type": "number",
-      "default": 80,
+      "default": 75,
       "description": "Alert when this % of units used"
+    },
+    "alert_75_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Alert sent at 75% utilization"
+    },
+    "alert_90_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Alert sent at 90% utilization"
+    },
+    "alert_expiry_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Alert sent 30 days before expiration"
     },
     "alert_sent": {
       "type": "boolean",
@@ -100,5 +115,36 @@
     "unit_type",
     "start_date",
     "end_date"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_id": {
+            "$in": "{{user.data.assigned_client_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

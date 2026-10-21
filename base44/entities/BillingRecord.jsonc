@@ -8,6 +8,10 @@
     "client_name": {
       "type": "string"
     },
+    "medicaid_id": {
+      "type": "string",
+      "description": "Client Medicaid ID for billing export"
+    },
     "service_type": {
       "type": "string",
       "enum": [
@@ -18,6 +22,26 @@
         "Supported Employment"
       ]
     },
+    "service_code_id": {
+      "type": "string"
+    },
+    "service_code": {
+      "type": "string"
+    },
+    "shift_id": {
+      "type": "string",
+      "description": "Linked ShiftSchedule record"
+    },
+    "session_note_id": {
+      "type": "string",
+      "description": "Linked approved SessionNote"
+    },
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
     "date": {
       "type": "string",
       "format": "date"
@@ -25,11 +49,27 @@
     "hours": {
       "type": "number"
     },
+    "units": {
+      "type": "number",
+      "description": "Billable units (15-min, hourly, or daily)"
+    },
+    "unit_type": {
+      "type": "string",
+      "enum": [
+        "15-minute",
+        "Hourly",
+        "Daily"
+      ]
+    },
     "rate": {
       "type": "number"
     },
     "total_amount": {
       "type": "number"
+    },
+    "evv_verified": {
+      "type": "boolean",
+      "default": false
     },
     "insurance_provider": {
       "type": "string"
@@ -47,6 +87,30 @@
         "Appealed"
       ],
       "default": "Pending"
+    },
+    "billable": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if all billing prerequisites are met"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Reasons this record is not billable"
+    },
+    "exported": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if included in a billing export"
+    },
+    "exported_at": {
+      "type": "string"
+    },
+    "export_id": {
+      "type": "string",
+      "description": "BillingExportLog ID"
     },
     "notes": {
       "type": "string"

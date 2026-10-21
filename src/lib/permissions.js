@@ -34,7 +34,7 @@ export const NAV_ACCESS = {
   "/timecards":     ["dsp", "manager", "admin", "super_admin"],
   "/hr":            ["admin", "super_admin"],
   "/compliance":   ["manager", "admin", "super_admin"],
-  "/finance":      ["admin", "super_admin"],
+  "/finance":      ["manager", "admin", "super_admin"],
   "/reports":      ["manager", "admin", "super_admin"],
   "/users":        ["admin", "super_admin"],
   "/agency-admin": ["admin", "super_admin"],
