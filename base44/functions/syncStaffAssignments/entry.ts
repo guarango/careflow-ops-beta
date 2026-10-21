@@ -31,16 +31,26 @@ export default async function(req) {
     if (body.staff_id) {
       staffIds = [body.staff_id];
     } else if (body.house_id) {
-      // Find all managers assigned to this house
-      const { items: managers } = await base44.asServiceRole.entities.StaffMember.filter({
+      const managers = await base44.asServiceRole.entities.StaffMember.filter({
         assigned_house_ids: body.house_id
-      }, { limit: 500 });
-      staffIds = managers.map(s => s.id);
+      });
+      const mgrList = Array.isArray(managers) ? managers : (managers?.items || []);
+      staffIds = mgrList.map(s => s.id);
     } else if (body.full_sync) {
-      const { items: allStaff } = await base44.asServiceRole.entities.StaffMember.filter({}, { limit: 500 });
-      staffIds = allStaff.map(s => s.id);
+      const allStaff = await base44.asServiceRole.entities.StaffMember.filter({});
+      staffIds = (Array.isArray(allStaff) ? allStaff : (allStaff?.items || [])).map(s => s.id);
     } else {
       return Response.json({ error: 'Provide staff_id, house_id, or full_sync' }, { status: 400 });
+    }
+
+    // Fetch all users once — User entity doesn't support .filter() with options
+    const allUsersRaw = await base44.asServiceRole.entities.User.list();
+    const allUsers = Array.isArray(allUsersRaw) ? allUsersRaw : (allUsersRaw?.items || []);
+    const userById = new Map();
+    const userEmailMap = new Map();
+    for (const u of allUsers) {
+      userById.set(u.id, u);
+      if (u.email) userEmailMap.set(u.email.toLowerCase(), u);
     }
 
     const results = [];
@@ -48,19 +58,18 @@ export default async function(req) {
     for (const staffId of staffIds) {
       try {
         // Fetch the staff record (service role to bypass RLS)
-        const { items: staffArr } = await base44.asServiceRole.entities.StaffMember.filter({ id: staffId }, { limit: 1 });
-        const staff = staffArr[0];
+        const staffArr = await base44.asServiceRole.entities.StaffMember.filter({ id: staffId });
+        const staffList = Array.isArray(staffArr) ? staffArr : (staffArr?.items || []);
+        const staff = staffList[0];
         if (!staff) { results.push({ staffId, error: 'Staff not found' }); continue; }
 
         // Find linked User by user_id or email
         let linkedUser = null;
         if (staff.user_id) {
-          const { items: users } = await base44.asServiceRole.entities.User.filter({ id: staff.user_id }, { limit: 1 });
-          linkedUser = users[0];
+          linkedUser = userById.get(staff.user_id);
         }
         if (!linkedUser && staff.email) {
-          const { items: users } = await base44.asServiceRole.entities.User.filter({ email: staff.email }, { limit: 1 });
-          linkedUser = users[0];
+          linkedUser = userEmailMap.get(staff.email.toLowerCase());
         }
 
         // Compute full caseload: direct client IDs + clients in assigned houses
@@ -69,11 +78,11 @@ export default async function(req) {
         let houseClientIds = [];
 
         if (houseIds.length > 0) {
-          const { items: houseClients } = await base44.asServiceRole.entities.Client.filter(
-            { house_id: { $in: houseIds } },
-            { limit: 500 }
+          const houseClients = await base44.asServiceRole.entities.Client.filter(
+            { house_id: { $in: houseIds } }
           );
-          houseClientIds = houseClients.map(c => c.id);
+          const clientList = Array.isArray(houseClients) ? houseClients : (houseClients?.items || []);
+          houseClientIds = clientList.map(c => c.id);
         }
 
         // Merge and deduplicate
@@ -82,11 +91,11 @@ export default async function(req) {
         // Compute team: all staff assigned to any client in the caseload
         let teamStaffIds = [];
         if (fullCaseload.length > 0) {
-          const { items: teamStaff } = await base44.asServiceRole.entities.StaffMember.filter(
-            { assigned_client_ids: { $in: fullCaseload } },
-            { limit: 500 }
+          const teamStaff = await base44.asServiceRole.entities.StaffMember.filter(
+            { assigned_client_ids: { $in: fullCaseload } }
           );
-          teamStaffIds = teamStaff.map(s => s.id).filter(id => id !== staffId);
+          const teamList = Array.isArray(teamStaff) ? teamStaff : (teamStaff?.items || []);
+          teamStaffIds = teamList.map(s => s.id).filter(id => id !== staffId);
         }
 
         // Update the linked User if found
@@ -105,7 +114,6 @@ export default async function(req) {
             houses: houseIds.length
           });
         } else {
-          // No linked user — still record the computation
           results.push({
             staffId,
             userId: null,

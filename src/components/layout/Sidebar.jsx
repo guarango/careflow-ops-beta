@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, UserCheck, ClipboardList, AlertTriangle,
   Pill, Clock, ShieldCheck, DollarSign, Target, Calendar,
-  UsersRound, ReceiptText, Briefcase, Settings,
+  UsersRound, ReceiptText, Briefcase, Settings, Home,
   Eye, ChevronDown, ChevronRight, Menu, X, FileText, Stethoscope, Brain, Bell
 } from "lucide-react";
 
@@ -36,6 +36,7 @@ const ALL_NAV = [
     section: "Staff & Operations",
     items: [
       { path: "/staff", label: "Staff", icon: UserCheck },
+      { path: "/houses", label: "Houses", icon: Home },
       { path: "/schedule", label: "Schedule & EVV", icon: Calendar },
       { path: "/timecards", label: "Timecards", icon: Clock },
       { path: "/hr", label: "HR & Compliance", icon: Briefcase },

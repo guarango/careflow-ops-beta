@@ -32,6 +32,7 @@ import Reports from './pages/Reports';
 import BSP from './pages/BSP';
 import ISP from './pages/ISP';
 import NotificationCenter from './pages/NotificationCenter';
+import Houses from './pages/Houses';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -75,6 +76,7 @@ const AuthenticatedApp = () => {
         <Route path="/bsp" element={<RouteGuard path="/bsp"><BSP /></RouteGuard>} />
         <Route path="/isp" element={<RouteGuard path="/isp"><ISP /></RouteGuard>} />
         <Route path="/notifications" element={<RouteGuard path="/notifications"><NotificationCenter /></RouteGuard>} />
+        <Route path="/houses" element={<RouteGuard path="/houses"><Houses /></RouteGuard>} />
       </Route>
       {/* Standalone routes — no sidebar layout */}
       <Route path="/super-admin" element={<SuperAdmin />} />
