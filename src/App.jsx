@@ -36,6 +36,10 @@ import NotificationCenter from './pages/NotificationCenter';
 import Houses from './pages/Houses';
 import ESignatures from './pages/ESignatures';
 import SignDocument from './pages/SignDocument';
+import TrainingBuilder from './pages/TrainingBuilder';
+import MyTrainings from './pages/MyTrainings';
+import TrainingVerification from './pages/TrainingVerification';
+import TrainingHoursReport from './pages/TrainingHoursReport';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -82,6 +86,10 @@ const AuthenticatedApp = () => {
         <Route path="/notifications" element={<RouteGuard path="/notifications"><NotificationCenter /></RouteGuard>} />
         <Route path="/houses" element={<RouteGuard path="/houses"><Houses /></RouteGuard>} />
         <Route path="/hr/signatures" element={<RouteGuard path="/hr/signatures"><ESignatures /></RouteGuard>} />
+        <Route path="/hr/trainings" element={<RouteGuard path="/hr/trainings"><TrainingBuilder /></RouteGuard>} />
+        <Route path="/my-trainings" element={<RouteGuard path="/my-trainings"><MyTrainings /></RouteGuard>} />
+        <Route path="/hr/training-verify" element={<RouteGuard path="/hr/training-verify"><TrainingVerification /></RouteGuard>} />
+        <Route path="/reports/training-hours" element={<RouteGuard path="/reports/training-hours"><TrainingHoursReport /></RouteGuard>} />
         </Route>
       {/* Standalone routes — no sidebar layout */}
       <Route path="/super-admin" element={<SuperAdmin />} />

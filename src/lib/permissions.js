@@ -44,12 +44,17 @@ export const NAV_ACCESS = {
   "/notifications":["dsp", "manager", "admin", "super_admin"],
   "/houses":       ["manager", "admin", "super_admin"],
   "/hr/signatures": ["admin", "super_admin"],
+  "/hr/trainings":  ["admin", "super_admin"],
+  "/my-trainings":  ["dsp", "manager", "admin", "super_admin"],
+  "/hr/training-verify": ["manager", "admin", "super_admin"],
+  "/reports/training-hours": ["manager", "admin", "super_admin"],
   "/sign":          ["dsp", "manager", "admin", "super_admin"],
 };
 
 // Paths that require an Admin bundle (super_admin bypasses)
 const PATH_BUNDLES = {
   "/hr":      "hr",
+  "/hr/trainings": "hr",
   "/finance": "billing",
 };
 

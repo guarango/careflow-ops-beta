@@ -1,0 +1,228 @@
+{
+  "name": "TrainingAssignment",
+  "type": "object",
+  "properties": {
+    "training_id": {
+      "type": "string"
+    },
+    "training_title": {
+      "type": "string"
+    },
+    "training_version": {
+      "type": "number",
+      "default": 1
+    },
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "assigned_by": {
+      "type": "string"
+    },
+    "assigned_by_name": {
+      "type": "string"
+    },
+    "assigned_at": {
+      "type": "string"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "assignment_type": {
+      "type": "string",
+      "enum": [
+        "onboarding",
+        "client",
+        "manual"
+      ],
+      "default": "manual"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "house_id": {
+      "type": "string"
+    },
+    "house_name": {
+      "type": "string"
+    },
+    "group_label": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Assigned",
+        "In Progress",
+        "Completed",
+        "Verified",
+        "Returned"
+      ],
+      "default": "Assigned"
+    },
+    "progress_pct": {
+      "type": "number",
+      "default": 0
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "verified_by": {
+      "type": "string"
+    },
+    "verified_by_name": {
+      "type": "string"
+    },
+    "verified_at": {
+      "type": "string"
+    },
+    "hours_awarded": {
+      "type": "number",
+      "default": 0
+    },
+    "responses": {
+      "type": "array",
+      "description": "Written responses and assessment results",
+      "items": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string"
+          },
+          "section_id": {
+            "type": "string"
+          },
+          "lesson_id": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "assessment_correct": {
+            "type": "boolean"
+          },
+          "attempts": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "return_note": {
+      "type": "string"
+    },
+    "is_external": {
+      "type": "boolean",
+      "default": false
+    },
+    "external_title": {
+      "type": "string"
+    },
+    "external_provider": {
+      "type": "string"
+    },
+    "external_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "certificate_uri": {
+      "type": "string",
+      "description": "Privately stored certificate file URI"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "staff_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "data.staff_id": {
+            "$in": "{{user.data.team_staff_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "data.staff_id": {
+            "$in": "{{user.data.team_staff_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "data.staff_id": {
+            "$in": "{{user.data.team_staff_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

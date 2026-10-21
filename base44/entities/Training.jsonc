@@ -1,0 +1,232 @@
+{
+  "name": "Training",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Training course title"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Published"
+      ],
+      "default": "Draft"
+    },
+    "training_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Hours awarded on completion (e.g. 1.5)"
+    },
+    "due_rule": {
+      "type": "string",
+      "enum": [
+        "Within 7 days",
+        "Within 14 days",
+        "Within 30 days",
+        "Within 60 days",
+        "Within 90 days",
+        "No due date"
+      ],
+      "default": "Within 30 days"
+    },
+    "linked_onboarding_requirement": {
+      "type": "string",
+      "description": "Onboarding requirement this training satisfies (e.g. CPR/First Aid)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Agency-Universal",
+        "Role-Specific",
+        "Client-Specific",
+        "Certification",
+        "Competency"
+      ],
+      "default": "Agency-Universal"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "sections": {
+      "type": "array",
+      "description": "Course outline: sections contain lessons, lessons contain content blocks",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "lessons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "content_blocks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "text",
+                          "video",
+                          "image",
+                          "document",
+                          "response",
+                          "assessment"
+                        ]
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "required": {
+                        "type": "boolean",
+                        "default": true
+                      },
+                      "text_content": {
+                        "type": "string"
+                      },
+                      "video_url": {
+                        "type": "string"
+                      },
+                      "video_file_uri": {
+                        "type": "string"
+                      },
+                      "require_watch_to_end": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "image_uri": {
+                        "type": "string"
+                      },
+                      "image_caption": {
+                        "type": "string"
+                      },
+                      "document_uri": {
+                        "type": "string"
+                      },
+                      "document_name": {
+                        "type": "string"
+                      },
+                      "response_question": {
+                        "type": "string"
+                      },
+                      "response_min_chars": {
+                        "type": "number",
+                        "default": 0
+                      },
+                      "assessment_question": {
+                        "type": "string"
+                      },
+                      "assessment_type": {
+                        "type": "string",
+                        "enum": [
+                          "multiple_choice",
+                          "true_false"
+                        ]
+                      },
+                      "assessment_options": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "assessment_correct_index": {
+                        "type": "number"
+                      },
+                      "passing_score_pct": {
+                        "type": "number",
+                        "default": 80
+                      },
+                      "retakes_allowed": {
+                        "type": "boolean",
+                        "default": true
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "type"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      }
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "published_at": {
+      "type": "string"
+    },
+    "last_published_version": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
