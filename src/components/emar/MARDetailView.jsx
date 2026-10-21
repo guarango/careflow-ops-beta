@@ -14,22 +14,53 @@ import { useAuth } from "@/lib/AuthContext";
 
 const LOG_STATUSES = ["Administered", "Refused", "Held", "Not Available", "Missed"];
 
-function MedRow({ med, log, onLogChange, isControlled, isPRN, isMissed }) {
+function MedRow({ med, log, onLogChange, isControlled, isPRN, isMissed, scheduledTime }) {
   const [qty, setQty] = useState(log?.qty || "1");
   const [notes, setNotes] = useState(log?.notes || "");
   const [temp, setTemp] = useState(log?.temp || "");
   const [signed, setSigned] = useState(!!log?.signed);
   const [status, setStatus] = useState(log?.status || "Administered");
+  const [reason, setReason] = useState(log?.reason || "");
+  const [prnReasonGiven, setPrnReasonGiven] = useState(log?.prn_reason_given || "");
   const { user } = useAuth();
+
+  const needsReason = status !== "Administered";
 
   const handleSign = (checked) => {
     setSigned(checked);
     if (checked) {
+      const fullName = user?.full_name || user?.email || "Staff";
+      const initials = fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+      const now = new Date();
+      const recordedTime = now.toTimeString().slice(0, 5);
+      const recordedDate = now.toISOString().split("T")[0];
+
+      // Check if late (30+ min after scheduled time)
+      let isLate = false;
+      if (scheduledTime) {
+        const m = scheduledTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+        if (m) {
+          let h = parseInt(m[1]);
+          const min = parseInt(m[2]);
+          const ampm = m[3]?.toUpperCase();
+          if (ampm === "PM" && h !== 12) h += 12;
+          if (ampm === "AM" && h === 12) h = 0;
+          const schMin = h * 60 + min;
+          const nowMin = now.getHours() * 60 + now.getMinutes();
+          isLate = (nowMin - schMin) >= 30;
+        }
+      }
+
       onLogChange(med.id, {
-        status, qty, notes, temp,
+        status, qty, notes, temp, reason, prn_reason_given: prnReasonGiven,
         signed: true,
-        signed_by: user?.full_name || user?.email || "Staff",
-        signed_at: new Date().toISOString(),
+        signed_by: fullName,
+        signed_at: now.toISOString(),
+        staff_initials: initials,
+        time: recordedTime,
+        date: recordedDate,
+        is_late: isLate,
+        review_status: needsReason ? "pending_review" : (isLate ? "pending_review" : null),
       });
     } else {
       onLogChange(med.id, { signed: false });
@@ -109,12 +140,12 @@ function MedRow({ med, log, onLogChange, isControlled, isPRN, isMissed }) {
           {isPRN && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
               <div>
-                <Label className="text-xs text-gray-500 mb-1 block">Reason / Response Notes</Label>
+                <Label className="text-xs text-gray-500 mb-1 block">Reason for Giving *</Label>
                 <Textarea
-                  value={notes}
-                  onChange={e => { setNotes(e.target.value); onLogChange(med.id, { notes: e.target.value }); }}
+                  value={prnReasonGiven}
+                  onChange={e => { setPrnReasonGiven(e.target.value); onLogChange(med.id, { prn_reason_given: e.target.value }); }}
                   rows={2}
-                  placeholder="Document reason for administration and observed response..."
+                  placeholder="What prompted administering this PRN medication?"
                   className="text-xs border-gray-200 resize-none"
                 />
               </div>
@@ -127,6 +158,19 @@ function MedRow({ med, log, onLogChange, isControlled, isPRN, isMissed }) {
                   className="h-8 text-xs border-gray-200"
                 />
               </div>
+            </div>
+          )}
+
+          {needsReason && (
+            <div className="mt-3">
+              <Label className="text-xs text-gray-500 mb-1 block">Reason for {status} *</Label>
+              <Textarea
+                value={reason}
+                onChange={e => { setReason(e.target.value); onLogChange(med.id, { reason: e.target.value }); }}
+                rows={2}
+                placeholder={`Explain why this medication was ${status.toLowerCase()}...`}
+                className="text-xs border-gray-200 resize-none"
+              />
             </div>
           )}
 
@@ -186,12 +230,20 @@ export default function MARDetailView({ client, time, meds, date, allMeds, logs,
         client_id: client.id,
         client_name: `${client.first_name} ${client.last_name}`,
         medication_name: med.medication_name,
-        date,
-        time: new Date().toTimeString().slice(0, 5),
+        date: data.date || date,
+        time: data.time || new Date().toTimeString().slice(0, 5),
         status: data.status || "Administered",
         notes: data.notes || "",
+        reason: data.reason || "",
+        prn_reason_given: data.prn_reason_given || "",
         administered_by_name: data.signed_by || "Staff",
+        staff_initials: data.staff_initials || "",
         qty: data.qty || "1",
+        signed: data.signed || false,
+        signed_by: data.signed_by || "",
+        signed_at: data.signed_at || "",
+        is_late: data.is_late || false,
+        review_status: data.review_status || null,
       });
     }
     onSave?.();
@@ -256,6 +308,7 @@ export default function MARDetailView({ client, time, meds, date, allMeds, logs,
                     isControlled={!!med.is_controlled}
                     isPRN={false}
                     isMissed={isMissed}
+                    scheduledTime={time}
                   />
                 </div>
               );
@@ -280,6 +333,7 @@ export default function MARDetailView({ client, time, meds, date, allMeds, logs,
                 onLogChange={handleLogChange}
                 isControlled={!!med.is_controlled}
                 isPRN={true}
+                scheduledTime={null}
               />
             ))}
           </div>

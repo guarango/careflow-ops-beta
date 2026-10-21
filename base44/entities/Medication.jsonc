@@ -43,6 +43,22 @@
         "type": "string"
       }
     },
+    "schedule_days": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ]
+      },
+      "description": "Days of the week this medication is scheduled"
+    },
     "prescriber": {
       "type": "string"
     },
@@ -59,6 +75,25 @@
     },
     "instructions": {
       "type": "string"
+    },
+    "side_effects": {
+      "type": "string",
+      "description": "Known side effects to watch for"
+    },
+    "prn_instructions": {
+      "type": "string",
+      "description": "PRN-specific instructions: when to give, max doses per day, minimum time between doses"
+    },
+    "diagnosis": {
+      "type": "string"
+    },
+    "is_controlled": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_prn": {
+      "type": "boolean",
+      "default": false
     },
     "status": {
       "type": "string",

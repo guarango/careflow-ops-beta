@@ -25,6 +25,7 @@ import MedAutocomplete from "@/components/emar/MedAutocomplete";
 import MARScheduledView from "@/components/emar/MARScheduledView";
 import MARDetailView from "@/components/emar/MARDetailView";
 import MARAdminSummary from "@/components/emar/MARAdminSummary";
+import MedErrorReviewQueue from "@/components/emar/MedErrorReviewQueue";
 import { cn } from "@/lib/utils";
 
 const routes = ["Oral", "Topical", "Injection", "Inhaled", "Sublingual", "Other"];
@@ -35,7 +36,7 @@ const DAY_KEYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const emptyMed = {
   client_id: "", client_name: "", medication_name: "", dosage: "", route: "",
   frequency: "", prescriber: "", pharmacy: "", start_date: "", end_date: "",
-  instructions: "", status: "Active", scheduled_times: [], schedule_days: [...DAY_KEYS],
+  instructions: "", side_effects: "", prn_instructions: "", status: "Active", scheduled_times: [], schedule_days: [...DAY_KEYS],
 };
 const emptyLog = {
   medication_id: "", client_id: "", client_name: "", medication_name: "",
@@ -170,6 +171,7 @@ export default function EMAR() {
           <TabsTrigger value="medications">Medications</TabsTrigger>
           <TabsTrigger value="summary">Administration Summary</TabsTrigger>
           <TabsTrigger value="logs">Administration Log</TabsTrigger>
+          {canEdit && <TabsTrigger value="review">Med Error Review</TabsTrigger>}
         </TabsList>
 
         {/* ── SCHEDULED MAR TAB ─────────────────────────────── */}
@@ -307,6 +309,13 @@ export default function EMAR() {
             </Card>
           )}
         </TabsContent>
+
+        {/* ── MED ERROR REVIEW TAB ─────────────────────────── */}
+        {canEdit && (
+          <TabsContent value="review">
+            <MedErrorReviewQueue visibleLogs={visibleLogs} />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Add/Edit Medication Dialog */}
@@ -365,6 +374,16 @@ export default function EMAR() {
                 <Label>Diagnosis</Label>
                 <Input value={medForm.diagnosis || ""} onChange={e => setMedForm(f => ({ ...f, diagnosis: e.target.value }))} />
               </div>
+              <div>
+                <Label>Side Effects</Label>
+                <Textarea value={medForm.side_effects || ""} onChange={e => setMedForm(f => ({ ...f, side_effects: e.target.value }))} rows={2} placeholder="Known side effects to watch for..." />
+              </div>
+              {medForm.is_prn && (
+                <div>
+                  <Label>PRN Instructions</Label>
+                  <Textarea value={medForm.prn_instructions || ""} onChange={e => setMedForm(f => ({ ...f, prn_instructions: e.target.value }))} rows={3} placeholder="When to give, max doses per day, minimum time between doses..." />
+                </div>
+              )}
               <MedScheduleSection form={medForm} setForm={setMedForm} />
             </div>
             <DialogFooter className="mt-4">

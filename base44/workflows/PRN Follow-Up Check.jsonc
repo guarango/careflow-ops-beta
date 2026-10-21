@@ -1,0 +1,45 @@
+{
+  "name": "PRN Follow-Up Check",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "America/Denver",
+      "interval_value": 5,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-10-21T06:00:00Z",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Runs every 5 minutes to check for PRN medication administrations that are 60+ minutes old without an effectiveness note, and reminds the DSP to record it",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "prn_followup_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_check": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkPRNFollowUps",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Check PRN Follow-Ups",
+            "description": "Remind DSPs to record PRN effectiveness notes after 60 minutes"
+          }
+        }
+      }
+    ]
+  }
+}

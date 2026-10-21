@@ -20,12 +20,17 @@
     "administered_by_name": {
       "type": "string"
     },
+    "staff_initials": {
+      "type": "string",
+      "description": "Auto-recorded staff initials"
+    },
     "date": {
       "type": "string",
       "format": "date"
     },
     "time": {
-      "type": "string"
+      "type": "string",
+      "description": "Auto-recorded administration time (HH:mm)"
     },
     "status": {
       "type": "string",
@@ -38,8 +43,75 @@
       ],
       "default": "Administered"
     },
+    "reason": {
+      "type": "string",
+      "description": "Required when status is not Administered"
+    },
+    "prn_reason_given": {
+      "type": "string",
+      "description": "Reason for administering a PRN medication"
+    },
+    "prn_effectiveness_note": {
+      "type": "string",
+      "description": "Follow-up effectiveness note recorded 60 minutes after PRN administration"
+    },
+    "prn_effectiveness_recorded_at": {
+      "type": "string"
+    },
     "notes": {
       "type": "string"
+    },
+    "qty": {
+      "type": "string"
+    },
+    "temp": {
+      "type": "string"
+    },
+    "signed": {
+      "type": "boolean",
+      "default": false
+    },
+    "signed_by": {
+      "type": "string"
+    },
+    "signed_at": {
+      "type": "string"
+    },
+    "signature_timestamp": {
+      "type": "string"
+    },
+    "is_late": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if recorded 30+ minutes after scheduled time"
+    },
+    "system_generated": {
+      "type": "boolean",
+      "default": false,
+      "description": "True for system-created Missed logs"
+    },
+    "review_status": {
+      "type": "string",
+      "enum": [
+        "pending_review",
+        "reviewed",
+        "converted"
+      ],
+      "description": "Med error review queue status"
+    },
+    "review_followup": {
+      "type": "string",
+      "description": "Manager follow-up notes"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string"
+    },
+    "converted_to_incident_id": {
+      "type": "string",
+      "description": "IncidentReport ID if converted"
     }
   },
   "required": [
