@@ -51,6 +51,7 @@ export const NAV_ACCESS = {
   "/summaries/monthly":    ["manager", "admin", "super_admin"],
   "/summaries/quarterly":  ["manager", "admin", "super_admin"],
   "/sign":          ["dsp", "manager", "admin", "super_admin"],
+  "/recognition":  ["dsp", "manager", "admin", "super_admin"],
 };
 
 // Paths that require an Admin bundle (super_admin bypasses)
@@ -97,6 +98,8 @@ export const CAN = {
   manageSignatures:       ["admin", "super_admin"],
   sendSignatureRequests:  ["admin", "super_admin"],
   viewTeamSignatures:     ["manager", "admin", "super_admin"],
+  manageRecognition:      ["admin", "super_admin"],
+  giveKudos:              ["manager", "admin", "super_admin"],
 };
 
 // Permissions that require a bundle (Admin only; super_admin bypasses)

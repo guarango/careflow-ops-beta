@@ -1,0 +1,122 @@
+{
+  "name": "RecognitionSettings",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Master toggle for the entire recognition program"
+    },
+    "point_values": {
+      "type": "object",
+      "description": "Editable point values for each recognized action",
+      "properties": {
+        "clock_in_on_time": {
+          "type": "number",
+          "default": 5
+        },
+        "clock_out_on_time": {
+          "type": "number",
+          "default": 5
+        },
+        "note_on_time": {
+          "type": "number",
+          "default": 10
+        },
+        "note_same_shift_bonus": {
+          "type": "number",
+          "default": 5
+        },
+        "med_pass_on_time_clean": {
+          "type": "number",
+          "default": 10
+        },
+        "goal_data_collected": {
+          "type": "number",
+          "default": 5
+        },
+        "shift_streak_base": {
+          "type": "number",
+          "default": 5
+        },
+        "training_before_due": {
+          "type": "number",
+          "default": 15
+        },
+        "kudos_manager": {
+          "type": "number",
+          "default": 20
+        }
+      }
+    },
+    "leaderboard_opt_in_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether DSPs are opted into leaderboards by default"
+    },
+    "kudos_monthly_limit": {
+      "type": "number",
+      "default": 5,
+      "description": "Max kudos a manager can give per month"
+    },
+    "streak_milestones": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "description": "Streak day counts that earn a badge",
+      "default": [
+        7,
+        14,
+        30,
+        60,
+        90
+      ]
+    },
+    "updated_by": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "enabled"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "dsp"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "name": "Kudos",
+  "type": "object",
+  "properties": {
+    "from_staff_id": {
+      "type": "string"
+    },
+    "from_staff_name": {
+      "type": "string"
+    },
+    "from_user_id": {
+      "type": "string",
+      "description": "Manager user ID who gave the kudos"
+    },
+    "to_staff_id": {
+      "type": "string"
+    },
+    "to_staff_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "month_key": {
+      "type": "string",
+      "description": "YYYY-MM for monthly limit tracking"
+    },
+    "message": {
+      "type": "string",
+      "description": "Privacy-safe recognition message"
+    },
+    "points_awarded": {
+      "type": "number",
+      "default": 0
+    },
+    "recognition_point_id": {
+      "type": "string",
+      "description": "Linked RecognitionPoint record"
+    }
+  },
+  "required": [
+    "from_staff_id",
+    "to_staff_id",
+    "date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.to_staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "data.from_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

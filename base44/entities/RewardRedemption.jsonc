@@ -1,0 +1,89 @@
+{
+  "name": "RewardRedemption",
+  "type": "object",
+  "properties": {
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "reward_id": {
+      "type": "string"
+    },
+    "reward_name": {
+      "type": "string"
+    },
+    "point_cost": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Approved",
+        "Denied",
+        "Fulfilled"
+      ],
+      "default": "Pending"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_by_name": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string"
+    },
+    "fulfilled_at": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "staff_id",
+    "reward_id",
+    "reward_name",
+    "point_cost",
+    "date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "data.staff_id": "{{user.data.staff_member_id}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

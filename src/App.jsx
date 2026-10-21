@@ -44,6 +44,7 @@ import MonthlySummaries from './pages/MonthlySummaries';
 import MonthlySummaryDetail from './pages/MonthlySummaryDetail';
 import QuarterlySummaries from './pages/QuarterlySummaries';
 import QuarterlySummaryDetail from './pages/QuarterlySummaryDetail';
+import Recognition from './pages/Recognition';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -98,6 +99,7 @@ const AuthenticatedApp = () => {
         <Route path="/summaries/monthly/:id" element={<RouteGuard path="/summaries/monthly"><MonthlySummaryDetail /></RouteGuard>} />
         <Route path="/summaries/quarterly" element={<RouteGuard path="/summaries/quarterly"><QuarterlySummaries /></RouteGuard>} />
         <Route path="/summaries/quarterly/:id" element={<RouteGuard path="/summaries/quarterly"><QuarterlySummaryDetail /></RouteGuard>} />
+        <Route path="/recognition" element={<RouteGuard path="/recognition"><Recognition /></RouteGuard>} />
         </Route>
       {/* Standalone routes — no sidebar layout */}
       <Route path="/super-admin" element={<SuperAdmin />} />

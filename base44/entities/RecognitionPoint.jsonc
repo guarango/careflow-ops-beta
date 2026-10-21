@@ -1,0 +1,87 @@
+{
+  "name": "RecognitionPoint",
+  "type": "object",
+  "properties": {
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "clock_in_on_time",
+        "clock_out_on_time",
+        "note_on_time",
+        "note_same_shift_bonus",
+        "med_pass_on_time_clean",
+        "goal_data_collected",
+        "shift_streak",
+        "training_before_due",
+        "kudos_manager"
+      ]
+    },
+    "points": {
+      "type": "number"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "shift_id": {
+      "type": "string",
+      "description": "Linked shift if applicable"
+    },
+    "training_assignment_id": {
+      "type": "string"
+    },
+    "kudos_id": {
+      "type": "string",
+      "description": "Linked kudos record if applicable"
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "staff_id",
+    "action",
+    "points",
+    "date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
