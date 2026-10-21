@@ -1,0 +1,89 @@
+{
+  "name": "PendingUserConfig",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email the invite was sent to"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "dsp",
+        "manager",
+        "admin"
+      ],
+      "default": "dsp"
+    },
+    "hr_bundle": {
+      "type": "boolean",
+      "default": false
+    },
+    "billing_bundle": {
+      "type": "boolean",
+      "default": false
+    },
+    "staff_member_id": {
+      "type": "string"
+    },
+    "assigned_client_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "assigned_house_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "team_staff_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "applied": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once the config has been applied to the User record"
+    },
+    "applied_user_id": {
+      "type": "string"
+    },
+    "applied_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "email",
+    "role"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

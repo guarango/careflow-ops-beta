@@ -1,0 +1,40 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "app_user_auth",
+      "events": [
+        "signup"
+      ]
+    }
+  },
+  "description": "When a user signs up, checks for a stored PendingUserConfig and applies the saved role, bundles, and assignments to the User record.",
+  "name": "Apply Pending User Config",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "apply_pending_user_config",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "apply_config": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "applyPendingUserConfig",
+            "args": {
+              "user_id": "${ .trigger.user_id }",
+              "email": "${ .trigger.email }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Apply pending user config",
+            "description": "Sets role, bundles, and assignments from stored invite config"
+          }
+        }
+      }
+    ]
+  }
+}

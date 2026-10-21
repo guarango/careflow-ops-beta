@@ -57,8 +57,20 @@ export default async function(req) {
         return Response.json({ success: true, email, role, userId: target.id, updated: true });
       }
 
-      // User record not found yet — invite was sent but role couldn't be set
-      return Response.json({ success: true, email, role, updated: false, warning: 'Role update pending — user record not yet queryable' });
+      // User record not found yet — store the config for the signup workflow
+      // to apply when the user accepts the invite and the User record is created
+      await base44.asServiceRole.entities.PendingUserConfig.create({
+        email: email.toLowerCase(),
+        role,
+        hr_bundle: role === 'admin' ? !!hrBundle : false,
+        billing_bundle: role === 'admin' ? !!billingBundle : false,
+        staff_member_id: staffMemberId || null,
+        assigned_client_ids: assignedClientIds || [],
+        assigned_house_ids: assignedHouseIds || [],
+        team_staff_ids: teamStaffIds || [],
+        applied: false,
+      });
+      return Response.json({ success: true, email, role, updated: false, pending: true, message: 'Invite sent. Role and assignments will be applied automatically when the user accepts.' });
     }
 
     // ─── Update an existing user's role/bundles ──────────────────────
