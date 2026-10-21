@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Plus, Search, ClipboardCheck, AlertTriangle } from "lucide-react";
+import { FileText, Plus, Search, ClipboardCheck, AlertTriangle, Clock } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import { useRole } from "@/hooks/useRole";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
@@ -19,11 +19,21 @@ import SupervisorReviewPanel from "@/components/sessionnotes/SupervisorReviewPan
 import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
 
+// ── Late note check ──
+function checkIsLate(note) {
+  if (!note || note.status === "Approved" || note.status === "Submitted") return false;
+  if (!note.date) return false;
+  // Default deadline: end of the same day (23:59)
+  const deadline = new Date(note.date + "T23:59:59");
+  return new Date() > deadline;
+}
+
 export default function SessionNotes() {
   const { isDSPMode, assignedClientIds } = useAssignedClients();
   const { can } = useRole();
   const { user } = useAuth();
   const canApproveNotes = can("approveSessionNotes");
+  const canAddAddendum = can("approveSessionNotes"); // admins/managers
 
   const [view, setView] = useState("list"); // "list" | "entry" | "review"
   const [selectedClient, setSelectedClient] = useState(null);
@@ -45,6 +55,14 @@ export default function SessionNotes() {
     queryKey: ["goals"],
     queryFn: () => base44.entities.ClientGoal.list(),
   });
+  const { data: serviceCodes = [] } = useQuery({
+    queryKey: ["service-codes"],
+    queryFn: () => base44.entities.ServiceCode.list(),
+  });
+  const { data: shifts = [] } = useQuery({
+    queryKey: ["shifts"],
+    queryFn: () => base44.entities.ShiftSchedule.list("-date"),
+  });
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.SessionNote.create(data),
@@ -52,7 +70,7 @@ export default function SessionNotes() {
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.SessionNote.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["session-notes"] }); setView("list"); setSelectedClient(null); setEditingNote(null); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["session-notes"] }); },
   });
 
   const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;
@@ -60,10 +78,14 @@ export default function SessionNotes() {
   const activeClients = visibleClients.filter(c => c.status === "Active" || !c.status);
 
   const filtered = visibleNotes.filter(n =>
-    `${n.client_name} ${n.staff_name} ${n.date}`.toLowerCase().includes(search.toLowerCase())
+    `${n.client_name} ${n.staff_name} ${n.date} ${n.service_code || ""}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  const pendingReview = notes.filter(n => n.status === "Submitted" || n.status === "Flagged for Review" || n.supervisor_action);
+  // Notes pending manager review
+  const pendingReview = notes.filter(n => n.status === "Submitted" || n.status === "Flagged for Review" || n.status === "Returned");
+
+  // Late notes (Draft or Returned past deadline)
+  const lateNotes = visibleNotes.filter(n => checkIsLate(n));
 
   const handleStartEntry = (client, existing = null) => {
     setSelectedClient(client);
@@ -72,24 +94,46 @@ export default function SessionNotes() {
   };
 
   const handleSave = (formData) => {
+    const data = { ...formData, is_late: checkIsLate(formData) };
     if (editingNote?.id) {
-      updateMutation.mutate({ id: editingNote.id, data: formData });
+      updateMutation.mutate({ id: editingNote.id, data });
+      queryClient.invalidateQueries({ queryKey: ["session-notes"] });
+      setView("list"); setSelectedClient(null); setEditingNote(null);
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(data);
     }
   };
 
-  const handleSupervisorAction = (note, action, coachingNote) => {
-    updateMutation.mutate({
-      id: note.id,
-      data: {
-        supervisor_action: action,
-        supervisor_note: coachingNote || "",
-        supervisor_reviewed_by: user?.full_name || "Supervisor",
-        supervisor_reviewed_at: new Date().toISOString(),
-        status: action === "Approved" ? "Approved" : action === "Flagged for Clinical Review" ? "Flagged for Review" : "Needs Revision",
-      }
-    });
+  const handleAutosave = (formData) => {
+    if (!editingNote?.id) return; // only autosave existing notes
+    const data = { ...formData, is_late: checkIsLate(formData) };
+    updateMutation.mutate({ id: editingNote.id, data });
+  };
+
+  const handleAddendum = ({ id, addenda, version, version_history }) => {
+    updateMutation.mutate({ id, data: { addenda, version, version_history } });
+    queryClient.invalidateQueries({ queryKey: ["session-notes"] });
+  };
+
+  const handleSupervisorAction = (note, action, comment) => {
+    const now = new Date().toISOString();
+    const updates = {
+      supervisor_action: action,
+      supervisor_note: comment || "",
+      supervisor_reviewed_by: user?.full_name || "Supervisor",
+      supervisor_reviewed_at: now,
+    };
+    if (action === "Approved") {
+      updates.status = "Approved";
+    } else if (action === "Returned") {
+      updates.status = "Returned";
+      updates.returned_comment = comment || "";
+      updates.returned_by = user?.full_name || "Supervisor";
+      updates.returned_at = now;
+    } else {
+      updates.status = "Flagged for Review";
+    }
+    updateMutation.mutate({ id: note.id, data: updates });
   };
 
   if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
@@ -101,9 +145,14 @@ export default function SessionNotes() {
       <SessionEntryForm
         client={selectedClient}
         goals={clientGoals}
+        serviceCodes={serviceCodes}
+        shifts={shifts}
         existingNote={editingNote}
         staffName={user?.full_name || ""}
+        canAddAddendum={canAddAddendum}
         onSave={handleSave}
+        onAutosave={handleAutosave}
+        onAddendum={handleAddendum}
         onCancel={() => { setView("list"); setSelectedClient(null); setEditingNote(null); }}
         saving={createMutation.isPending || updateMutation.isPending}
       />
@@ -115,7 +164,7 @@ export default function SessionNotes() {
     <div>
       <PageHeader
         title="Session Notes"
-        subtitle={`${visibleNotes.length} notes`}
+        subtitle={`${visibleNotes.length} notes${lateNotes.length > 0 ? ` · ${lateNotes.length} late` : ""}`}
         action={
           <Button onClick={() => setTab("new")} className="gap-1.5">
             <Plus className="w-4 h-4" />New Session Note
@@ -129,7 +178,7 @@ export default function SessionNotes() {
           <TabsTrigger value="new">Start New</TabsTrigger>
           {canApproveNotes && (
             <TabsTrigger value="review" className="relative">
-              Supervisor Review
+              Manager Review
               {pendingReview.filter(n => n.status === "Submitted").length > 0 && (
                 <span className="ml-1.5 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   {pendingReview.filter(n => n.status === "Submitted").length}
@@ -160,7 +209,7 @@ export default function SessionNotes() {
                     <TableRow>
                       <TableHead>Client</TableHead>
                       <TableHead>Date</TableHead>
-                      <TableHead className="hidden md:table-cell">Location</TableHead>
+                      <TableHead className="hidden md:table-cell">Service</TableHead>
                       <TableHead className="hidden md:table-cell">Staff</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="w-16"></TableHead>
@@ -169,6 +218,7 @@ export default function SessionNotes() {
                   <TableBody>
                     {filtered.map(n => {
                       const hasFlags = Object.values(n.health_safety_flags || {}).some(v => v === true);
+                      const isLate = checkIsLate(n);
                       const client = clients.find(c => c.id === n.client_id);
                       return (
                         <TableRow key={n.id} className="cursor-pointer hover:bg-muted/50" onClick={() => client && handleStartEntry(client, n)}>
@@ -179,12 +229,19 @@ export default function SessionNotes() {
                             </div>
                           </TableCell>
                           <TableCell className="text-sm">{n.date}</TableCell>
-                          <TableCell className="hidden md:table-cell text-sm">{n.location || "—"}</TableCell>
+                          <TableCell className="hidden md:table-cell text-sm">{n.service_code || "—"}</TableCell>
                           <TableCell className="hidden md:table-cell text-sm">{n.staff_name || "—"}</TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-0.5">
-                              <StatusBadge status={n.status || "Draft"} />
-                              {n.supervisor_note && (
+                              <div className="flex items-center gap-1">
+                                <StatusBadge status={n.status || "Draft"} />
+                                {isLate && (
+                                  <span className="flex items-center gap-0.5 text-[10px] text-red-600 font-bold">
+                                    <Clock className="w-3 h-3" />LATE
+                                  </span>
+                                )}
+                              </div>
+                              {n.supervisor_note && n.status !== "Approved" && (
                                 <span className="text-[10px] text-amber-700 flex items-center gap-1">
                                   <AlertTriangle className="w-3 h-3" />Has coaching note
                                 </span>
@@ -193,7 +250,7 @@ export default function SessionNotes() {
                           </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm" className="text-xs h-7" onClick={e => { e.stopPropagation(); client && handleStartEntry(client, n); }}>
-                              Edit
+                              {n.status === "Approved" ? "View" : "Edit"}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -244,7 +301,7 @@ export default function SessionNotes() {
           </div>
         </TabsContent>
 
-        {/* ── SUPERVISOR REVIEW TAB ─── */}
+        {/* ── MANAGER REVIEW TAB ─── */}
         {canApproveNotes && (
           <TabsContent value="review">
             <SupervisorReviewPanel

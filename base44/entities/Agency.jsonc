@@ -184,6 +184,11 @@
       "type": "number",
       "default": 0
     },
+    "session_note_deadline_time": {
+      "type": "string",
+      "description": "Deadline time (HH:mm) for same-day session note submission. Notes not submitted by this time are flagged Late.",
+      "default": "23:59"
+    },
     "notes": {
       "type": "string"
     }

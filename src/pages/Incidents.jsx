@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { useRole } from "@/hooks/useRole";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
+import DictationButton from "@/components/shared/DictationButton";
 
 const types = ["Behavioral", "Medical", "Fall", "Elopement", "Property Damage", "Medication Error", "Injury", "Other"];
 const severities = ["Low", "Medium", "High", "Critical"];
@@ -163,8 +164,20 @@ export default function Incidents() {
                 <SelectContent>{severities.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="col-span-2"><Label>Description *</Label><Textarea value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} rows={3} /></div>
-            <div className="col-span-2"><Label>Actions Taken</Label><Textarea value={form.actions_taken} onChange={(e) => setForm({...form, actions_taken: e.target.value})} rows={2} /></div>
+            <div className="col-span-2">
+              <Label>Description *</Label>
+              <div className="relative">
+                <Textarea value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} rows={3} className="pr-12" />
+                <div className="absolute right-2 top-2"><DictationButton value={form.description} onChange={(val) => setForm({...form, description: val})} /></div>
+              </div>
+            </div>
+            <div className="col-span-2">
+              <Label>Actions Taken</Label>
+              <div className="relative">
+                <Textarea value={form.actions_taken} onChange={(e) => setForm({...form, actions_taken: e.target.value})} rows={2} className="pr-12" />
+                <div className="absolute right-2 top-2"><DictationButton value={form.actions_taken} onChange={(val) => setForm({...form, actions_taken: val})} /></div>
+              </div>
+            </div>
             <div><Label>Reported By</Label><Input value={form.reported_by_name} onChange={(e) => setForm({...form, reported_by_name: e.target.value})} /></div>
             <div><Label>Witnesses</Label><Input value={form.witnesses} onChange={(e) => setForm({...form, witnesses: e.target.value})} /></div>
             {can("changeIncidentStatus") ? (
@@ -188,7 +201,13 @@ export default function Incidents() {
               <Label>Follow-up Required</Label>
             </div>
             {form.follow_up_required && (
-              <div className="col-span-2"><Label>Follow-up Notes</Label><Textarea value={form.follow_up_notes} onChange={(e) => setForm({...form, follow_up_notes: e.target.value})} rows={2} /></div>
+              <div className="col-span-2">
+                <Label>Follow-up Notes</Label>
+                <div className="relative">
+                  <Textarea value={form.follow_up_notes} onChange={(e) => setForm({...form, follow_up_notes: e.target.value})} rows={2} className="pr-12" />
+                  <div className="absolute right-2 top-2"><DictationButton value={form.follow_up_notes} onChange={(val) => setForm({...form, follow_up_notes: val})} /></div>
+                </div>
+              </div>
             )}
           </div>
 

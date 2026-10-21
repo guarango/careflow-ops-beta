@@ -14,6 +14,18 @@
     "staff_name": {
       "type": "string"
     },
+    "shift_id": {
+      "type": "string",
+      "description": "Linked ShiftSchedule record"
+    },
+    "service_code_id": {
+      "type": "string",
+      "description": "Service code for this session"
+    },
+    "service_code": {
+      "type": "string",
+      "description": "Denormalized service code for display"
+    },
     "date": {
       "type": "string",
       "format": "date"
@@ -38,16 +50,49 @@
     "location_other": {
       "type": "string"
     },
+    "summary": {
+      "type": "string",
+      "description": "Written summary of what was done during the session"
+    },
+    "original_summary": {
+      "type": "string",
+      "description": "DSP's original text before AI cleanup"
+    },
+    "ai_cleaned_summary": {
+      "type": "string",
+      "description": "AI-cleaned version of the summary"
+    },
+    "ai_cleaned_at": {
+      "type": "string"
+    },
     "status": {
       "type": "string",
       "enum": [
         "Draft",
         "Submitted",
         "Approved",
-        "Needs Revision",
+        "Returned",
         "Flagged for Review"
       ],
       "default": "Draft"
+    },
+    "submitted_at": {
+      "type": "string"
+    },
+    "returned_comment": {
+      "type": "string",
+      "description": "Comment left by manager when returning a note"
+    },
+    "returned_by": {
+      "type": "string"
+    },
+    "returned_at": {
+      "type": "string"
+    },
+    "is_late": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if not submitted by the agency deadline"
     },
     "goal_data": {
       "type": "array",
@@ -176,6 +221,51 @@
         "Coaching Note Added",
         "Flagged for Clinical Review"
       ]
+    },
+    "addenda": {
+      "type": "array",
+      "description": "Admin addenda \u2014 never overwrite the original note",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "added_by": {
+            "type": "string"
+          },
+          "added_at": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "version_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "saved_at": {
+            "type": "string"
+          },
+          "saved_by": {
+            "type": "string"
+          },
+          "summary_of_changes": {
+            "type": "string"
+          }
+        }
+      }
     },
     "offline_created": {
       "type": "boolean",

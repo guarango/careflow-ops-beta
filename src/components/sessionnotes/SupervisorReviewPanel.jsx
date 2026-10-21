@@ -1,28 +1,27 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, MessageSquare, AlertTriangle, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { CheckCircle2, Undo2, AlertTriangle, Clock, ChevronDown, ChevronRight } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
-const ACTION_OPTIONS = [
-  { value: "Approved", label: "✓ Approve", color: "bg-emerald-500 hover:bg-emerald-600 text-white" },
-  { value: "Coaching Note Added", label: "💬 Add Coaching Note", color: "bg-amber-500 hover:bg-amber-600 text-white" },
-  { value: "Flagged for Clinical Review", label: "🚩 Flag for Clinical Review", color: "bg-red-500 hover:bg-red-600 text-white" },
-];
-
 function NoteReviewCard({ note, onAction, loading }) {
   const [expanded, setExpanded] = useState(false);
   const [action, setAction] = useState("");
-  const [coachingNote, setCoachingNote] = useState("");
+  const [comment, setComment] = useState("");
 
   const flags = note.health_safety_flags || {};
   const hasFlags = Object.values(flags).some(v => v === true);
   const goalData = note.goal_data || [];
   const completedGoals = goalData.filter(g => !g.skipped && (g.trials_total || g.narrative)).length;
+
+  const handleConfirm = () => {
+    onAction(note, action, comment);
+    setAction("");
+    setComment("");
+  };
 
   return (
     <Card className={cn("mb-3 border-l-4", hasFlags ? "border-l-red-400" : "border-l-primary")}>
@@ -32,10 +31,15 @@ function NoteReviewCard({ note, onAction, loading }) {
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="font-semibold text-sm">{note.client_name}</span>
               <StatusBadge status={note.status} />
-              {hasFlags && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">⚠ Health/Safety Flag</span>}
+              {note.is_late && (
+                <span className="flex items-center gap-0.5 text-[10px] text-red-600 font-bold">
+                  <Clock className="w-3 h-3" />LATE
+                </span>
+              )}
+              {hasFlags && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">⚠ Health/Safety</span>}
             </div>
             <p className="text-xs text-muted-foreground">
-              {note.date} · {note.staff_name || "Unknown staff"} · {note.location || "—"} · {completedGoals}/{goalData.length} goals
+              {note.date} · {note.staff_name || "Unknown"} · {note.service_code || "No code"} · {note.location || "—"} · {completedGoals}/{goalData.length} goals
             </p>
           </div>
           {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
@@ -44,6 +48,22 @@ function NoteReviewCard({ note, onAction, loading }) {
 
       {expanded && (
         <CardContent className="pt-0 pb-4 border-t border-border/40">
+          {/* Summary */}
+          {note.summary && (
+            <div className="mb-3">
+              <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wide">Summary</p>
+              <p className="text-xs bg-violet-50 border border-violet-100 rounded-lg px-3 py-2">{note.summary}</p>
+            </div>
+          )}
+
+          {/* Returned comment */}
+          {note.status === "Returned" && note.returned_comment && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+              <p className="text-xs font-bold text-amber-700 mb-1">Returned by {note.returned_by}:</p>
+              <p className="text-xs text-amber-800">{note.returned_comment}</p>
+            </div>
+          )}
+
           {/* Flags */}
           {hasFlags && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
@@ -94,29 +114,35 @@ function NoteReviewCard({ note, onAction, loading }) {
             </div>
           )}
 
-          {/* Supervisor Action */}
+          {/* Manager Action */}
           {note.status === "Submitted" && (
             <div className="border-t border-border/40 pt-3 mt-3">
               <p className="text-xs font-semibold mb-2">Your Action</p>
               <div className="flex gap-2 flex-wrap mb-2">
-                {ACTION_OPTIONS.map(opt => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setAction(opt.value)}
-                    className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all border-2", action === opt.value ? `${opt.color} border-current` : "border-border bg-white text-muted-foreground hover:border-primary/30")}
-                  >{opt.label}</button>
-                ))}
+                <button type="button"
+                  onClick={() => setAction("Approved")}
+                  className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all border-2", action === "Approved" ? "bg-emerald-500 text-white border-emerald-500" : "border-border bg-white text-muted-foreground hover:border-emerald-300")}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 inline mr-1" />Approve
+                </button>
+                <button type="button"
+                  onClick={() => setAction("Returned")}
+                  className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all border-2", action === "Returned" ? "bg-amber-500 text-white border-amber-500" : "border-border bg-white text-muted-foreground hover:border-amber-300")}
+                >
+                  <Undo2 className="w-3.5 h-3.5 inline mr-1" />Return with Comment
+                </button>
               </div>
-              {(action === "Coaching Note Added" || action === "Flagged for Clinical Review") && (
+              {action === "Returned" && (
                 <Textarea
-                  value={coachingNote}
-                  onChange={e => setCoachingNote(e.target.value)}
-                  placeholder={action === "Coaching Note Added" ? "Write a supportive coaching note for the DSP..." : "Describe what needs clinical attention..."}
-                  rows={2}
+                  value={comment}
+                  onChange={e => setComment(e.target.value)}
+                  placeholder="Explain what needs to be corrected. The DSP will see this comment."
+                  rows={3}
                   className="text-sm mb-2"
                 />
               )}
               {action && (
-                <Button size="sm" onClick={() => onAction(note, action, coachingNote)} disabled={loading || ((action === "Coaching Note Added" || action === "Flagged for Clinical Review") && !coachingNote)} className="text-xs gap-1.5">
+                <Button size="sm" onClick={handleConfirm} disabled={loading || (action === "Returned" && !comment)} className="text-xs gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5" />Confirm
                 </Button>
               )}
@@ -124,11 +150,23 @@ function NoteReviewCard({ note, onAction, loading }) {
           )}
 
           {/* Already reviewed */}
-          {note.supervisor_action && (
+          {note.supervisor_action && note.status !== "Submitted" && (
             <div className="border-t border-border/40 pt-3 mt-3 text-xs text-muted-foreground">
               <span className="font-medium">{note.supervisor_action}</span>
               {note.supervisor_note && <p className="mt-1 italic bg-amber-50 border border-amber-200 rounded px-2 py-1 text-amber-800">💬 {note.supervisor_note}</p>}
               {note.supervisor_reviewed_by && <p className="mt-1">— {note.supervisor_reviewed_by}</p>}
+            </div>
+          )}
+
+          {/* Addenda */}
+          {note.addenda && note.addenda.length > 0 && (
+            <div className="border-t border-border/40 pt-3 mt-3">
+              <p className="text-xs font-semibold text-blue-700 mb-1">Addenda ({note.addenda.length})</p>
+              {note.addenda.map((a, i) => (
+                <div key={i} className="text-xs bg-blue-50 rounded-lg px-2 py-1 mb-1">
+                  {a.text} <span className="text-blue-600">— {a.added_by}, {a.added_at ? format(new Date(a.added_at), "MM/dd/yyyy") : ""}</span>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
@@ -139,8 +177,9 @@ function NoteReviewCard({ note, onAction, loading }) {
 
 export default function SupervisorReviewPanel({ notes, onAction, loading }) {
   const pending = notes.filter(n => n.status === "Submitted");
-  const reviewed = notes.filter(n => n.status === "Approved" || n.supervisor_action);
-  const flagged = notes.filter(n => n.status === "Flagged for Review" || n.status === "Flagged for Clinical Review");
+  const returned = notes.filter(n => n.status === "Returned");
+  const flagged = notes.filter(n => n.status === "Flagged for Review");
+  const reviewed = notes.filter(n => n.status === "Approved");
 
   return (
     <div>
@@ -148,7 +187,7 @@ export default function SupervisorReviewPanel({ notes, onAction, loading }) {
         <div className="mb-5">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-4 h-4 text-red-500" />
-            <p className="text-sm font-bold text-red-700">Flagged for Clinical Review ({flagged.length})</p>
+            <p className="text-sm font-bold text-red-700">Flagged for Review ({flagged.length})</p>
           </div>
           {flagged.map(n => <NoteReviewCard key={n.id} note={n} onAction={onAction} loading={loading} />)}
         </div>
@@ -168,9 +207,19 @@ export default function SupervisorReviewPanel({ notes, onAction, loading }) {
         )}
       </div>
 
+      {returned.length > 0 && (
+        <div className="mb-5">
+          <div className="flex items-center gap-2 mb-2">
+            <Undo2 className="w-4 h-4 text-amber-500" />
+            <p className="text-sm font-bold">Returned for Revision ({returned.length})</p>
+          </div>
+          {returned.map(n => <NoteReviewCard key={n.id} note={n} onAction={onAction} loading={loading} />)}
+        </div>
+      )}
+
       {reviewed.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Recently Reviewed ({reviewed.length})</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Recently Approved ({reviewed.length})</p>
           {reviewed.slice(0, 5).map(n => <NoteReviewCard key={n.id} note={n} onAction={onAction} loading={loading} />)}
         </div>
       )}

@@ -9,6 +9,7 @@ import { base44 } from "@/api/base44Client";
 import { formatTimeRange } from "./scheduleUtils";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import DictationButton from "@/components/shared/DictationButton";
 
 const STATUSES = ["Scheduled", "In Progress", "Completed", "Missed", "Cancelled"];
 const STATUS_COLORS = {
@@ -22,6 +23,7 @@ const STATUS_COLORS = {
 export default function ShiftDetailModal({ shift, conflictInfo, canEdit, onClose, onEdit, onDelete, serviceColor }) {
   const [status, setStatus] = useState(shift?.status || "Scheduled");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [shiftNotes, setShiftNotes] = useState(shift?.notes || "");
   const queryClient = useQueryClient();
 
   const updateMutation = useMutation({
@@ -72,7 +74,27 @@ export default function ShiftDetailModal({ shift, conflictInfo, canEdit, onClose
           <Row label="Time" value={formatTimeRange(shift.start_time, shift.end_time)} />
           {shift.service_type && <Row label="Service" value={`${shift.service_type}${shift.service_code ? ` (${shift.service_code})` : ""}`} />}
           {shift.location && <Row label="Location" value={shift.location} />}
-          {shift.notes && <Row label="Notes" value={shift.notes} />}
+          {shift.notes && !canEdit && <Row label="Notes" value={shift.notes} />}
+          {canEdit && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-1 font-medium">Shift Notes</p>
+              <div className="relative">
+                <textarea
+                  value={shiftNotes}
+                  onChange={(e) => setShiftNotes(e.target.value)}
+                  placeholder="Add shift log notes..."
+                  rows={3}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm pr-12 resize-none"
+                />
+                <div className="absolute right-2 top-2"><DictationButton value={shiftNotes} onChange={setShiftNotes} /></div>
+              </div>
+              {shiftNotes !== (shift?.notes || "") && (
+                <Button size="sm" className="mt-1.5" onClick={() => updateMutation.mutate({ id: shift.id, data: { notes: shiftNotes } })} disabled={updateMutation.isPending}>
+                  Save Notes
+                </Button>
+              )}
+            </div>
+          )}
 
           {shift.recurring_series_id && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
