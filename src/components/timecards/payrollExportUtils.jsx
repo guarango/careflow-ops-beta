@@ -15,7 +15,7 @@ export function exportCSV(timecards, period) {
   const summary = buildPayrollSummary(timecards, otMap);
 
   const rows = [];
-  rows.push(["Employee Name", "Date", "Clock In", "Clock Out", "Hours", "Week", "Regular Hours", "Overtime Hours", "Status", "Pay Period", "Locked"]);
+  rows.push(["Employee Name", "Date", "Clock In", "Clock Out", "Hours", "Service Code", "Week", "Regular Hours", "Overtime Hours", "Status", "Pay Period", "Locked"]);
 
   for (const emp of summary) {
     const sorted = [...emp.entries].sort((a, b) => a.date.localeCompare(b.date));
@@ -26,6 +26,7 @@ export function exportCSV(timecards, period) {
         e.clock_in,
         e.clock_out || "",
         fmt(e.total_hours),
+        e.service_code || "",
         e.weekLabel || "",
         fmt(e.tcRegular),
         fmt(e.tcOT),
@@ -37,12 +38,12 @@ export function exportCSV(timecards, period) {
     // Subtotal row per employee
     rows.push([
       `${emp.staff_name} TOTAL`, "", "", "",
-      fmt(emp.totalHours), "",
+      fmt(emp.totalHours), "", "",
       fmt(emp.totalRegular),
       fmt(emp.totalOT),
       "", "", ""
     ]);
-    rows.push(["", "", "", "", "", "", "", "", "", "", ""]);
+    rows.push(["", "", "", "", "", "", "", "", "", "", "", ""]);
   }
 
   const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");

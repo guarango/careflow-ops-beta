@@ -7,7 +7,9 @@
       "enum": [
         "emar_reminder",
         "emar_missed",
-        "goal_missed"
+        "goal_missed",
+        "timecard_reminder",
+        "timecard_escalation"
       ]
     },
     "recipient_user_id": {
@@ -42,7 +44,8 @@
       "type": "string",
       "enum": [
         "emar",
-        "goal"
+        "goal",
+        "timecard"
       ]
     },
     "message": {
@@ -63,7 +66,7 @@
     },
     "trigger_stage": {
       "type": "string",
-      "description": "pre_window | at_time | missed | goal_clock_out | goal_escalation"
+      "description": "pre_window | at_time | missed | goal_clock_out | goal_escalation | forgot_clockout_15min | forgot_clockout_1hr"
     },
     "is_controlled_substance": {
       "type": "boolean",

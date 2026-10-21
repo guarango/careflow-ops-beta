@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, Download, Eye, Lock, Users } from "lucide-react";
-import { generatePayPeriods } from "@/lib/overtimeUtils";
+import { ChevronDown, ChevronUp, Download, Eye, Lock, Users, AlertTriangle } from "lucide-react";
+import { generatePayPeriods, filterByPeriod } from "@/lib/overtimeUtils";
 
 const FREQUENCIES = [
   { value: "semi-monthly", label: "Semi-Monthly (1st–15th / 16th–end)" },
@@ -16,9 +16,7 @@ const FREQUENCIES = [
   { value: "custom", label: "Custom Date Range" },
 ];
 
-const STATUS_OPTIONS = ["Approved", "Pending", "All"];
-
-export default function PayrollExportPanel({ staff = [], onPreview, onExportCSV, onExportPDF, onLockPeriod }) {
+export default function PayrollExportPanel({ staff = [], timecards = [], onPreview, onExportCSV, onExportPDF, onLockPeriod }) {
   const [open, setOpen] = useState(false);
   const [frequency, setFrequency] = useState("semi-monthly");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
@@ -26,7 +24,6 @@ export default function PayrollExportPanel({ staff = [], onPreview, onExportCSV,
   const [customEnd, setCustomEnd] = useState("");
   const [selectedStaff, setSelectedStaff] = useState([]); // [] = all
   const [allStaff, setAllStaff] = useState(true);
-  const [selectedStatuses, setSelectedStatuses] = useState(["Approved"]);
   const [staffDropdownOpen, setStaffDropdownOpen] = useState(false);
 
   const activeStaff = useMemo(() => staff.filter(s => s.status === "Active" || !s.status), [staff]);
@@ -47,16 +44,13 @@ export default function PayrollExportPanel({ staff = [], onPreview, onExportCSV,
   const effectiveStaffIds = allStaff ? activeStaff.map(s => s.id) : selectedStaff;
   const canAct = currentPeriod && effectiveStaffIds.length > 0;
 
-  const toggleStatus = (s) => {
-    if (s === "All") {
-      setSelectedStatuses(["All"]);
-    } else {
-      setSelectedStatuses(prev => {
-        const without = prev.filter(x => x !== "All");
-        return without.includes(s) ? without.filter(x => x !== s) || ["Approved"] : [...without, s];
-      });
-    }
-  };
+  // Count unapproved timecards in the selected period for the selected staff
+  const unapprovedCount = useMemo(() => {
+    if (!currentPeriod) return 0;
+    const periodTCs = filterByPeriod(timecards, currentPeriod.start, currentPeriod.end);
+    const staffSet = new Set(effectiveStaffIds);
+    return periodTCs.filter(tc => staffSet.has(tc.staff_id) && tc.status !== "Approved").length;
+  }, [currentPeriod, timecards, effectiveStaffIds]);
 
   const toggleStaff = (id) => {
     if (allStaff) {
@@ -74,7 +68,7 @@ export default function PayrollExportPanel({ staff = [], onPreview, onExportCSV,
     setSelectedStaff([]);
   };
 
-  const params = { period: currentPeriod, frequency, staffIds: effectiveStaffIds, statuses: selectedStatuses };
+  const params = { period: currentPeriod, frequency, staffIds: effectiveStaffIds, statuses: ["Approved"] };
 
   return (
     <div className="mb-6">
@@ -166,29 +160,14 @@ export default function PayrollExportPanel({ staff = [], onPreview, onExportCSV,
                 )}
               </div>
 
-              {/* Status Filter */}
-              <div>
-                <Label className="text-xs mb-1 block text-muted-foreground">Status Filter</Label>
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {STATUS_OPTIONS.map(s => {
-                    const active = selectedStatuses.includes(s);
-                    return (
-                      <button
-                        key={s}
-                        onClick={() => toggleStatus(s)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                          active
-                            ? s === "Approved" ? "bg-accent text-white border-accent"
-                              : s === "Pending" ? "bg-amber-500 text-white border-amber-500"
-                              : "bg-primary text-white border-primary"
-                            : "bg-background text-muted-foreground border-border hover:border-primary/50"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    );
-                  })}
-                </div>
+              {/* Unapproved Warning */}
+              <div className="flex items-center gap-2">
+                <div className="text-xs text-muted-foreground">Export includes <span className="font-medium text-accent">approved timecards only</span>.</div>
+                {canAct && unapprovedCount > 0 && (
+                  <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs gap-1">
+                    <AlertTriangle className="w-3 h-3" /> {unapprovedCount} unapproved
+                  </Badge>
+                )}
               </div>
             </div>
 

@@ -1,0 +1,45 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 5,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-10-21T06:00:00Z",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "forgot_clockout_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_check": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkForgotClockOut",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Check forgotten clock-outs",
+            "description": "Finds shifts past end time with no clock-out"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Runs every 5 minutes to check for shifts where the scheduled end time has passed with no clock-out. Notifies the DSP after 15 minutes and their manager after 1 hour.",
+  "name": "Forgot Clock-Out Check"
+}

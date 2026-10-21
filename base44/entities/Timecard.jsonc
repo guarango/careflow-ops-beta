@@ -53,6 +53,66 @@
     },
     "notes": {
       "type": "string"
+    },
+    "service_code_id": {
+      "type": "string"
+    },
+    "service_code": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string"
+    },
+    "approval_timestamp": {
+      "type": "string",
+      "description": "Signature timestamp recorded at approval"
+    },
+    "evv_location_in": {
+      "type": "object",
+      "description": "GPS location data captured at clock-in"
+    },
+    "evv_location_out": {
+      "type": "object",
+      "description": "GPS location data captured at clock-out"
+    },
+    "correction_requested": {
+      "type": "boolean",
+      "default": false
+    },
+    "correction_reason": {
+      "type": "string",
+      "description": "Reason submitted by DSP for requesting a correction"
+    },
+    "correction_requested_at": {
+      "type": "string"
+    },
+    "correction_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "pending",
+        "approved",
+        "returned"
+      ],
+      "default": "none"
+    },
+    "corrected_clock_in": {
+      "type": "string",
+      "description": "Corrected clock-in time proposed by DSP"
+    },
+    "corrected_clock_out": {
+      "type": "string",
+      "description": "Corrected clock-out time proposed by DSP"
+    },
+    "correction_reviewed_by": {
+      "type": "string"
+    },
+    "correction_reviewed_at": {
+      "type": "string"
+    },
+    "correction_manager_note": {
+      "type": "string",
+      "description": "Manager note when returning a correction"
     }
   },
   "required": [

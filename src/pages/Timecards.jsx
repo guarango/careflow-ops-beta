@@ -19,6 +19,8 @@ import { useAuth } from "@/lib/AuthContext";
 import EVVCapturePanel from "@/components/evv/EVVCapturePanel";
 import PayrollExportPanel from "@/components/timecards/PayrollExportPanel";
 import PayrollPreviewModal from "@/components/timecards/PayrollPreviewModal";
+import DSPPayPeriodView from "@/components/timecards/DSPPayPeriodView";
+import CorrectionReviewDialog from "@/components/timecards/CorrectionReviewDialog";
 import { computeOvertimeMap, filterByPeriod } from "@/lib/overtimeUtils";
 import { exportCSV, exportPDF } from "@/components/timecards/payrollExportUtils";
 import { useToast } from "@/components/ui/use-toast";
@@ -58,6 +60,7 @@ export default function Timecards() {
   const [approveTarget, setApproveTarget] = useState(null);
   const [approveSigChecked, setApproveSigChecked] = useState(false);
   const [approveSigTimestamp, setApproveSigTimestamp] = useState("");
+  const [correctionReviewTarget, setCorrectionReviewTarget] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -143,7 +146,7 @@ export default function Timecards() {
   };
 
   // Status filter chips
-  const STATUS_CHIPS = ["All", "Pending", "Approved", "Rejected", "Locked"];
+  const STATUS_CHIPS = ["All", "Pending", "Approved", "Rejected", "Locked", "Corrections"];
 
   const filtered = useMemo(() => {
     return timecards.filter(t => {
@@ -151,6 +154,7 @@ export default function Timecards() {
       const matchesStatus = statusFilter === "All"
         ? true
         : statusFilter === "Locked" ? t.locked
+        : statusFilter === "Corrections" ? t.correction_status === "pending"
         : t.status === statusFilter && !t.locked;
       return matchesSearch && matchesStatus;
     });
@@ -276,10 +280,11 @@ export default function Timecards() {
         }
       />
 
-      {/* Payroll Export Panel (Admin / HR only) */}
+      {/* Payroll Export Panel (Admin with Billing bundle only) */}
       {canExport && (
         <PayrollExportPanel
           staff={staff}
+          timecards={timecards}
           onPreview={handlePreview}
           onExportCSV={handleExportCSV}
           onExportPDF={handleExportPDF}
@@ -310,6 +315,7 @@ export default function Timecards() {
                       : chip === "Approved" ? "bg-accent text-white border-accent"
                       : chip === "Pending" ? "bg-amber-500 text-white border-amber-500"
                       : chip === "Rejected" ? "bg-destructive text-white border-destructive"
+                      : chip === "Corrections" ? "bg-violet-500 text-white border-violet-500"
                       : "bg-primary text-white border-primary"
                     : "bg-background text-muted-foreground border-border hover:border-primary/40"
                 }`}
@@ -329,6 +335,8 @@ export default function Timecards() {
           description="Create your first timecard entry."
           action={<Button onClick={() => setShowDialog(true)} size="sm"><Plus className="w-4 h-4 mr-1" />New Entry</Button>}
         />
+      ) : role === "dsp" ? (
+        <DSPPayPeriodView timecards={filtered} />
       ) : (
         <Card>
           <div className="table-scroll">
@@ -371,6 +379,9 @@ export default function Timecards() {
                             {isLocked && <Lock className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />}
                             <StatusBadge status={isLocked ? "Locked" : t.status} />
                           </div>
+                          {t.correction_status === "pending" && (
+                            <Badge className="bg-violet-500/10 text-violet-600 border-violet-500/20 text-[10px] w-fit">Correction Pending</Badge>
+                          )}
                           {t.approval_timestamp && t.status === "Approved" && (
                             <span className="text-[10px] text-muted-foreground leading-tight">{t.approval_timestamp}</span>
                           )}
@@ -379,16 +390,37 @@ export default function Timecards() {
                       <TableCell>
                         {isLocked ? (
                           isAdmin && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-slate-500 hover:text-primary"
-                              title="Unlock timecard"
-                              onClick={() => updateMutation.mutate({ id: t.id, data: { locked: false, locked_by: null, locked_at: null } })}
-                            >
-                              <Unlock className="w-4 h-4" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-slate-500 hover:text-primary"
+                                title="Unlock timecard"
+                                onClick={() => updateMutation.mutate({ id: t.id, data: { locked: false, locked_by: null, locked_at: null } })}
+                              >
+                                <Unlock className="w-4 h-4" />
+                              </Button>
+                              {t.correction_status === "pending" && can("approveTimecards") && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs text-violet-600 hover:bg-violet-50"
+                                  onClick={() => setCorrectionReviewTarget(t)}
+                                >
+                                  Review
+                                </Button>
+                              )}
+                            </div>
                           )
+                        ) : t.correction_status === "pending" && can("approveTimecards") ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-violet-600 hover:bg-violet-50"
+                            onClick={() => setCorrectionReviewTarget(t)}
+                          >
+                            Review Correction
+                          </Button>
                         ) : (
                           can("approveTimecards") && t.status === "Pending" && (
                             isOT ? (
@@ -585,6 +617,14 @@ export default function Timecards() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Correction Review Dialog */}
+      {correctionReviewTarget && (
+        <CorrectionReviewDialog
+          timecard={correctionReviewTarget}
+          onClose={() => setCorrectionReviewTarget(null)}
+        />
+      )}
 
       {/* OT Override Confirmation Dialog */}
       <Dialog open={otOverrideOpen} onOpenChange={setOtOverrideOpen}>
