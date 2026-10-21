@@ -40,6 +40,7 @@ export const NAV_ACCESS = {
   "/agency-admin": ["admin", "super_admin"],
   "/role-preview": ["admin", "super_admin"],
   "/super-admin":  ["super_admin"],
+  "/notifications":["dsp", "manager", "admin", "super_admin"],
 };
 
 // Paths that require an Admin bundle (super_admin bypasses)

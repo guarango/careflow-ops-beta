@@ -27,6 +27,7 @@ const emptyClient = {
   first_name: "", last_name: "", date_of_birth: "", gender: "",
   diagnosis: "", guardian_name: "", guardian_phone: "", address: "",
   insurance_id: "", insurance_provider: "",
+  house_id: "",
   service_enrollments: [],
   status: "Active", notes: ""
 };
@@ -51,14 +52,34 @@ export default function Clients() {
     queryFn: () => base44.entities.ServiceCode.list(),
   });
 
+  const { data: houses = [] } = useQuery({
+    queryKey: ["houses"],
+    queryFn: () => base44.entities.House.list(),
+  });
+
+  const syncHouse = (houseId) => {
+    if (houseId) base44.functions.invoke("syncStaffAssignments", { house_id: houseId }).catch(() => {});
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Client.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["clients"] }); closeDialog(); },
+    onSuccess: (client) => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      syncHouse(client.house_id);
+      closeDialog();
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Client.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["clients"] }); closeDialog(); },
+    onSuccess: (client) => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      syncHouse(client.house_id);
+      if (editing?.house_id && editing.house_id !== client.house_id) {
+        syncHouse(editing.house_id);
+      }
+      closeDialog();
+    },
   });
 
   const closeDialog = () => { setShowDialog(false); setEditing(null); setForm(emptyClient); };
@@ -224,6 +245,15 @@ export default function Clients() {
               <div><Label>Guardian Name</Label><Input value={form.guardian_name} onChange={(e) => setForm({...form, guardian_name: e.target.value})} /></div>
               <div><Label>Guardian Phone</Label><Input value={form.guardian_phone} onChange={(e) => setForm({...form, guardian_phone: e.target.value})} /></div>
               <div className="col-span-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({...form, address: e.target.value})} /></div>
+              <div>
+                <Label>House / Location</Label>
+                <Select value={form.house_id || ""} onValueChange={(v) => setForm({...form, house_id: v})}>
+                  <SelectTrigger><SelectValue placeholder="Select house" /></SelectTrigger>
+                  <SelectContent>
+                    {houses.map(h => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div><Label>Insurance Provider</Label><Input value={form.insurance_provider} onChange={(e) => setForm({...form, insurance_provider: e.target.value})} /></div>
               <div><Label>Insurance ID</Label><Input value={form.insurance_id} onChange={(e) => setForm({...form, insurance_id: e.target.value})} /></div>
               <div>

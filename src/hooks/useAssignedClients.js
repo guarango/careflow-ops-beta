@@ -6,37 +6,45 @@ import { useRolePreview } from "@/lib/RolePreviewContext";
 
 /**
  * Returns assignment info for the current user.
- * If user is DSP (real or preview), returns isDSPMode=true and their assigned client IDs.
- * Otherwise returns isDSPMode=false and assignedClientIds=null (no filtering needed).
+ * Reads from the User record's assigned_client_ids (maintained by syncStaffAssignments),
+ * which is the same field RLS rules use — so the UI and data layer are always in sync.
+ *
+ * isDSPMode: true for DSPs (backward compat — existing pages filter client-side).
+ * isCaseloadMode: true for DSP + Manager (broader caseload concept).
+ * For Admin/Super Admin: both false (RLS returns all records).
  */
 export function useAssignedClients() {
-  const { isDSP } = useRole();
+  const { isDSP, isManager, isAdmin } = useRole();
   const { user } = useAuth();
   const { previewRole } = useRolePreview();
 
-  const { data: staffMembers = [], isLoading } = useQuery({
-    queryKey: ["staff-assignments"],
-    queryFn: () => base44.entities.StaffMember.list(),
-    enabled: isDSP,
+  const isCaseloadMode = isDSP || isManager;
+  // Backward compat: existing pages use isDSPMode for client-side filtering.
+  // With RLS in place, server already filters — this is a secondary safety net.
+  const isDSPMode = isDSP;
+
+  const { data: me, isLoading } = useQuery({
+    queryKey: ["my-assignments"],
+    queryFn: () => base44.auth.me(),
+    enabled: isCaseloadMode,
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: "always",
   });
 
-  if (!isDSP) {
-    return { isDSPMode: false, assignedClientIds: null, staffMember: null, isLoading: false };
+  if (!isCaseloadMode) {
+    return { isDSPMode: false, isCaseloadMode: false, assignedClientIds: null, isLoading: false };
   }
 
-  // Preview DSP mode → look for "James Williams" staff record
-  // Real DSP mode → match by authenticated user email
-  const staffMember = previewRole === "dsp"
-    ? staffMembers.find(s => `${s.first_name} ${s.last_name}` === "James Williams")
-    : staffMembers.find(s => s.email?.toLowerCase() === user?.email?.toLowerCase());
+  const assignedClientIds = me?.assigned_client_ids || [];
 
   return {
-    isDSPMode: true,
-    assignedClientIds: staffMember?.assigned_client_ids || [],
-    staffMember,
+    isDSPMode,
+    isCaseloadMode,
+    assignedClientIds,
+    assignedHouseIds: me?.assigned_house_ids || [],
+    teamStaffIds: me?.team_staff_ids || [],
+    staffMemberId: me?.staff_member_id,
     isLoading,
   };
 }

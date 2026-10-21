@@ -238,6 +238,7 @@ export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = f
 
             {/* COMPLIANCE TAB */}
             <TabsContent value="compliance" className="mt-0 space-y-5">
+              {isAdmin ? (<>
               {/* Background Check */}
               <div className="bg-muted rounded-lg p-4 space-y-3">
                 <h3 className="text-sm font-semibold">Background Check</h3>
@@ -285,6 +286,11 @@ export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = f
                 </div>
               </div>
 
+              </>) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  HR compliance documents are restricted. Contact an administrator for access.
+                </p>
+              )}
               {/* TB Test */}
               <div className="bg-muted rounded-lg p-4 space-y-3">
                 <h3 className="text-sm font-semibold">TB Test</h3>

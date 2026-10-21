@@ -1,0 +1,83 @@
+{
+  "name": "House",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "House or program name"
+    },
+    "address": {
+      "type": "string"
+    },
+    "geofence_radius": {
+      "type": "number",
+      "description": "Geofence radius in meters for EVV verification",
+      "default": 100
+    },
+    "program_type": {
+      "type": "string",
+      "enum": [
+        "Residential",
+        "Day Program",
+        "Community Living",
+        "Supported Living",
+        "Other"
+      ],
+      "default": "Residential"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Inactive"
+      ],
+      "default": "Active"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "id": {
+            "$in": "{{user.data.assigned_house_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "id": {
+            "$in": "{{user.data.assigned_house_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

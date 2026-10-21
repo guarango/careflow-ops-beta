@@ -10,7 +10,14 @@
         "admin"
       ],
       "default": "dsp",
-      "description": "dsp, manager, or admin. Super Admin = admin with is_super_admin=true."
+      "description": "dsp, manager, or admin. Super Admin = admin with is_super_admin=true.",
+      "rls": {
+        "update": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
     },
     "is_super_admin": {
       "type": "boolean",
@@ -40,6 +47,62 @@
       "type": "boolean",
       "default": false,
       "description": "Admin-only: service code rates, authorizations, unit tracking, payroll export, billing export, EVV export",
+      "rls": {
+        "update": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
+    },
+    "staff_member_id": {
+      "type": "string",
+      "description": "StaffMember record ID linked to this user account",
+      "rls": {
+        "update": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
+    },
+    "assigned_client_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Full caseload: directly assigned clients + clients in assigned houses. Maintained by syncStaffAssignments function.",
+      "default": [],
+      "rls": {
+        "update": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
+    },
+    "assigned_house_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Houses this user is directly assigned to manage. Maintained by syncStaffAssignments function.",
+      "default": [],
+      "rls": {
+        "update": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
+    },
+    "team_staff_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "StaffMember record IDs in this user's team (DSPs assigned to clients in their caseload). Maintained by syncStaffAssignments function.",
+      "default": [],
       "rls": {
         "update": {
           "user_condition": {

@@ -15,6 +15,10 @@
     "phone": {
       "type": "string"
     },
+    "user_id": {
+      "type": "string",
+      "description": "User account ID linked to this staff member"
+    },
     "date_of_birth": {
       "type": "string",
       "format": "date"
@@ -256,7 +260,15 @@
       "items": {
         "type": "string"
       },
-      "description": "Client IDs assigned to this staff member",
+      "description": "Client IDs directly assigned to this staff member",
+      "default": []
+    },
+    "assigned_house_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "House IDs this staff member manages (managers only). Clients in these houses are included in their caseload.",
       "default": []
     },
     "notes": {
@@ -267,5 +279,51 @@
     "first_name",
     "last_name",
     "role"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "id": {
+            "$in": "{{user.data.team_staff_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "id": {
+            "$in": "{{user.data.team_staff_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

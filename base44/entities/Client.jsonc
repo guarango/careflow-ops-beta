@@ -24,6 +24,10 @@
     "diagnosis": {
       "type": "string"
     },
+    "house_id": {
+      "type": "string",
+      "description": "House/Location ID this client belongs to"
+    },
     "guardian_name": {
       "type": "string"
     },
@@ -97,5 +101,45 @@
   "required": [
     "first_name",
     "last_name"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "id": {
+            "$in": "{{user.data.assigned_client_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "id": {
+            "$in": "{{user.data.assigned_client_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
