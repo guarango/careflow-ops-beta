@@ -20,6 +20,9 @@ const DATA_SCHEDULES = ["Every Session", "Daily", "Weekly", "Monthly", "As Natur
 const DATA_ROLES = ["DSP", "Job Coach", "Nurse", "Behavior Analyst", "Teacher", "Any Staff"];
 const FRAMEWORKS = ["HCBS Waiver", "ICF/IDD", "State-Funded", "School IEP Transition", "Vocational Rehab", "Private Pay", "Other"];
 const OBJ_STATUSES = ["Not Started", "In Progress", "Met", "Not Met"];
+const CHARTING_MODES = ["Scheduled", "PRN"];
+const MEASUREMENT_TYPES = ["trials", "frequency", "duration", "percentage"];
+const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 function FieldHint({ text }) {
   return <p className="text-[11px] text-muted-foreground mt-0.5 italic">{text}</p>;
@@ -60,11 +63,12 @@ export default function GoalFormDialog({ open, onClose, editing, form, setForm, 
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid grid-cols-5 mx-0 shrink-0 text-[11px]">
+          <TabsList className="grid grid-cols-6 mx-0 shrink-0 text-[11px]">
             <TabsTrigger value="identity" className="text-[11px]">Identity</TabsTrigger>
             <TabsTrigger value="personcentered" className="text-[11px]">Person-Centered</TabsTrigger>
             <TabsTrigger value="clinical" className="text-[11px]">Clinical</TabsTrigger>
             <TabsTrigger value="measurement" className="text-[11px]">Measurement</TabsTrigger>
+            <TabsTrigger value="charting" className="text-[11px]">Charting</TabsTrigger>
             <TabsTrigger value="team" className="text-[11px]">Team</TabsTrigger>
           </TabsList>
 
@@ -297,7 +301,78 @@ export default function GoalFormDialog({ open, onClose, editing, form, setForm, 
               </div>
             </TabsContent>
 
-            {/* ── TAB 5: TEAM ── */}
+            {/* ── TAB 5: CHARTING ── */}
+            <TabsContent value="charting" className="space-y-4 mt-4 pb-4">
+              <SectionLabel>Charting Mode</SectionLabel>
+
+              <div>
+                <Label>Charting Mode *</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {CHARTING_MODES.map(m => (
+                    <button key={m} type="button" onClick={() => set("charting_mode", m)}
+                      className={cn("px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all text-left",
+                        f.charting_mode === m ? "border-primary bg-primary/5 text-primary" : "border-border bg-white text-muted-foreground hover:border-primary/30")}>
+                      {m === "Scheduled" ? "📅 Scheduled" : "🟡 PRN (as needed)"}
+                      <p className="text-[10px] font-normal mt-0.5">
+                        {m === "Scheduled" ? "Charted on set days and/or shifts" : "Charted when DSP chooses to work on it"}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {f.charting_mode === "Scheduled" && (
+                <div>
+                  <Label>Schedule Days</Label>
+                  <p className="text-xs text-muted-foreground mb-2">Select which days this goal should be charted.</p>
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {WEEKDAYS.map(d => {
+                      const checked = (f.schedule_days || []).includes(d);
+                      return (
+                        <button key={d} type="button"
+                          onClick={() => {
+                            const days = checked
+                              ? (f.schedule_days || []).filter(x => x !== d)
+                              : [...(f.schedule_days || []), d];
+                            set("schedule_days", days);
+                          }}
+                          className={cn("py-2 rounded-lg border-2 text-[10px] font-bold transition-all",
+                            checked ? "border-primary bg-primary text-primary-foreground" : "border-border bg-white text-muted-foreground hover:border-primary/30")}>
+                          {d.slice(0, 3)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {f.charting_mode === "PRN" && (
+                <div>
+                  <Label>Monthly Minimum (optional)</Label>
+                  <Input type="number" min={0} value={f.prn_monthly_minimum ?? ""} onChange={e => set("prn_monthly_minimum", e.target.value ? Number(e.target.value) : null)} placeholder="e.g. 4" />
+                  <FieldHint>Optional minimum number of times per month this PRN goal should be charted. Used for progress tracking.</FieldHint>
+                </div>
+              )}
+
+              <SectionLabel>Measurement</SectionLabel>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Charting Measurement Type</Label>
+                  <Select value={f.measurement_type || ""} onValueChange={v => set("measurement_type", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                    <SelectContent>{MEASUREMENT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <FieldHint>How progress is recorded during charting.</FieldHint>
+                </div>
+                <div>
+                  <Label>Target Value</Label>
+                  <Input type="number" value={f.target_value ?? ""} onChange={e => set("target_value", e.target.value ? Number(e.target.value) : null)} placeholder="e.g. 80" />
+                  <FieldHint>Numeric target (e.g. 80 for 80%, 5 for 5 trials).</FieldHint>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* ── TAB 6: TEAM ── */}
             <TabsContent value="team" className="space-y-4 mt-4 pb-4">
               <SectionLabel>Team & Compliance</SectionLabel>
 
@@ -334,7 +409,7 @@ export default function GoalFormDialog({ open, onClose, editing, form, setForm, 
         <DialogFooter className="border-t border-border pt-3 shrink-0">
           <div className="flex items-center justify-between w-full">
             <div className="flex gap-1.5">
-              {["identity", "personcentered", "clinical", "measurement", "team"].map((t, i) => (
+              {["identity", "personcentered", "clinical", "measurement", "charting", "team"].map((t, i) => (
                 <button key={t} onClick={() => setActiveTab(t)} className={cn("w-2 h-2 rounded-full transition-colors", activeTab === t ? "bg-primary" : "bg-border hover:bg-muted-foreground")} />
               ))}
             </div>

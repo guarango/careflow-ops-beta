@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, SkipForward } from "lucide-react";
+import { ChevronDown, ChevronUp, SkipForward, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const PROMPT_LEVELS = [
   { label: "Full\nAssist", short: "FA", value: "Full Physical Assist", color: "bg-red-100 text-red-700 border-red-200" },
@@ -26,7 +29,7 @@ const ENGAGEMENT_EMOJI = { Motivated: "😊", Neutral: "😐", Resistant: "😤"
 
 const SKIP_REASONS = ["No opportunity arose", "Person refused", "Health issue", "Environmental barrier", "Other"];
 
-export default function GoalDataCard({ goalEntry, onChange, clientName, priority, index }) {
+export default function GoalDataCard({ goalEntry, onChange, clientName, priority, index, chartingMode, scheduleDays }) {
   const [showSkip, setShowSkip] = useState(false);
   const [skipReason, setSkipReason] = useState(goalEntry.skip_reason || "");
   const [customSkip, setCustomSkip] = useState("");
@@ -78,6 +81,18 @@ export default function GoalDataCard({ goalEntry, onChange, clientName, priority
             {priority && <span className={cn("text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0", priority === "High" ? "bg-red-100 text-red-700" : priority === "Medium" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500")}>{priority}</span>}
             <p className="font-semibold text-sm leading-snug truncate">{g.goal_title}</p>
           </div>
+          {chartingMode && (
+            <div className="flex items-center gap-1 mt-0.5">
+              <Badge variant="outline" className={cn("text-[9px] h-4 py-0", chartingMode === "Scheduled" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-amber-50 text-amber-700 border-amber-200")}>
+                {chartingMode === "Scheduled" ? "📅 Scheduled" : "🟡 PRN"}
+              </Badge>
+              {chartingMode === "Scheduled" && scheduleDays && scheduleDays.length > 0 && (
+                <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                  <Calendar className="w-2.5 h-2.5" /> {scheduleDays.map(d => d.slice(0, 3)).join(", ")}
+                </span>
+              )}
+            </div>
+          )}
           {pct !== null && <p className="text-xs text-muted-foreground mt-0.5">{g.trials_correct}/{g.trials_total} correct · <span className={cn("font-bold", pct >= 80 ? "text-emerald-600" : pct >= 60 ? "text-amber-600" : "text-red-600")}>{pct}%</span></p>}
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">

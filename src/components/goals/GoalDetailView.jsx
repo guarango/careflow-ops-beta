@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, Circle, Clock, Edit2, PlusCircle, Target, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import GoalAlerts from "./GoalAlerts";
 import ProgressLogDialog from "./ProgressLogDialog";
+import GoalTrendChart from "./GoalTrendChart";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -128,7 +129,15 @@ Write a 2-3 sentence plain-language progress summary suitable for reading aloud 
             <Badge variant="outline" className={`text-[10px] border ${STATUS_COLORS[goal.status] || ""}`}>{goal.status}</Badge>
           </div>
           <h3 className="font-semibold text-base leading-snug">{goal.goal_title}</h3>
-          {goal.mastery_criteria && <p className="text-xs text-muted-foreground mt-1">Target: {goal.mastery_criteria}</p>}
+          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+            {goal.charting_mode && (
+              <Badge variant="outline" className={cn("text-[10px]", goal.charting_mode === "Scheduled" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-amber-50 text-amber-700 border-amber-200")}>
+                {goal.charting_mode === "Scheduled" ? "📅 Scheduled" : "🟡 PRN"}
+              </Badge>
+            )}
+            {goal.measurement_type && <Badge variant="outline" className="text-[10px]">{goal.measurement_type}</Badge>}
+            {goal.mastery_criteria && <p className="text-xs text-muted-foreground">Target: {goal.mastery_criteria}</p>}
+          </div>
         </div>
         <div className="flex gap-1.5 shrink-0">
           <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => setShowLog(true)}>
@@ -208,6 +217,11 @@ Write a 2-3 sentence plain-language progress summary suitable for reading aloud 
                 {loadingAI ? "Generating..." : "Generate Progress Summary"}
               </Button>
             )}
+          </div>
+
+          {/* Trend Chart & Monthly Summary */}
+          <div className="mb-4">
+            <GoalTrendChart goal={goal} />
           </div>
 
           {/* Progress log */}

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +11,7 @@ import { formatTimeRange } from "./scheduleUtils";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import DictationButton from "@/components/shared/DictationButton";
+import MissedGoalsDialog from "@/components/goals/MissedGoalsDialog";
 
 const STATUSES = ["Scheduled", "In Progress", "Completed", "Missed", "Cancelled"];
 const STATUS_COLORS = {
@@ -24,7 +26,15 @@ export default function ShiftDetailModal({ shift, conflictInfo, canEdit, onClose
   const [status, setStatus] = useState(shift?.status || "Scheduled");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [shiftNotes, setShiftNotes] = useState(shift?.notes || "");
+  const [showMissedGoals, setShowMissedGoals] = useState(false);
   const queryClient = useQueryClient();
+
+  // Fetch goals for this shift's client to check missed scheduled goals
+  const { data: clientGoals = [] } = useQuery({
+    queryKey: ["client-goals", shift?.client_id],
+    queryFn: () => base44.entities.ClientGoal.filter({ client_id: shift?.client_id, status: "Active" }),
+    enabled: !!shift?.client_id && showMissedGoals,
+  });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ShiftSchedule.update(id, data),
@@ -41,8 +51,53 @@ export default function ShiftDetailModal({ shift, conflictInfo, canEdit, onClose
   };
 
   const handleClockOut = () => {
+    // Check for missed scheduled goals
+    const today = new Date();
+    const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][today.getDay()];
+    const todayStr = today.toISOString().split("T")[0];
+    const scheduledDue = clientGoals.filter(g =>
+      g.charting_mode === "Scheduled" &&
+      (!g.schedule_days || g.schedule_days.length === 0 || g.schedule_days.includes(dayName))
+    );
+    const uncharted = scheduledDue.filter(g => {
+      const entries = g.progress_entries || [];
+      return !entries.some(e => e.date === todayStr && !e.missed_reason);
+    });
+    if (uncharted.length > 0) {
+      setShowMissedGoals(true);
+      return;
+    }
+    doClockOut();
+  };
+
+  const doClockOut = () => {
     const now = format(new Date(), "HH:mm");
     updateMutation.mutate({ id: shift.id, data: { evv_clock_out: now, status: "Completed" } });
+    setShowMissedGoals(false);
+  };
+
+  const handleMissedGoalsSave = async (reasons) => {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const today = new Date();
+    const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][today.getDay()];
+    // Save missed entries to each goal
+    for (const r of reasons) {
+      const goal = clientGoals.find(g => g.id === r.goal_id);
+      if (!goal) continue;
+      const entries = goal.progress_entries || [];
+      entries.push({
+        date: todayStr,
+        score: "Missed",
+        recorded_by: shift.staff_name || "Staff",
+        shift_id: shift.id,
+        charting_mode: "Scheduled",
+        missed_reason: r.reason,
+        missed_comment: r.comment || "",
+      });
+      await base44.entities.ClientGoal.update(goal.id, { progress_entries: entries });
+    }
+    queryClient.invalidateQueries({ queryKey: ["goals"] });
+    doClockOut();
   };
 
   const handleStatusUpdate = () => {
@@ -128,6 +183,21 @@ export default function ShiftDetailModal({ shift, conflictInfo, canEdit, onClose
                 <Button size="sm" variant="outline" className="flex-1 gap-1.5 text-red-700 border-red-300 hover:bg-red-50" onClick={handleClockOut} disabled={updateMutation.isPending}>
                   <LogOut className="w-3.5 h-3.5" />Clock Out Now
                 </Button>
+              )}
+
+              {showMissedGoals && (
+                <MissedGoalsDialog
+                  goals={clientGoals.filter(g => {
+                    const today = new Date();
+                    const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][today.getDay()];
+                    const todayStr = today.toISOString().split("T")[0];
+                    return g.charting_mode === "Scheduled" &&
+                      (!g.schedule_days || g.schedule_days.length === 0 || g.schedule_days.includes(dayName)) &&
+                      !(g.progress_entries || []).some(e => e.date === todayStr && !e.missed_reason);
+                  })}
+                  onSave={handleMissedGoalsSave}
+                  onClose={() => setShowMissedGoals(false)}
+                />
               )}
               {shift.evv_clock_in && shift.evv_clock_out && (
                 <p className="text-xs text-emerald-600 font-medium flex items-center gap-1 py-1">

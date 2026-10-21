@@ -309,9 +309,49 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
 
         {/* Section 4: Goal Cards */}
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-primary mb-3 px-1">
-            Goals for Today ({totalGoals})
-          </p>
+          <div className="flex items-center justify-between mb-3 px-1">
+            <p className="text-xs font-bold uppercase tracking-wider text-primary">
+              Goals for Today ({totalGoals})
+            </p>
+            {canEdit && (() => {
+              const today = new Date();
+              const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][today.getDay()];
+              const prnGoals = goals.filter(g => g.status === "Active" && g.charting_mode === "PRN" && !form.goal_data.some(gd => gd.goal_id === g.id));
+              if (prnGoals.length === 0) return null;
+              return (
+                <Select value="" onValueChange={(v) => {
+                  const g = goals.find(x => x.id === v);
+                  if (g) {
+                    setForm(f => ({
+                      ...f,
+                      goal_data: [...f.goal_data, {
+                        goal_id: g.id,
+                        goal_title: g.goal_title,
+                        skipped: false,
+                        skip_reason: "",
+                        trials_total: "",
+                        trials_correct: "",
+                        percentage: null,
+                        prompt_level: g.prompt_level_baseline || "",
+                        mastery_met: "",
+                        narrative: "",
+                        person_expressed_preference: null,
+                        preference_detail: "",
+                        person_communication: "",
+                        session_highlight: "",
+                        engagement: "",
+                      }],
+                    }));
+                  }
+                }}>
+                  <SelectTrigger className="h-7 text-xs w-auto gap-1"><SelectValue placeholder="+ Add PRN Goal" /></SelectTrigger>
+                  <SelectContent>
+                    {prnGoals.map(g => <SelectItem key={g.id} value={g.id}>{g.goal_title}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              );
+            })()}
+          </div>
           {form.goal_data.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground text-sm border border-dashed border-border rounded-xl">
               No active goals found for {client.first_name}.<br />
@@ -329,6 +369,8 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
                     clientName={client.first_name}
                     priority={fullGoal?.priority}
                     index={i}
+                    chartingMode={fullGoal?.charting_mode}
+                    scheduleDays={fullGoal?.schedule_days}
                   />
                 );
               })}

@@ -69,6 +69,8 @@ const EMPTY_FORM = {
   data_collection_instructions: "", goal_author: "", supervising_clinician: "",
   start_date: "", target_date: "", next_review_date: "", regulatory_framework: "",
   team_notes: "", progress_entries: [],
+  charting_mode: "Scheduled", schedule_days: [], prn_monthly_minimum: null,
+  measurement_type: "", target_value: null,
 };
 
 export default function Goals() {
@@ -320,6 +322,7 @@ function GoalListItem({ goal, onClick, onEdit }) {
             <div className="flex flex-wrap items-center gap-1.5 mt-1">
               <Badge variant="outline" className={`text-[9px] py-0 h-4 border ${DOMAIN_COLORS[goal.domain] || DOMAIN_COLORS.Other}`}>{goal.domain}</Badge>
               {goal.goal_type && <Badge variant="outline" className="text-[9px] py-0 h-4">{goal.goal_type}</Badge>}
+              {goal.charting_mode && <Badge variant="outline" className={`text-[9px] py-0 h-4 ${goal.charting_mode === "Scheduled" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>{goal.charting_mode}</Badge>}
               <Badge variant="outline" className={`text-[9px] py-0 h-4 border ${STATUS_COLORS[goal.status] || ""}`}>{goal.status}</Badge>
             </div>
             {lastEntry && (

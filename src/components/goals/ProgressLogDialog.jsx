@@ -18,6 +18,7 @@ export default function ProgressLogDialog({ goal, onClose, onSave }) {
     setting: "",
     notes: "",
     recorded_by: "",
+    charting_mode: goal?.charting_mode || "Scheduled",
   });
 
   const e = entry;

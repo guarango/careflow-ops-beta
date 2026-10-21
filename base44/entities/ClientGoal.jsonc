@@ -224,6 +224,56 @@
       "type": "string",
       "description": "Meeting minutes or team decisions"
     },
+    "charting_mode": {
+      "type": "string",
+      "enum": [
+        "Scheduled",
+        "PRN"
+      ],
+      "default": "Scheduled",
+      "description": "Scheduled = charted on set days/shifts. PRN = charted when DSP chooses to work on it."
+    },
+    "schedule_days": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ]
+      },
+      "description": "Days of the week this scheduled goal should be charted"
+    },
+    "schedule_shift_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Shift IDs this scheduled goal should be charted on (optional)"
+    },
+    "prn_monthly_minimum": {
+      "type": "number",
+      "description": "Optional minimum number of times per month a PRN goal should be charted"
+    },
+    "measurement_type": {
+      "type": "string",
+      "enum": [
+        "trials",
+        "frequency",
+        "duration",
+        "percentage"
+      ],
+      "description": "Simplified charting measurement type"
+    },
+    "target_value": {
+      "type": "number",
+      "description": "Numeric target for the measurement (e.g. 80 for 80%, 5 for 5 trials)"
+    },
     "frequency": {
       "type": "string",
       "description": "Legacy tracking frequency field"
@@ -270,6 +320,31 @@
             "type": "string"
           },
           "recorded_by": {
+            "type": "string"
+          },
+          "shift_id": {
+            "type": "string"
+          },
+          "session_note_id": {
+            "type": "string"
+          },
+          "charting_mode": {
+            "type": "string",
+            "enum": [
+              "Scheduled",
+              "PRN"
+            ]
+          },
+          "missed_reason": {
+            "type": "string",
+            "enum": [
+              "Client refused",
+              "Client not home",
+              "Client ill",
+              "Other"
+            ]
+          },
+          "missed_comment": {
             "type": "string"
           }
         }
