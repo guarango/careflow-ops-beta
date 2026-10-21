@@ -9,7 +9,15 @@
         "emar_missed",
         "goal_missed",
         "timecard_reminder",
-        "timecard_escalation"
+        "timecard_escalation",
+        "note_not_submitted",
+        "compliance_expiring",
+        "compliance_missing",
+        "document_to_sign",
+        "training_assigned",
+        "note_returned",
+        "quarterly_due",
+        "incident_deadline"
       ]
     },
     "recipient_user_id": {
@@ -17,6 +25,10 @@
     },
     "recipient_email": {
       "type": "string"
+    },
+    "recipient_phone": {
+      "type": "string",
+      "description": "Phone number for SMS channel"
     },
     "recipient_role": {
       "type": "string",
@@ -45,11 +57,22 @@
       "enum": [
         "emar",
         "goal",
-        "timecard"
+        "timecard",
+        "session_note",
+        "compliance_doc",
+        "signature_request",
+        "training_assignment",
+        "quarterly_summary",
+        "incident"
       ]
     },
     "message": {
-      "type": "string"
+      "type": "string",
+      "description": "Privacy-safe message \u2014 NO client names, diagnoses, or medications"
+    },
+    "deep_link": {
+      "type": "string",
+      "description": "App-relative path to jump to the item (e.g. /emar, /session-notes)"
     },
     "status": {
       "type": "string",
@@ -66,7 +89,24 @@
     },
     "trigger_stage": {
       "type": "string",
-      "description": "pre_window | at_time | missed | goal_clock_out | goal_escalation | forgot_clockout_15min | forgot_clockout_1hr"
+      "description": "pre_window | at_time | missed | goal_clock_out | goal_escalation | forgot_clockout_15min | forgot_clockout_1hr | compliance_60day | compliance_30day | compliance_7day | compliance_today | note_clockout | note_eod | note_next_morning | quarterly_7day | quarterly_2day | quarterly_overdue | incident_deadline"
+    },
+    "reminder_rule": {
+      "type": "string",
+      "description": "Name of the notification rule that fired (e.g. forgot_clockout, med_pass_missed)"
+    },
+    "channels": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "in_app",
+          "email",
+          "sms",
+          "push"
+        ]
+      },
+      "description": "Channels this notification was sent through"
     },
     "is_controlled_substance": {
       "type": "boolean",
@@ -77,6 +117,14 @@
       "default": false
     },
     "email_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "sms_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "push_sent": {
       "type": "boolean",
       "default": false
     },

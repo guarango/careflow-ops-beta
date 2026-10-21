@@ -1,26 +1,33 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import PageHeader from "@/components/shared/PageHeader";
+import { useAuth } from "@/lib/AuthContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Bell, AlertTriangle, Pill, Target, Check, X, Download, Filter } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Bell, Check, X, Mail, MessageSquare, Smartphone, Monitor, Settings, Filter, Download } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
-import { useRole } from "@/hooks/useRole";
-import AccessDenied from "@/components/shared/AccessDenied";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 const TYPE_LABELS = {
-  emar_reminder: { label: "eMAR Reminder", color: "bg-blue-100 text-blue-700" },
-  emar_missed: { label: "eMAR Missed", color: "bg-red-100 text-red-700" },
-  goal_missed: { label: "Goal Missed", color: "bg-amber-100 text-amber-700" },
+  emar_reminder: { label: "Med Reminder", color: "bg-blue-100 text-blue-700" },
+  emar_missed: { label: "Med Missed", color: "bg-red-100 text-red-700" },
+  goal_missed: { label: "Goal Not Charted", color: "bg-amber-100 text-amber-700" },
+  timecard_reminder: { label: "Clock-Out", color: "bg-blue-100 text-blue-700" },
+  timecard_escalation: { label: "Clock-Out Escalation", color: "bg-red-100 text-red-700" },
+  note_not_submitted: { label: "Note Not Submitted", color: "bg-amber-100 text-amber-700" },
+  compliance_expiring: { label: "Compliance Expiring", color: "bg-orange-100 text-orange-700" },
+  compliance_missing: { label: "Compliance Missing", color: "bg-red-100 text-red-700" },
+  document_to_sign: { label: "Document to Sign", color: "bg-purple-100 text-purple-700" },
+  training_assigned: { label: "Training Assigned", color: "bg-indigo-100 text-indigo-700" },
+  note_returned: { label: "Note Returned", color: "bg-amber-100 text-amber-700" },
+  quarterly_due: { label: "Quarterly Due", color: "bg-red-100 text-red-700" },
+  incident_deadline: { label: "Incident Deadline", color: "bg-red-100 text-red-700" },
 };
 
 const STATUS_COLORS = {
@@ -30,284 +37,285 @@ const STATUS_COLORS = {
   dismissed: "bg-gray-100 text-gray-400",
 };
 
-export default function NotificationCenter() {
-  const { role } = useRole();
-  const queryClient = useQueryClient();
+const CHANNEL_ICONS = {
+  in_app: Monitor,
+  email: Mail,
+  sms: MessageSquare,
+  push: Smartphone,
+};
 
+export default function NotificationCenter() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+  const [activeTab, setActiveTab] = useState("mine");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterClient, setFilterClient] = useState("");
-  const [filterStaff, setFilterStaff] = useState("");
-  const [filterDateFrom, setFilterDateFrom] = useState("");
-  const [filterDateTo, setFilterDateTo] = useState("");
-  const [selected, setSelected] = useState(new Set());
-  const [ackModal, setAckModal] = useState(null);
-  const [ackNote, setAckNote] = useState("");
 
-  const { data: notifications = [] } = useQuery({
-    queryKey: ["admin-notifications"],
+  const { data: myNotifications = [] } = useQuery({
+    queryKey: ["my-notifications"],
+    queryFn: () => base44.entities.AppNotification.filter({ recipient_user_id: user?.id }),
+    enabled: !!user?.id,
+  });
+
+  const { data: allNotifications = [] } = useQuery({
+    queryKey: ["all-notifications"],
     queryFn: () => base44.entities.AppNotification.list("-created_date", 500),
+    enabled: isAdmin && activeTab === "all",
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.AppNotification.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-notifications"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["all-notifications"] });
+    },
   });
 
-  if (role !== "admin" && role !== "hr") return <AccessDenied />;
-
+  const notifications = activeTab === "mine" ? myNotifications : allNotifications;
   const filtered = notifications.filter(n => {
     if (filterType !== "all" && n.type !== filterType) return false;
     if (filterStatus !== "all" && n.status !== filterStatus) return false;
-    if (filterClient && !n.client_name?.toLowerCase().includes(filterClient.toLowerCase())) return false;
-    if (filterStaff && !n.staff_name?.toLowerCase().includes(filterStaff.toLowerCase())) return false;
-    if (filterDateFrom && n.created_date < filterDateFrom) return false;
-    if (filterDateTo && n.created_date > filterDateTo + "T23:59:59") return false;
     return true;
   });
 
-  const counts = {
-    unread: notifications.filter(n => n.status === "unread").length,
-    pending: notifications.filter(n => n.status === "read" && n.recipient_role === "admin").length,
-    acknowledgedToday: notifications.filter(n => n.status === "acknowledged" && n.acknowledged_at?.startsWith(new Date().toISOString().split("T")[0])).length,
-    dismissed: notifications.filter(n => n.status === "dismissed").length,
-  };
+  const unreadCount = myNotifications.filter(n => n.status === "unread").length;
 
-  const toggleSelect = (id) => {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-
-  const selectAll = () => {
-    if (selected.size === filtered.length) setSelected(new Set());
-    else setSelected(new Set(filtered.map(n => n.id)));
-  };
-
-  const bulkUpdate = async (data) => {
-    for (const id of selected) {
-      await base44.entities.AppNotification.update(id, data);
+  const handleOpen = (notif) => {
+    if (notif.status === "unread") {
+      updateMutation.mutate({ id: notif.id, data: { status: "read", read_at: new Date().toISOString() } });
     }
-    queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
-    setSelected(new Set());
+    if (notif.deep_link) {
+      navigate(notif.deep_link);
+    }
   };
 
-  const handleAckConfirm = async () => {
-    if (!ackModal) return;
-    await updateMutation.mutateAsync({ id: ackModal.id, data: { status: "acknowledged", acknowledged_note: ackNote, acknowledged_at: new Date().toISOString() } });
-    setAckModal(null);
-    setAckNote("");
-  };
-
-  const exportCSV = () => {
-    const headers = ["Type", "Client", "Staff", "Message", "Triggered At", "Status", "Acknowledged Note"];
-    const rows = filtered.map(n => [
-      TYPE_LABELS[n.type]?.label || n.type,
-      n.client_name || "",
-      n.staff_name || "",
-      `"${(n.message || "").replace(/"/g, '""')}"`,
-      n.created_date ? format(new Date(n.created_date), "MM/dd/yyyy HH:mm") : "",
-      n.status,
-      `"${(n.acknowledged_note || "").replace(/"/g, '""')}"`,
-    ]);
-    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `notifications-${format(new Date(), "yyyy-MM-dd")}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleMarkAllRead = async () => {
+    const unread = myNotifications.filter(n => n.status === "unread");
+    for (const n of unread) {
+      await base44.entities.AppNotification.update(n.id, { status: "read", read_at: new Date().toISOString() });
+    }
+    queryClient.invalidateQueries({ queryKey: ["my-notifications"] });
+    toast.success(`Marked ${unread.length} as read`);
   };
 
   return (
     <div>
-      <PageHeader
-        title="Notification Center"
-        subtitle="Monitor and manage all system notifications"
-        action={
-          <Button variant="outline" size="sm" onClick={exportCSV}>
-            <Download className="w-4 h-4 mr-1.5" /> Export CSV
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Bell className="w-6 h-6 text-primary" />
+            Reminders
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Your reminders and action items. Tap any reminder to jump to it.
+          </p>
+        </div>
+        {unreadCount > 0 && (
+          <Button variant="outline" size="sm" onClick={handleMarkAllRead} className="gap-1">
+            <Check className="w-3.5 h-3.5" /> Mark all read ({unreadCount})
           </Button>
-        }
-      />
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {[
-          { label: "Unread", count: counts.unread, color: "border-l-blue-500 bg-blue-50", textColor: "text-blue-700" },
-          { label: "Pending Acknowledgment", count: counts.pending, color: "border-l-amber-500 bg-amber-50", textColor: "text-amber-700" },
-          { label: "Acknowledged Today", count: counts.acknowledgedToday, color: "border-l-green-500 bg-green-50", textColor: "text-green-700" },
-          { label: "Dismissed", count: counts.dismissed, color: "border-l-gray-400 bg-gray-50", textColor: "text-gray-600" },
-        ].map(card => (
-          <Card key={card.label} className={cn("border-l-4", card.color)}>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">{card.label}</p>
-              <p className={cn("text-2xl font-bold mt-1", card.textColor)}>{card.count}</p>
-            </CardContent>
-          </Card>
-        ))}
+        )}
       </div>
 
-      {/* Filters */}
-      <Card className="mb-4">
-        <CardContent className="py-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex items-center gap-1.5 text-muted-foreground text-sm font-medium">
-              <Filter className="w-4 h-4" /> Filters
-            </div>
-            <div className="w-36">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="emar_reminder">eMAR Reminder</SelectItem>
-                  <SelectItem value="emar_missed">eMAR Missed</SelectItem>
-                  <SelectItem value="goal_missed">Goal Missed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-36">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="unread">Unread</SelectItem>
-                  <SelectItem value="read">Read</SelectItem>
-                  <SelectItem value="acknowledged">Acknowledged</SelectItem>
-                  <SelectItem value="dismissed">Dismissed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Input placeholder="Client name..." value={filterClient} onChange={e => setFilterClient(e.target.value)} className="w-36 h-9" />
-            <Input placeholder="Staff name..." value={filterStaff} onChange={e => setFilterStaff(e.target.value)} className="w-36 h-9" />
-            <Input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} className="w-36 h-9" />
-            <Input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} className="w-36 h-9" />
-            <Button variant="ghost" size="sm" onClick={() => { setFilterType("all"); setFilterStatus("all"); setFilterClient(""); setFilterStaff(""); setFilterDateFrom(""); setFilterDateTo(""); }}>
-              Clear
-            </Button>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="mine" className="gap-1">
+            My Reminders
+            {unreadCount > 0 && <Badge className="ml-1 bg-red-500 text-white text-[10px] px-1.5">{unreadCount}</Badge>}
+          </TabsTrigger>
+          {isAdmin && <TabsTrigger value="all">All Notifications</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="settings">Rules & Channels</TabsTrigger>}
+        </TabsList>
+
+        <TabsContent value="mine">
+          <NotificationList
+            notifications={filtered}
+            onOpen={handleOpen}
+            onMark={(id, status) => updateMutation.mutate({ id, data: { status } })}
+            filterType={filterType}
+            setFilterType={setFilterType}
+            filterStatus={filterStatus}
+            setFilterStatus={setFilterStatus}
+            showRecipient={false}
+          />
+        </TabsContent>
+
+        {isAdmin && (
+          <TabsContent value="all">
+            <NotificationList
+              notifications={filtered}
+              onOpen={handleOpen}
+              onMark={(id, status) => updateMutation.mutate({ id, data: { status } })}
+              filterType={filterType}
+              setFilterType={setFilterType}
+              filterStatus={filterStatus}
+              setFilterStatus={setFilterStatus}
+              showRecipient={true}
+            />
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="settings">
+            <NotificationRulesSettings />
+          </TabsContent>
+        )}
+      </Tabs>
+    </div>
+  );
+}
+
+function NotificationList({ notifications, onOpen, onMark, filterType, setFilterType, filterStatus, setFilterStatus, showRecipient }) {
+  return (
+    <>
+      <div className="flex gap-3 mb-4 flex-wrap">
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Type" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            {Object.entries(TYPE_LABELS).map(([key, val]) => (
+              <SelectItem key={key} value={key}>{val.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="unread">Unread</SelectItem>
+            <SelectItem value="read">Read</SelectItem>
+            <SelectItem value="acknowledged">Acknowledged</SelectItem>
+            <SelectItem value="dismissed">Dismissed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {notifications.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Bell className="w-12 h-12 mx-auto mb-3 opacity-40" />
+          <p>No reminders. You're all caught up!</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {notifications.map(n => {
+            const typeInfo = TYPE_LABELS[n.type] || { label: n.type, color: "bg-gray-100 text-gray-600" };
+            return (
+              <div
+                key={n.id}
+                className={cn(
+                  "border rounded-lg p-3 flex items-start gap-3 transition-colors cursor-pointer",
+                  n.status === "unread" ? "bg-blue-50/30 border-blue-200" : "hover:bg-accent"
+                )}
+                onClick={() => onOpen(n)}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-medium", typeInfo.color)}>
+                      {typeInfo.label}
+                    </span>
+                    {n.is_controlled_substance && (
+                      <span className="text-[10px] text-red-600 font-semibold">Requires immediate attention</span>
+                    )}
+                    {showRecipient && n.recipient_email && (
+                      <span className="text-xs text-muted-foreground">→ {n.recipient_email}</span>
+                    )}
+                  </div>
+                  <p className="text-sm mt-1 line-clamp-2">{n.message}</p>
+                  <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                    <span>{n.created_date ? formatDistanceToNow(new Date(n.created_date), { addSuffix: true }) : ""}</span>
+                    {n.channels && n.channels.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        {n.channels.map(ch => {
+                          const Icon = CHANNEL_ICONS[ch] || Monitor;
+                          return <Icon key={ch} className="w-3 h-3" />;
+                        })}
+                      </div>
+                    )}
+                    {n.deep_link && <span className="text-primary">Tap to open →</span>}
+                  </div>
+                </div>
+                <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                  {(n.status === "unread" || n.status === "read") && (
+                    <>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => onMark(n.id, "acknowledged")}>
+                        <Check className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground" onClick={() => onMark(n.id, "dismissed")}>
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+function NotificationRulesSettings() {
+  const queryClient = useQueryClient();
+  const { data: rules = [] } = useQuery({
+    queryKey: ["notification-rules"],
+    queryFn: () => base44.entities.NotificationSettings.list("category"),
+  });
+
+  const toggleRule = async (rule) => {
+    await base44.entities.NotificationSettings.update(rule.id, {
+      enabled: !rule.enabled,
+      updated_by: "admin",
+      updated_at: new Date().toISOString(),
+    });
+    queryClient.invalidateQueries({ queryKey: ["notification-rules"] });
+  };
+
+  return (
+    <div className="space-y-3">
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Settings className="w-4 h-4" />
+            Admin-editable reminder rules. Toggle rules on/off and adjust timing, channels, and escalation.
+            Messages never include client names, diagnoses, or medications.
           </div>
         </CardContent>
       </Card>
 
-      {/* Bulk Actions */}
-      {selected.size > 0 && (
-        <div className="flex items-center gap-3 mb-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-          <span className="text-sm font-medium text-primary">{selected.size} selected</span>
-          <Button size="sm" variant="outline" onClick={() => bulkUpdate({ status: "acknowledged", acknowledged_at: new Date().toISOString() })}>
-            <Check className="w-3.5 h-3.5 mr-1.5" /> Bulk Acknowledge
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => bulkUpdate({ status: "dismissed" })}>
-            <X className="w-3.5 h-3.5 mr-1.5" /> Bulk Dismiss
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Cancel</Button>
-        </div>
-      )}
-
-      {/* Table */}
-      <Card>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
-                  <input type="checkbox" checked={selected.size === filtered.length && filtered.length > 0} onChange={selectAll} className="w-4 h-4 accent-primary" />
-                </TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Staff</TableHead>
-                <TableHead>Message</TableHead>
-                <TableHead>Triggered At</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                    No notifications match your filters.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map(notif => {
-                  const typeInfo = TYPE_LABELS[notif.type] || { label: notif.type, color: "bg-gray-100 text-gray-600" };
-                  return (
-                    <TableRow key={notif.id} className={notif.status === "unread" ? "bg-blue-50/30" : ""}>
-                      <TableCell>
-                        <input type="checkbox" checked={selected.has(notif.id)} onChange={() => toggleSelect(notif.id)} className="w-4 h-4 accent-primary" />
-                      </TableCell>
-                      <TableCell>
-                        <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-medium", typeInfo.color)}>
-                          {typeInfo.label}
-                        </span>
-                        {notif.is_controlled_substance && (
-                          <div className="text-[10px] text-red-600 font-semibold mt-0.5">⚠️ CS</div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm">{notif.client_name || "—"}</TableCell>
-                      <TableCell className="text-sm">{notif.staff_name || "—"}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-xs">
-                        <p className="line-clamp-2">{notif.message}</p>
-                        {notif.acknowledged_note && (
-                          <p className="mt-1 text-green-700 italic">Note: {notif.acknowledged_note}</p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {notif.created_date ? format(new Date(notif.created_date), "MM/dd/yy HH:mm") : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-medium capitalize", STATUS_COLORS[notif.status])}>
-                          {notif.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {(notif.status === "unread" || notif.status === "read") && (
-                          <div className="flex gap-1.5">
-                            <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => { setAckModal(notif); setAckNote(""); }}>
-                              <Check className="w-3 h-3 mr-1" /> Ack
-                            </Button>
-                            <Button size="sm" variant="ghost" className="h-7 text-xs px-2 text-muted-foreground" onClick={() => updateMutation.mutate({ id: notif.id, data: { status: "dismissed" } })}>
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
-
-      {/* Acknowledge Modal */}
-      <Dialog open={!!ackModal} onOpenChange={() => setAckModal(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Acknowledge Notification</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground line-clamp-3">{ackModal?.message}</p>
-            <div>
-              <Label>Note (optional)</Label>
-              <Textarea
-                value={ackNote}
-                onChange={e => setAckNote(e.target.value)}
-                placeholder="Add a note about the follow-up action taken..."
-                rows={3}
-              />
+      {rules.map(rule => (
+        <Card key={rule.id}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base">{rule.label}</CardTitle>
+                <Badge variant="outline" className="text-xs">{rule.category}</Badge>
+              </div>
+              <Switch checked={rule.enabled} onCheckedChange={() => toggleRule(rule)} />
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAckModal(null)}>Cancel</Button>
-            <Button onClick={handleAckConfirm}>Confirm</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">{rule.description}</p>
+            <div className="space-y-2">
+              {rule.stages?.map((stage, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm border-l-2 border-primary/20 pl-3 py-1">
+                  <span className="font-medium">{stage.label}</span>
+                  <Badge variant="secondary" className="text-xs">{stage.recipient}</Badge>
+                  {stage.delay_minutes > 0 && <span className="text-xs text-muted-foreground">+{stage.delay_minutes} min</span>}
+                  <div className="flex items-center gap-1 ml-auto">
+                    {stage.channels?.map(ch => {
+                      const Icon = CHANNEL_ICONS[ch] || Monitor;
+                      return <Icon key={ch} className="w-3.5 h-3.5 text-muted-foreground" />;
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

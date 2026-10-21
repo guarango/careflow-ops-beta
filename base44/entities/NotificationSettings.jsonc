@@ -1,0 +1,126 @@
+{
+  "name": "NotificationSettings",
+  "type": "object",
+  "properties": {
+    "rule_name": {
+      "type": "string",
+      "description": "Unique rule identifier (e.g. forgot_clockout, med_pass_missed)"
+    },
+    "label": {
+      "type": "string",
+      "description": "Human-readable label"
+    },
+    "description": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "timekeeping",
+        "medication",
+        "charting",
+        "compliance",
+        "documents",
+        "deadlines"
+      ],
+      "description": "Rule category"
+    },
+    "stages": {
+      "type": "array",
+      "description": "Escalation stages with timing, recipient, and channels",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage_name": {
+            "type": "string",
+            "description": "e.g. dsp_15min, manager_1hr"
+          },
+          "label": {
+            "type": "string"
+          },
+          "delay_minutes": {
+            "type": "number",
+            "description": "Minutes after trigger event (0 = immediate)"
+          },
+          "recipient": {
+            "type": "string",
+            "enum": [
+              "dsp",
+              "manager",
+              "admin",
+              "hr",
+              "reporting_staff"
+            ]
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "in_app",
+                "email",
+                "sms",
+                "push"
+              ]
+            }
+          },
+          "message_template": {
+            "type": "string",
+            "description": "Privacy-safe template \u2014 no client names, diagnoses, or medications"
+          }
+        },
+        "required": [
+          "stage_name",
+          "recipient",
+          "channels"
+        ]
+      }
+    },
+    "updated_by": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "rule_name",
+    "label",
+    "enabled"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

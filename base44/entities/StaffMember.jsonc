@@ -271,6 +271,33 @@
       "description": "House IDs this staff member manages (managers only). Clients in these houses are included in their caseload.",
       "default": []
     },
+    "sms_opted_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "Staff opted in to receive SMS notifications during onboarding"
+    },
+    "sms_opted_in_at": {
+      "type": "string",
+      "description": "Timestamp when SMS consent was recorded"
+    },
+    "sms_opted_out_at": {
+      "type": "string",
+      "description": "Timestamp when SMS consent was revoked"
+    },
+    "sms_phone": {
+      "type": "string",
+      "description": "Phone number for SMS (may differ from primary phone)"
+    },
+    "email_notifications": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the staff member receives email notifications"
+    },
+    "push_notifications": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the staff member receives push notifications (when available)"
+    },
     "notes": {
       "type": "string"
     }
