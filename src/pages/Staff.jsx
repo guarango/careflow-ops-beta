@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Search, Phone, Mail, AlertTriangle, LayoutGrid, List } from "lucide-react";
+import { Users, Plus, Search, Phone, Mail, AlertTriangle, LayoutGrid, List, Link2 } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
+import { useToast } from "@/components/ui/use-toast";
 
 const emptyStaff = {
   first_name: "", last_name: "", email: "", phone: "", role: "DSP", status: "Active",
@@ -30,10 +31,29 @@ function complianceAlerts(s) {
 
 export default function Staff() {
   const { isAdmin } = useRole();
+  const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("grid");
+  const [linking, setLinking] = useState(false);
+
+  const handleLinkUsers = async () => {
+    setLinking(true);
+    try {
+      const res = await base44.functions.invoke("linkStaffUsers", {});
+      const d = res.data;
+      toast({
+        title: "Staff linked & synced",
+        description: `${d.linked} of ${d.totalStaff} staff linked to user accounts. ${d.unlinked} pending invitation acceptance.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["staff"] });
+    } catch (err) {
+      toast({ title: "Link failed", description: err.message, variant: "destructive" });
+    } finally {
+      setLinking(false);
+    }
+  };
 
   const queryClient = useQueryClient();
   const { data: staff = [], isLoading } = useQuery({
@@ -68,7 +88,16 @@ export default function Staff() {
       <PageHeader
         title="Staff Management"
         subtitle={`${staff.length} team members`}
-        action={<Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Staff</Button>}
+        action={
+          <div className="flex gap-2">
+            {isAdmin && (
+              <Button variant="outline" onClick={handleLinkUsers} disabled={linking}>
+                <Link2 className="w-4 h-4 mr-2" />{linking ? "Linking..." : "Link Users & Sync"}
+              </Button>
+            )}
+            <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Staff</Button>
+          </div>
+        }
       />
 
       <Card className="mb-6">
