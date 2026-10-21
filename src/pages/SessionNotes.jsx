@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Plus, Search, ClipboardCheck, AlertTriangle, Clock } from "lucide-react";
+import toast from "react-hot-toast";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import { useRole } from "@/hooks/useRole";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
@@ -67,10 +68,12 @@ export default function SessionNotes() {
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.SessionNote.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["session-notes"] }); setView("list"); setSelectedClient(null); setEditingNote(null); },
+    onError: (e) => { toast.error("Failed to save session note: " + (e?.message || "Unknown error")); },
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.SessionNote.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["session-notes"] }); },
+    onError: (e) => { toast.error("Failed to save session note: " + (e?.message || "Unknown error")); },
   });
 
   const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;

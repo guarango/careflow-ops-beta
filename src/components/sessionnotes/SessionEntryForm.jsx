@@ -17,7 +17,7 @@ import { format } from "date-fns";
 const LOCATIONS = ["Day Program", "Community Outing", "Residence", "Vocational Site", "Telehealth", "Other"];
 
 export default function SessionEntryForm({ client, goals, existingNote, staffName, serviceCodes = [], shifts = [], onSave, onAutosave, onCancel, saving, canAddAddendum = false, onAddendum }) {
-  const isOffline = useOffline();
+  const { isOnline } = useOffline();
   const [sigChecked, setSigChecked] = useState(false);
   const [sigTimestamp, setSigTimestamp] = useState("");
   const [showAddendum, setShowAddendum] = useState(false);
@@ -75,7 +75,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
     addenda: existingNote?.addenda || [],
     version: existingNote?.version || 1,
     version_history: existingNote?.version_history || [],
-    offline_created: isOffline,
+    offline_created: !isOnline,
   });
 
   // Whether this note is locked (Approved) — no editing
@@ -180,7 +180,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
                 Returned — revise & resubmit
               </span>
             )}
-            {isOffline ? (
+            {!isOnline ? (
               <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
                 <WifiOff className="w-3 h-3" />Offline
               </span>
