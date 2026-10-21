@@ -43,6 +43,8 @@ export const NAV_ACCESS = {
   "/super-admin":  ["super_admin"],
   "/notifications":["dsp", "manager", "admin", "super_admin"],
   "/houses":       ["manager", "admin", "super_admin"],
+  "/hr/signatures": ["admin", "super_admin"],
+  "/sign":          ["dsp", "manager", "admin", "super_admin"],
 };
 
 // Paths that require an Admin bundle (super_admin bypasses)
@@ -83,6 +85,9 @@ export const CAN = {
   authorizationsManage:   ["admin", "super_admin"],
   ispEdit:                ["admin", "super_admin"],
   superAdminAccess:       ["super_admin"],
+  manageSignatures:       ["admin", "super_admin"],
+  sendSignatureRequests:  ["admin", "super_admin"],
+  viewTeamSignatures:     ["manager", "admin", "super_admin"],
 };
 
 // Permissions that require a bundle (Admin only; super_admin bypasses)
@@ -95,6 +100,8 @@ const BUNDLE_REQUIRED = {
   evvExport:           "billing",
   authorizationsManage: "billing",
   hrAccess:            "hr",
+  manageSignatures:   "hr",
+  sendSignatureRequests: "hr",
 };
 
 // ─── Permission check (single source) ───────────────────────────────────

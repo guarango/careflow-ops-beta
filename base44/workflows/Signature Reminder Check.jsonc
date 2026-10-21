@@ -1,0 +1,44 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "signature_reminder_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_reminders": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendSignatureReminders"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send Signature Reminders",
+            "description": "Checks Sent/Viewed requests and notifies staff about due/overdue documents"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Signature Reminder Check",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * 1-5",
+      "one_time_date": null,
+      "timezone": "America/Denver",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Daily check for overdue or approaching-due signature requests. Sends reminder notifications to staff."
+}

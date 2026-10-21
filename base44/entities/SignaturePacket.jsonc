@@ -1,0 +1,89 @@
+{
+  "name": "SignaturePacket",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Packet name (e.g. New Hire Packet)"
+    },
+    "description": {
+      "type": "string"
+    },
+    "template_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "SignatureTemplate IDs included in this packet"
+    },
+    "template_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "auto_send_on_hire": {
+      "type": "boolean",
+      "default": false,
+      "description": "Automatically send this packet when a new StaffMember is created"
+    },
+    "auto_send_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Staff roles that trigger auto-send (e.g. DSP, Nurse)"
+    },
+    "default_due_days": {
+      "type": "number",
+      "default": 7,
+      "description": "Default due date in days from send date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Archived"
+      ],
+      "default": "Active"
+    },
+    "created_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "template_ids"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

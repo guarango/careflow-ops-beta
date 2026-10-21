@@ -11,7 +11,7 @@ import {
   Pill, Clock, ShieldCheck, DollarSign, Target, Calendar,
   UsersRound, ReceiptText, Briefcase, Settings, Home,
   Eye, ChevronDown, ChevronRight, Menu, X, FileText, Stethoscope, Brain, Bell,
-  ScrollText, UserSearch
+  ScrollText, UserSearch, FileSignature
 } from "lucide-react";
 import UserPickerDialog from "@/components/shared/UserPickerDialog";
 import { useImpersonation } from "@/lib/ImpersonationContext";
@@ -43,6 +43,7 @@ const ALL_NAV = [
       { path: "/schedule", label: "Schedule & EVV", icon: Calendar },
       { path: "/timecards", label: "Timecards", icon: Clock },
       { path: "/hr", label: "HR & Compliance", icon: Briefcase },
+      { path: "/hr/signatures", label: "E-Signatures", icon: FileSignature },
       { path: "/compliance", label: "Compliance", icon: ShieldCheck },
     ],
   },

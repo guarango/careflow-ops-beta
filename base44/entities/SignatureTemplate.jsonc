@@ -1,0 +1,139 @@
+{
+  "name": "SignatureTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name (e.g. W-4, I-9, Employee Handbook)"
+    },
+    "description": {
+      "type": "string"
+    },
+    "document_url": {
+      "type": "string",
+      "description": "Uploaded document file URI (stored privately)"
+    },
+    "document_name": {
+      "type": "string",
+      "description": "Original filename"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "pdf",
+        "docx",
+        "doc",
+        "image"
+      ]
+    },
+    "page_count": {
+      "type": "number",
+      "default": 1
+    },
+    "fields": {
+      "type": "array",
+      "description": "Field placements on the document",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "signature",
+              "initials",
+              "date",
+              "text",
+              "checkbox"
+            ]
+          },
+          "x": {
+            "type": "number",
+            "description": "X position as percentage of page width (0-100)"
+          },
+          "y": {
+            "type": "number",
+            "description": "Y position as percentage of page height (0-100)"
+          },
+          "width": {
+            "type": "number",
+            "default": 30
+          },
+          "height": {
+            "type": "number",
+            "default": 8
+          },
+          "page": {
+            "type": "number",
+            "default": 1
+          },
+          "label": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "x",
+          "y"
+        ]
+      }
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Archived"
+      ],
+      "default": "Active"
+    },
+    "created_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "document_url"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

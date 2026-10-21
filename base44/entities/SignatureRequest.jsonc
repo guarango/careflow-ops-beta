@@ -1,0 +1,199 @@
+{
+  "name": "SignatureRequest",
+  "type": "object",
+  "properties": {
+    "template_id": {
+      "type": "string"
+    },
+    "template_name": {
+      "type": "string"
+    },
+    "packet_id": {
+      "type": "string"
+    },
+    "packet_name": {
+      "type": "string"
+    },
+    "staff_id": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "staff_email": {
+      "type": "string"
+    },
+    "staff_role": {
+      "type": "string"
+    },
+    "sent_by": {
+      "type": "string"
+    },
+    "sent_by_name": {
+      "type": "string"
+    },
+    "sent_at": {
+      "type": "string"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Sent",
+        "Viewed",
+        "Signed",
+        "Overdue",
+        "Voided"
+      ],
+      "default": "Sent"
+    },
+    "viewed_at": {
+      "type": "string"
+    },
+    "signed_at": {
+      "type": "string"
+    },
+    "voided_at": {
+      "type": "string"
+    },
+    "voided_by": {
+      "type": "string"
+    },
+    "field_data": {
+      "type": "array",
+      "description": "Filled field values from the signer",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "signature_data": {
+      "type": "object",
+      "description": "Primary signature (drawn or typed)",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "drawn",
+            "typed"
+          ]
+        },
+        "data": {
+          "type": "string",
+          "description": "Base64 image or typed name"
+        }
+      }
+    },
+    "signed_pdf_uri": {
+      "type": "string",
+      "description": "Final signed PDF with certificate page (stored privately)"
+    },
+    "certificate_data": {
+      "type": "object",
+      "description": "Audit certificate captured at signing",
+      "properties": {
+        "signer_name": {
+          "type": "string"
+        },
+        "signer_email": {
+          "type": "string"
+        },
+        "signed_at": {
+          "type": "string"
+        },
+        "ip_address": {
+          "type": "string"
+        },
+        "device_type": {
+          "type": "string"
+        },
+        "user_agent": {
+          "type": "string"
+        },
+        "document_fingerprint": {
+          "type": "string"
+        }
+      }
+    },
+    "onboarding_doc_id": {
+      "type": "string",
+      "description": "Linked OnboardingDocument to mark complete"
+    },
+    "onboarding_doc_name": {
+      "type": "string"
+    },
+    "reminder_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_reminder_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "template_id",
+    "template_name",
+    "staff_id",
+    "staff_name",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "data.staff_id": {
+            "$in": "{{user.data.team_staff_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

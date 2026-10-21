@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
   UserPlus, FileCheck, Star, Plus, Search, Send, CheckCircle2,
-  Clock, AlertTriangle, FileText, Eye
+  Clock, AlertTriangle, FileText, Eye, FileSignature
 } from "lucide-react";
 import { differenceInDays, format, parseISO } from "date-fns";
 
@@ -482,6 +482,12 @@ export default function HRCompliance() {
             <Star className="w-4 h-4" />Performance
           </TabsTrigger>
         </TabsList>
+
+      <div className="mb-6 flex items-center gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm">
+        <FileSignature className="w-4 h-4 text-blue-600 shrink-0" />
+        <span className="text-blue-800">Go paperless with electronic signatures.</span>
+        <a href="/hr/signatures" className="ml-auto text-blue-600 font-medium hover:underline">Open E-Signatures →</a>
+      </div>
 
         <TabsContent value="onboarding">
           <OnboardingTab staff={staff} />

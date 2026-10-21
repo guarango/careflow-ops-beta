@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   CalendarDays, Clock, CheckCircle2, AlertCircle, Bell,
-  Smartphone, ChevronRight, AlertTriangle, Target, Pill as PillIcon, Info
+  Smartphone, ChevronRight, AlertTriangle, Target, Pill as PillIcon, Info,
+  FileSignature
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -90,6 +91,13 @@ export default function DSPDashboard({ user }) {
     queryKey: ["my-notifs", user?.id],
     queryFn: () => base44.entities.AppNotification.filter({ recipient_user_id: user.id }),
     enabled: !!user?.id,
+  });
+
+  // Fetch pending signature requests
+  const { data: mySigRequests = [] } = useQuery({
+    queryKey: ["my-sig-requests", staffRecord?.id],
+    queryFn: () => base44.entities.SignatureRequest.filter({ staff_id: staffRecord?.id, status: { $in: ["Sent", "Viewed", "Overdue"] } }),
+    enabled: !!staffRecord?.id,
   });
 
   // Filter shifts to user's
@@ -201,6 +209,30 @@ export default function DSPDashboard({ user }) {
         <Card className="border border-border bg-muted/30">
           <CardContent className="p-5 text-center text-muted-foreground text-sm">
             No shifts scheduled for today.
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Documents to Sign */}
+      {mySigRequests.length > 0 && (
+        <Card className="border-2 border-blue-200 bg-blue-50/30">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileSignature className="w-4 h-4 text-blue-600" />
+              <CardTitle className="text-sm font-semibold">Documents to Sign</CardTitle>
+            </div>
+            <span className="text-xs font-medium text-blue-600">{mySigRequests.length} pending</span>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            {mySigRequests.slice(0, 3).map((r) => (
+              <Link key={r.id} to={`/sign/${r.id}`} className="flex items-center gap-3 py-2.5 border-b border-border last:border-0 hover:bg-blue-50/50 rounded px-1 -mx-1 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate">{r.template_name}</p>
+                  <p className="text-xs text-muted-foreground">Due {r.due_date || "—"}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </Link>
+            ))}
           </CardContent>
         </Card>
       )}
