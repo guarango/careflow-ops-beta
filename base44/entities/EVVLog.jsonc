@@ -2,6 +2,10 @@
   "name": "EVVLog",
   "type": "object",
   "properties": {
+    "shift_id": {
+      "type": "string",
+      "description": "Linked ShiftSchedule record"
+    },
     "timecard_id": {
       "type": "string"
     },
@@ -17,11 +21,21 @@
     "client_name": {
       "type": "string"
     },
+    "house_id": {
+      "type": "string"
+    },
+    "house_name": {
+      "type": "string"
+    },
     "service_type": {
       "type": "string"
     },
     "service_code": {
       "type": "string"
+    },
+    "is_evv_required": {
+      "type": "boolean",
+      "default": false
     },
     "date": {
       "type": "string",
@@ -51,6 +65,51 @@
     "location_out_address": {
       "type": "string"
     },
+    "geofence_distance_in": {
+      "type": "number",
+      "description": "Distance from house geofence at clock-in (meters)"
+    },
+    "geofence_distance_out": {
+      "type": "number",
+      "description": "Distance from house geofence at clock-out (meters)"
+    },
+    "exception_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "missed_punch",
+        "geofence_violation",
+        "manual_entry"
+      ],
+      "default": "none"
+    },
+    "reason_code": {
+      "type": "string",
+      "description": "DSP-provided reason for exception"
+    },
+    "exception_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "none"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string"
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "is_manual_entry": {
+      "type": "boolean",
+      "default": false
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -78,5 +137,63 @@
     "staff_id",
     "date",
     "service_type"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "data.staff_id": {
+            "$in": "{{user.data.team_staff_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "data.staff_id": {
+            "$in": "{{user.data.team_staff_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "data.staff_id": {
+            "$in": "{{user.data.team_staff_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

@@ -52,6 +52,11 @@
         "Other"
       ]
     },
+    "is_evv_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "True for EVV-required services: Companion, Homemaker, Respite (except RP4, RP5, RPS), Supported Living, Personal Assistance"
+    },
     "active": {
       "type": "boolean",
       "default": true
@@ -65,5 +70,46 @@
     "description",
     "rate_type",
     "rate"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.funding_source": "Medicaid Waiver"
+        },
+        {
+          "data.funding_source": "Medicaid"
+        },
+        {
+          "data.funding_source": "State"
+        },
+        {
+          "data.funding_source": "Private"
+        },
+        {
+          "data.funding_source": "Other"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

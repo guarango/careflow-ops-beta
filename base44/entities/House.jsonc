@@ -14,6 +14,14 @@
       "description": "Geofence radius in meters for EVV verification",
       "default": 100
     },
+    "latitude": {
+      "type": "number",
+      "description": "Geocoded latitude for geofence checks"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Geocoded longitude for geofence checks"
+    },
     "program_type": {
       "type": "string",
       "enum": [
