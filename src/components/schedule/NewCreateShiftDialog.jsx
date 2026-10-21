@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -8,23 +8,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { format, parseISO, addWeeks } from "date-fns";
-import { calcHours } from "./scheduleUtils";
+import { format, parseISO, addWeeks, startOfWeek, differenceInCalendarDays } from "date-fns";
+import { calcHours, timeToMinutes } from "./scheduleUtils";
 import { cn } from "@/lib/utils";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Clock, TrendingUp } from "lucide-react";
+import QualificationCheck from "./QualificationCheck";
 
 const DAYS_SHORT = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const DAYS_FULL = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const emptyShift = {
-  client_id: "", client_name: "", staff_id: "", staff_name: "",
+  client_id: "", client_name: "", house_id: "", house_name: "",
+  staff_id: "", staff_name: "",
   service_code_id: "", service_code: "", service_type: "", rate_type: "Hourly", rate: 0,
   date: "", start_time: "", end_time: "", total_hours: 0,
   status: "Scheduled", billing_created: false, notes: "", location: "",
   recurring_series_id: "",
 };
 
-export default function NewCreateShiftDialog({ open, onClose, initialDate, clients, staffList, serviceCodes, editingShift }) {
+export default function NewCreateShiftDialog({ open, onClose, initialDate, clients, staffList, serviceCodes, editingShift, shifts = [], houses = [] }) {
   const [form, setForm] = useState({ ...emptyShift });
   const [recurring, setRecurring] = useState(false);
   const [recurDays, setRecurDays] = useState([]);
@@ -58,17 +60,21 @@ export default function NewCreateShiftDialog({ open, onClose, initialDate, clien
   });
 
   const selectedClient = clients.find(c => c.id === form.client_id);
-  // Filter staff to those assigned to this client
   const assignedStaff = selectedClient
     ? staffList.filter(s => (s.assigned_client_ids || []).includes(form.client_id))
     : [];
   const noStaffAssigned = form.client_id && assignedStaff.length === 0;
+  const selectedStaff = staffList.find(s => s.id === form.staff_id);
+  const selectedServiceCode = serviceCodes.find(sc => sc.id === form.service_code_id);
 
   const handleClientSelect = (clientId) => {
     const client = clients.find(c => c.id === clientId);
+    const house = houses.find(h => h.id === client?.house_id);
     setForm(f => ({
       ...f, client_id: clientId,
       client_name: client ? `${client.first_name} ${client.last_name}` : "",
+      house_id: house?.id || client?.house_id || "",
+      house_name: house?.name || "",
       location: client?.address || "",
       staff_id: "", staff_name: "",
     }));
@@ -83,6 +89,40 @@ export default function NewCreateShiftDialog({ open, onClose, initialDate, clien
     const code = serviceCodes.find(sc => sc.id === codeId);
     setForm(f => ({ ...f, service_code_id: codeId, service_code: code?.code || "", service_type: code?.service_type || "", rate_type: code?.rate_type || "Hourly", rate: code?.rate || 0 }));
   };
+
+  // Overtime check: sum staff's hours for the same week as the shift date
+  const overtimeWarning = useMemo(() => {
+    if (!form.staff_id || !form.date || !form.start_time || !form.end_time) return null;
+    const shiftDate = parseISO(form.date);
+    const weekStartStr = format(startOfWeek(shiftDate, { weekStartsOn: 0 }), "yyyy-MM-dd");
+    const weekEnd = addWeeks(startOfWeek(shiftDate, { weekStartsOn: 0 }), 1);
+    const weekEndStr = format(weekEnd, "yyyy-MM-dd");
+    const staffShifts = shifts.filter(s =>
+      s.staff_id === form.staff_id &&
+      s.date >= weekStartStr && s.date < weekEndStr &&
+      s.id !== editingShift?.id
+    );
+    const weeklyHours = staffShifts.reduce((sum, s) => sum + (s.total_hours || calcHours(s.start_time, s.end_time)), 0);
+    const thisShiftHours = calcHours(form.start_time, form.end_time);
+    const total = weeklyHours + thisShiftHours;
+    if (total > 40) return { total, weekly: weeklyHours, thisShift: thisShiftHours };
+    return null;
+  }, [form.staff_id, form.date, form.start_time, form.end_time, shifts, editingShift]);
+
+  // Double-booking check: same staff, same date, overlapping time
+  const doubleBookingWarning = useMemo(() => {
+    if (!form.staff_id || !form.date || !form.start_time || !form.end_time) return null;
+    const newStart = timeToMinutes(form.start_time);
+    const newEnd = timeToMinutes(form.end_time);
+    const conflict = shifts.find(s =>
+      s.staff_id === form.staff_id &&
+      s.date === form.date &&
+      s.id !== editingShift?.id &&
+      timeToMinutes(s.start_time) < newEnd &&
+      timeToMinutes(s.end_time || "23:59") > newStart
+    );
+    return conflict ? { start: conflict.start_time, end: conflict.end_time } : null;
+  }, [form.staff_id, form.date, form.start_time, form.end_time, shifts, editingShift]);
 
   const toggleRecurDay = (idx) => {
     setRecurDays(prev => prev.includes(idx) ? prev.filter(d => d !== idx) : [...prev, idx]);
@@ -103,7 +143,7 @@ export default function NewCreateShiftDialog({ open, onClose, initialDate, clien
         const diff = (dayIdx - weekBase.getDay() + 7) % 7;
         const date = new Date(weekBase);
         date.setDate(date.getDate() + diff);
-        if (week === 0 && diff === 0) return; // skip the original
+        if (week === 0 && diff === 0) return;
         if (maxDate && date > maxDate) return;
         dates.push(format(date, "yyyy-MM-dd"));
       });
@@ -165,6 +205,13 @@ export default function NewCreateShiftDialog({ open, onClose, initialDate, clien
             </Select>
           </div>
 
+          {/* House (auto-populated, editable) */}
+          {form.house_name && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-1.5">
+              <span>House: <span className="font-medium text-foreground">{form.house_name}</span></span>
+            </div>
+          )}
+
           {/* Staff */}
           <div>
             <Label>Staff *</Label>
@@ -185,6 +232,11 @@ export default function NewCreateShiftDialog({ open, onClose, initialDate, clien
             )}
           </div>
 
+          {/* Qualification Check */}
+          {selectedStaff && (
+            <QualificationCheck staffId={form.staff_id} staff={selectedStaff} />
+          )}
+
           {/* Service Code */}
           <div>
             <Label>Service Code *</Label>
@@ -193,7 +245,7 @@ export default function NewCreateShiftDialog({ open, onClose, initialDate, clien
               <SelectContent>
                 {serviceCodes.filter(sc => sc.active !== false).map(sc => (
                   <SelectItem key={sc.id} value={sc.id}>
-                    {sc.code} — {sc.description}
+                    {sc.code} — {sc.description}{sc.is_evv_required ? " (EVV)" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -213,6 +265,22 @@ export default function NewCreateShiftDialog({ open, onClose, initialDate, clien
               {form.rate > 0 && form.rate_type === "Hourly" && (
                 <span className="ml-3">Est. billing: <span className="font-semibold text-green-600">${(hours * form.rate).toFixed(2)}</span></span>
               )}
+            </div>
+          )}
+
+          {/* Double-booking warning */}
+          {doubleBookingWarning && (
+            <div className="flex gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>Double-booking: {form.staff_name} is already scheduled {doubleBookingWarning.start}–{doubleBookingWarning.end} on this date.</span>
+            </div>
+          )}
+
+          {/* Overtime warning */}
+          {overtimeWarning && (
+            <div className="flex gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-sm text-orange-700">
+              <TrendingUp className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>Overtime: {form.staff_name} will have {overtimeWarning.total.toFixed(1)}h this week ({overtimeWarning.weekly.toFixed(1)}h existing + {overtimeWarning.thisShift.toFixed(1)}h new). This exceeds 40h.</span>
             </div>
           )}
 
@@ -238,7 +306,6 @@ export default function NewCreateShiftDialog({ open, onClose, initialDate, clien
 
               {recurring && (
                 <div className="space-y-3">
-                  {/* Day selector */}
                   <div>
                     <Label className="text-xs mb-1.5 block">Days of week</Label>
                     <div className="flex gap-1">
@@ -260,7 +327,6 @@ export default function NewCreateShiftDialog({ open, onClose, initialDate, clien
                     </div>
                   </div>
 
-                  {/* Frequency */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Repeat</Label>

@@ -157,6 +157,11 @@
     "evv_api_endpoint": {
       "type": "string"
     },
+    "track_location_clock_in": {
+      "type": "boolean",
+      "default": true,
+      "description": "Track location at clock in/out. EVV-required services always capture location regardless of this setting."
+    },
     "notification_settings": {
       "type": "object"
     },

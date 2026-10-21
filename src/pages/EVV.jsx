@@ -14,13 +14,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { MapPin, Settings, FileCheck, AlertCircle, CheckCircle2, Clock, Send } from "lucide-react";
+import { MapPin, Settings, FileCheck, AlertCircle, CheckCircle2, Clock, Send, Download, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
+import EVVExceptions from "@/components/evv/EVVExceptions";
+import EVVExportButton from "@/components/evv/EVVExportButton";
+import { useRole } from "@/hooks/useRole";
 
 const US_STATES = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"];
 const AGGREGATORS = ["Sandata", "HHAeXchange", "Authenticare", "Other", "State System"];
 
 export default function EVV() {
+  const { can } = useRole();
+  const canExport = can("evvExport");
   const [activeTab, setActiveTab] = useState("submissions");
   const [configForm, setConfigForm] = useState({ agency_name: "", state: "UT", evv_model: "Open Model", aggregator: "Sandata", api_endpoint: "", api_key: "", enabled: true, notes: "" });
   const [savingConfig, setSavingConfig] = useState(false);
@@ -107,6 +112,8 @@ export default function EVV() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
           <TabsTrigger value="submissions" className="gap-2"><FileCheck className="w-4 h-4" />Submission Log</TabsTrigger>
+          <TabsTrigger value="exceptions" className="gap-2"><AlertTriangle className="w-4 h-4" />Exceptions</TabsTrigger>
+          {canExport && <TabsTrigger value="export" className="gap-2"><Download className="w-4 h-4" />Export</TabsTrigger>}
           <TabsTrigger value="config" className="gap-2"><Settings className="w-4 h-4" />Aggregator Config</TabsTrigger>
         </TabsList>
 
@@ -177,6 +184,22 @@ export default function EVV() {
             </div>
           </Card>
         </TabsContent>
+
+        <TabsContent value="exceptions">
+          <EVVExceptions />
+        </TabsContent>
+
+        {canExport && (
+          <TabsContent value="export">
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="text-sm font-semibold mb-1">Export EVV Records</h3>
+                <p className="text-xs text-muted-foreground mb-4">Export EVV-required service records as CSV for aggregator submission.</p>
+                <EVVExportButton />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="config">
           <Card>

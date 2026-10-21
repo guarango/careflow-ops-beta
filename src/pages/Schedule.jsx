@@ -51,6 +51,9 @@ export default function Schedule() {
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: () => base44.entities.Client.list() });
   const { data: staffList = [] } = useQuery({ queryKey: ["staff"], queryFn: () => base44.entities.StaffMember.list() });
   const { data: serviceCodes = [] } = useQuery({ queryKey: ["service-codes"], queryFn: () => base44.entities.ServiceCode.list() });
+  const { data: houses = [] } = useQuery({ queryKey: ["houses"], queryFn: () => base44.entities.House.list() });
+  const { data: agencies = [] } = useQuery({ queryKey: ["agencies"], queryFn: () => base44.entities.Agency.list("-created_date", 1) });
+  const agency = agencies[0];
 
   const createBillingMutation = useMutation({ mutationFn: (data) => base44.entities.BillingRecord.create(data) });
   const updateShiftMutation = useMutation({
@@ -237,6 +240,9 @@ export default function Schedule() {
           onClose={() => setSelectedShift(null)}
           onEdit={openEditShift}
           onDelete={() => setSelectedShift(null)}
+          houses={houses}
+          agency={agency}
+          serviceCodes={serviceCodes}
         />
       )}
 
@@ -250,6 +256,8 @@ export default function Schedule() {
           staffList={staffList}
           serviceCodes={serviceCodes}
           editingShift={editingShift}
+          shifts={shifts}
+          houses={houses}
         />
       )}
 

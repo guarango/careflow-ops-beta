@@ -6,13 +6,14 @@ import AgencyBranding from "@/components/agencyadmin/AgencyBranding";
 import AgencyProfile from "@/components/agencyadmin/AgencyProfile";
 import AgencyNotifications from "@/components/agencyadmin/AgencyNotifications";
 import AgencyAPISettings from "@/components/agencyadmin/AgencyAPISettings";
+import EVVLocationSettings from "@/components/agencyadmin/EVVLocationSettings";
 import AgencySubscription from "@/components/agencyadmin/AgencySubscription";
 import PortalUserManagement from "@/components/portal/PortalUserManagement";
 import StaffMessageInbox from "@/components/portal/StaffMessageInbox";
 import AIFeatureManager from "@/components/ai/AIFeatureManager";
 import AgencyIntegrationHub from "@/components/integrations/AgencyIntegrationHub";
 import IntegrationHealthDashboard from "@/components/integrations/IntegrationHealthDashboard";
-import { Settings, Palette, Bell, Code, CreditCard, Users, MessageSquare, Sparkles, Plug, Activity } from "lucide-react";
+import { Settings, Palette, Bell, Code, CreditCard, Users, MessageSquare, Sparkles, Plug, Activity, MapPin } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AgencyAdmin() {
@@ -50,6 +51,7 @@ export default function AgencyAdmin() {
           <TabsTrigger value="branding" className="gap-2"><Palette className="w-4 h-4" /> Branding</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2"><Bell className="w-4 h-4" /> Notifications</TabsTrigger>
           <TabsTrigger value="api" className="gap-2"><Code className="w-4 h-4" /> API & Webhooks</TabsTrigger>
+          <TabsTrigger value="evv" className="gap-2"><MapPin className="w-4 h-4" /> EVV Settings</TabsTrigger>
           <TabsTrigger value="subscription" className="gap-2"><CreditCard className="w-4 h-4" /> Subscription</TabsTrigger>
           <TabsTrigger value="portal-users" className="gap-2"><Users className="w-4 h-4" /> Family Portal</TabsTrigger>
           <TabsTrigger value="portal-messages" className="gap-2"><MessageSquare className="w-4 h-4" /> Portal Messages</TabsTrigger>
@@ -69,6 +71,9 @@ export default function AgencyAdmin() {
         </TabsContent>
         <TabsContent value="api">
           <AgencyAPISettings agency={agency} onSave={updateMutation.mutate} saving={updateMutation.isPending} />
+        </TabsContent>
+        <TabsContent value="evv">
+          <EVVLocationSettings agency={agency} onSave={updateMutation.mutate} saving={updateMutation.isPending} />
         </TabsContent>
         <TabsContent value="subscription">
           <AgencySubscription agency={agency} />
