@@ -14,12 +14,13 @@ export default async function(req) {
     const todayStr = now.toISOString().split('T')[0];
 
     // Get all shifts for today that are In Progress (clocked in, not clocked out)
-    const shifts = await base44.asServiceRole.entities.ShiftSchedule.filter({
+    const shiftsPage = await base44.asServiceRole.entities.ShiftSchedule.filter({
       status: 'In Progress',
       date: todayStr,
     }, { limit: 500 });
+    const shifts = shiftsPage?.items || [];
 
-    if (!shifts || shifts.length === 0) {
+    if (shifts.length === 0) {
       return Response.json({ success: true, checkedAt: now.toISOString(), notificationsSent: 0 });
     }
 
@@ -28,12 +29,13 @@ export default async function(req) {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    const yesterdayShifts = await base44.asServiceRole.entities.ShiftSchedule.filter({
+    const yesterdayShiftsPage = await base44.asServiceRole.entities.ShiftSchedule.filter({
       status: 'In Progress',
       date: yesterdayStr,
-    }, { limit: 500 });
+    }, { limit: 500 }).catch(() => ({ items: [] }));
+    const yesterdayShifts = yesterdayShiftsPage?.items || [];
 
-    const allShifts = [...shifts, ...(yesterdayShifts || [])];
+    const allShifts = [...shifts, ...yesterdayShifts];
 
     // Get existing notifications to dedupe
     const existingNotifs = await base44.asServiceRole.entities.AppNotification
@@ -48,9 +50,10 @@ export default async function(req) {
 
     // Build staff lookup map for user_id resolution
     const staffIds = [...new Set(allShifts.map(s => s.staff_id).filter(Boolean))];
-    const staffRecords = staffIds.length > 0
-      ? await base44.asServiceRole.entities.StaffMember.filter({ id: { $in: staffIds } }, { limit: 500 }).catch(() => [])
-      : [];
+    const staffRecordsPage = staffIds.length > 0
+      ? await base44.asServiceRole.entities.StaffMember.filter({ id: { $in: staffIds } }, { limit: 500 }).catch(() => ({ items: [] }))
+      : { items: [] };
+    const staffRecords = staffRecordsPage?.items || [];
     const staffMap = {};
     for (const s of staffRecords) {
       staffMap[s.id] = s;
@@ -58,11 +61,12 @@ export default async function(req) {
 
     // Build manager lookup: StaffMembers with role Supervisor/Admin who have house in assigned_house_ids
     const houseIds = [...new Set(allShifts.map(s => s.house_id).filter(Boolean))];
-    const managers = houseIds.length > 0
+    const managersPage = houseIds.length > 0
       ? await base44.asServiceRole.entities.StaffMember.filter({
           role: { $in: ['Supervisor', 'Admin'] },
-        }, { limit: 500 }).catch(() => [])
-      : [];
+        }, { limit: 500 }).catch(() => ({ items: [] }))
+      : { items: [] };
+    const managers = managersPage?.items || [];
     const managersByHouse = {};
     for (const m of managers) {
       const assignedHouses = m.assigned_house_ids || [];
