@@ -8,6 +8,14 @@
     "client_name": {
       "type": "string"
     },
+    "house_id": {
+      "type": "string",
+      "description": "House/Location ID this shift is at"
+    },
+    "house_name": {
+      "type": "string",
+      "description": "Denormalized house name"
+    },
     "staff_id": {
       "type": "string"
     },
@@ -71,12 +79,20 @@
       "type": "boolean",
       "default": false
     },
+    "evv_log_id": {
+      "type": "string",
+      "description": "Linked EVVLog record"
+    },
     "billing_created": {
       "type": "boolean",
       "default": false
     },
     "billing_record_id": {
       "type": "string"
+    },
+    "recurring_series_id": {
+      "type": "string",
+      "description": "ID grouping recurring shifts"
     },
     "location": {
       "type": "string"
@@ -98,6 +114,9 @@
           "data.client_id": {
             "$in": "{{user.data.assigned_client_ids}}"
           }
+        },
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
         },
         {
           "user_condition": {
@@ -126,6 +145,9 @@
           "data.client_id": {
             "$in": "{{user.data.assigned_client_ids}}"
           }
+        },
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
         },
         {
           "user_condition": {
