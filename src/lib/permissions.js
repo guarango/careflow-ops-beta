@@ -78,6 +78,8 @@ export const CAN = {
   viewIncidentBadge:      ["manager", "admin", "super_admin"],
   manageTraining:         ["manager", "admin", "super_admin"],
   viewAllStaff:           ["manager", "admin", "super_admin"],
+  viewServiceCodes:       ["manager", "admin", "super_admin"],
+  viewUnitTracking:       ["manager", "admin", "super_admin"],
   accessSettings:         ["admin", "super_admin"],
   exportPayroll:          ["admin", "super_admin"],
   lockPayPeriod:          ["admin", "super_admin"],
@@ -129,7 +131,7 @@ export function canAccessPath(role, path, bundles = {}) {
   if (!allowed) return role === "admin" || role === "super_admin";
   if (!allowed.includes(role)) return false;
   const requiredBundle = PATH_BUNDLES[cleanPath];
-  if (requiredBundle && role !== "super_admin") {
+  if (requiredBundle && role === "admin") {
     return bundles[requiredBundle] === true;
   }
   return true;
