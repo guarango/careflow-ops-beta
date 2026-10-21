@@ -19,6 +19,16 @@
       ],
       "default": "Hourly"
     },
+    "unit_type": {
+      "type": "string",
+      "enum": [
+        "15-minute",
+        "Hourly",
+        "Daily"
+      ],
+      "default": "Hourly",
+      "description": "Billing unit type: 15-minute units, hourly, or daily"
+    },
     "rate": {
       "type": "number",
       "description": "State payout rate"
@@ -57,6 +67,11 @@
       "default": false,
       "description": "True for EVV-required services: Companion, Homemaker, Respite (except RP4, RP5, RPS), Supported Living, Personal Assistance"
     },
+    "is_exempt_support_strategies": {
+      "type": "boolean",
+      "default": false,
+      "description": "True for ELS, MTP, PBA, Professional Medication Monitoring, Respite - exempt from support strategies and quarterly goal progress"
+    },
     "active": {
       "type": "boolean",
       "default": true
@@ -92,6 +107,11 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
           }
         }
       ]
