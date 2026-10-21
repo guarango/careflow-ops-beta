@@ -18,7 +18,7 @@ export default async function(req) {
 
     // ─── Invite a new user ───────────────────────────────────────────
     if (action === 'invite') {
-      const { email, role, hrBundle, billingBundle } = body;
+      const { email, role, hrBundle, billingBundle, staffMemberId, assignedClientIds, assignedHouseIds, teamStaffIds } = body;
       if (!email || !email.includes('@')) {
         return Response.json({ error: 'Valid email is required' }, { status: 400 });
       }
@@ -30,11 +30,18 @@ export default async function(req) {
       const platformRole = role === 'admin' ? 'admin' : 'user';
       await base44.users.inviteUser(email, platformRole);
 
-      // Find the newly invited user and set their role + bundles
-      const found = await base44.asServiceRole.entities.User.filter({ email });
-      const target = Array.isArray(found) ? found[0] : (found?.items?.[0]);
+      // Find the newly invited user (retry up to 5 times — the record may not be
+      // immediately queryable after inviteUser returns)
+      let target = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const found = await base44.asServiceRole.entities.User.filter({ email });
+        const items = Array.isArray(found) ? found : (found?.items || []);
+        if (items.length > 0) { target = items[0]; break; }
+        await new Promise(r => setTimeout(r, 500));
+      }
+
       if (target) {
-        const updateData = { role };
+        const updateData = { role, is_super_admin: false };
         if (role === 'admin') {
           updateData.hr_bundle = !!hrBundle;
           updateData.billing_bundle = !!billingBundle;
@@ -42,11 +49,16 @@ export default async function(req) {
           updateData.hr_bundle = false;
           updateData.billing_bundle = false;
         }
-        updateData.is_super_admin = false;
+        if (staffMemberId) updateData.staff_member_id = staffMemberId;
+        if (assignedClientIds) updateData.assigned_client_ids = assignedClientIds;
+        if (assignedHouseIds) updateData.assigned_house_ids = assignedHouseIds;
+        if (teamStaffIds) updateData.team_staff_ids = teamStaffIds;
         await base44.asServiceRole.entities.User.update(target.id, updateData);
+        return Response.json({ success: true, email, role, userId: target.id, updated: true });
       }
 
-      return Response.json({ success: true, email, role });
+      // User record not found yet — invite was sent but role couldn't be set
+      return Response.json({ success: true, email, role, updated: false, warning: 'Role update pending — user record not yet queryable' });
     }
 
     // ─── Update an existing user's role/bundles ──────────────────────
