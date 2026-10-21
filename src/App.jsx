@@ -23,6 +23,7 @@ import Goals from './pages/Goals.jsx';
 import Schedule from './pages/Schedule';
 import UserManagement from './pages/UserManagement';
 import RolePreview from './pages/RolePreview';
+import AuditLogPage from './pages/AuditLogPage';
 import HRCompliance from './pages/HRCompliance';
 import SuperAdmin from './pages/SuperAdmin';
 import AgencyAdmin from './pages/AgencyAdmin';
@@ -70,6 +71,7 @@ const AuthenticatedApp = () => {
         <Route path="/schedule" element={<RouteGuard path="/schedule"><Schedule /></RouteGuard>} />
         <Route path="/users" element={<RouteGuard path="/users"><UserManagement /></RouteGuard>} />
         <Route path="/role-preview" element={<RouteGuard path="/role-preview"><RolePreview /></RouteGuard>} />
+        <Route path="/audit-log" element={<RouteGuard path="/audit-log"><AuditLogPage /></RouteGuard>} />
         <Route path="/hr" element={<RouteGuard path="/hr"><HRCompliance /></RouteGuard>} />
         <Route path="/agency-admin" element={<RouteGuard path="/agency-admin"><AgencyAdmin /></RouteGuard>} />
         <Route path="/reports" element={<RouteGuard path="/reports"><Reports /></RouteGuard>} />

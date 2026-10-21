@@ -2,6 +2,8 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar.jsx";
 import TopNav from "./TopNav.jsx";
+import ReadOnlyInterceptor from "@/components/shared/ReadOnlyInterceptor";
+import PageViewLogger from "@/components/shared/PageViewLogger";
 
 // Sidebar widths:
 //   mobile  (<768px): 0 (hidden, overlay)
@@ -13,6 +15,8 @@ export default function AppLayout() {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <Sidebar />
       <TopNav />
+      <ReadOnlyInterceptor />
+      <PageViewLogger />
       {/* Offset main content: sidebar on left, top nav on top */}
       <main className="min-h-screen transition-all duration-300
         ml-0

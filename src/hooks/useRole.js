@@ -6,7 +6,7 @@ import { useImpersonation } from "@/lib/ImpersonationContext";
 export function useRole() {
   const { user } = useAuth();
   const { previewRole } = useRolePreview();
-  const { impersonation } = useImpersonation();
+  const { impersonation, isReadOnly } = useImpersonation();
 
   // When impersonating, use the target user's role/bundles
   const effectiveUser = impersonation?.targetUser || user;
@@ -22,6 +22,7 @@ export function useRole() {
     role,
     realRole,
     bundles,
+    isReadOnly,
     // Role flags
     isSuperAdmin:  role === "super_admin",
     isManager:     role === "manager",

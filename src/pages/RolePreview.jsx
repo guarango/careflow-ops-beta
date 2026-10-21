@@ -7,9 +7,12 @@ import PageHeader from "@/components/shared/PageHeader";
 import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, Target, CalendarDays, Tag, UserCog,
-  TrendingUp, Check, X, Lock, Briefcase, Info
+  TrendingUp, Check, X, Lock, Briefcase, Info, UserSearch, ShieldAlert
 } from "lucide-react";
 import { NAV_ACCESS, CAN, getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
+import { useRole } from "@/hooks/useRole";
+import { useImpersonation } from "@/lib/ImpersonationContext";
+import UserPickerDialog from "@/components/shared/UserPickerDialog";
 
 const ALL_NAV = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
@@ -165,6 +168,9 @@ function RoleCard({ role }) {
 
 export default function RolePreview() {
   const [compareMode, setCompareMode] = useState("side-by-side");
+  const { isSuperAdmin } = useRole();
+  const { impersonation, returnToSelf } = useImpersonation();
+  const [userPickerOpen, setUserPickerOpen] = useState(false);
 
   return (
     <div>
@@ -173,11 +179,60 @@ export default function RolePreview() {
         subtitle="Permission model for DSP, Manager, Admin, and Super Admin"
         action={
           <div className="flex gap-2">
+            {isSuperAdmin && !impersonation && (
+              <Button variant="outline" size="sm" onClick={() => setUserPickerOpen(true)}>
+                <UserSearch className="w-4 h-4 mr-2" />
+                View as User
+              </Button>
+            )}
             <Button variant={compareMode === "side-by-side" ? "default" : "outline"} size="sm" onClick={() => setCompareMode("side-by-side")}>Side by Side</Button>
             <Button variant={compareMode === "tabs" ? "default" : "outline"} size="sm" onClick={() => setCompareMode("tabs")}>Tabbed</Button>
           </div>
         }
       />
+
+      {impersonation && (
+        <Card className="mb-6 border-orange-500/30 bg-orange-500/5">
+          <CardContent className="py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="w-5 h-5 text-orange-500" />
+              <div>
+                <p className="text-sm font-medium">
+                  Currently viewing as {impersonation.targetUser?.full_name || impersonation.targetUser?.email} ({getRoleLabel(impersonation.targetUser?.role)})
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Reason: {impersonation.reason} · Read-only mode · 30-minute timeout
+                </p>
+              </div>
+            </div>
+            <Button size="sm" onClick={() => returnToSelf()}>Return to my account</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {isSuperAdmin && !impersonation && (
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardContent className="py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <UserSearch className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-sm font-medium">View as a specific user</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Pick any user to see exactly what they see — read-only, 30-minute timeout, fully audited.
+                </p>
+              </div>
+            </div>
+            <Button size="sm" onClick={() => setUserPickerOpen(true)}>
+              <UserSearch className="w-4 h-4 mr-2" />
+              Select User
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {userPickerOpen && (
+        <UserPickerDialog open={userPickerOpen} onClose={() => setUserPickerOpen(false)} />
+      )}
 
       {/* Bundle note */}
       <div className="mb-6 p-4 bg-muted rounded-lg flex items-start gap-2">

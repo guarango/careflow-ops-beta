@@ -10,8 +10,11 @@ import {
   LayoutDashboard, Users, UserCheck, ClipboardList, AlertTriangle,
   Pill, Clock, ShieldCheck, DollarSign, Target, Calendar,
   UsersRound, ReceiptText, Briefcase, Settings, Home,
-  Eye, ChevronDown, ChevronRight, Menu, X, FileText, Stethoscope, Brain, Bell
+  Eye, ChevronDown, ChevronRight, Menu, X, FileText, Stethoscope, Brain, Bell,
+  ScrollText, UserSearch
 } from "lucide-react";
+import UserPickerDialog from "@/components/shared/UserPickerDialog";
+import { useImpersonation } from "@/lib/ImpersonationContext";
 
 const ALL_NAV = [
   {
@@ -56,6 +59,7 @@ const ALL_NAV = [
       { path: "/users", label: "Users", icon: UsersRound },
       { path: "/notifications", label: "Notification Center", icon: Bell },
       { path: "/agency-admin", label: "Settings & Admin", icon: Settings },
+      { path: "/audit-log", label: "Audit Log", icon: ScrollText },
       { path: "/role-preview", label: "Role Preview", icon: Eye },
     ],
   },
@@ -84,11 +88,13 @@ function NavTooltip({ label, children }) {
 
 export default function Sidebar() {
   const location = useLocation();
-  const { role, realRole, can, canAccessPath } = useRole();
+  const { role, realRole, can, canAccessPath, isReadOnly } = useRole();
   const { previewRole, setPreviewRole } = useRolePreview();
+  const { impersonation, returnToSelf } = useImpersonation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [tabletExpanded, setTabletExpanded] = useState(false);
   const [rolePickerOpen, setRolePickerOpen] = useState(false);
+  const [userPickerOpen, setUserPickerOpen] = useState(false);
 
   const [currentUser, setCurrentUser] = useState(null);
   useEffect(() => { base44.auth.me().then(setCurrentUser).catch(() => {}); }, []);
@@ -172,38 +178,69 @@ export default function Sidebar() {
       <div className="px-3 py-3 border-t border-[#1E293B] shrink-0">
         {(realRole === "admin" || realRole === "super_admin") ? (
           <div className="relative">
-            <button
-              onClick={() => setRolePickerOpen((v) => !v)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-[#1E293B] hover:bg-[#334155] transition-colors"
-            >
-              <Eye className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
-              <span className="flex-1 text-left text-xs text-[#94A3B8]">
-                {previewRole ? `Viewing as ${getRoleLabel(previewRole)}` : "Preview Role"}
-              </span>
-              <ChevronDown className={cn("w-3.5 h-3.5 text-[#64748B] transition-transform", rolePickerOpen && "rotate-180")} />
-            </button>
-            {rolePickerOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
+            {impersonation ? (
+              <div className="space-y-2">
+                <div className="px-3 py-2 rounded-md bg-orange-500/10 border border-orange-500/30 text-center">
+                  <p className="text-[11px] font-medium text-orange-400">
+                    Viewing as {impersonation.targetUser?.full_name?.split(" ")[0] || "user"}
+                  </p>
+                  <p className="text-[10px] text-orange-400/70 mt-0.5">Read-only · 30min limit</p>
+                </div>
                 <button
-                  onClick={() => { setPreviewRole(null); setRolePickerOpen(false); }}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors font-medium text-foreground"
+                  onClick={() => returnToSelf()}
+                  className="w-full px-3 py-2 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium transition-colors"
                 >
-                  Reset (Admin view)
+                  Return to my account
                 </button>
-                <div className="border-t border-border" />
-                {PREVIEW_ROLES.filter(r => r !== "admin").map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => { setPreviewRole(r); setRolePickerOpen(false); }}
-                    className={cn(
-                      "w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors",
-                      previewRole === r && "bg-accent font-semibold"
-                    )}
-                  >
-                    {getRoleLabel(r)}
-                  </button>
-                ))}
               </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => setRolePickerOpen((v) => !v)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-[#1E293B] hover:bg-[#334155] transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
+                  <span className="flex-1 text-left text-xs text-[#94A3B8]">
+                    {previewRole ? `Viewing as ${getRoleLabel(previewRole)}` : "Preview Role"}
+                  </span>
+                  <ChevronDown className={cn("w-3.5 h-3.5 text-[#64748B] transition-transform", rolePickerOpen && "rotate-180")} />
+                </button>
+                {rolePickerOpen && (
+                  <div className="absolute bottom-full left-0 right-0 mb-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
+                    <button
+                      onClick={() => { setPreviewRole(null); setRolePickerOpen(false); }}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors font-medium text-foreground"
+                    >
+                      Reset (Admin view)
+                    </button>
+                    <div className="border-t border-border" />
+                    {PREVIEW_ROLES.filter(r => r !== "admin").map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => { setPreviewRole(r); setRolePickerOpen(false); }}
+                        className={cn(
+                          "w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors",
+                          previewRole === r && "bg-accent font-semibold"
+                        )}
+                      >
+                        {getRoleLabel(r)}
+                      </button>
+                    ))}
+                    {realRole === "super_admin" && (
+                      <>
+                        <div className="border-t border-border" />
+                        <button
+                          onClick={() => { setUserPickerOpen(true); setRolePickerOpen(false); }}
+                          className="w-full flex items-center gap-2 text-left px-3 py-2 text-xs hover:bg-accent transition-colors text-foreground"
+                        >
+                          <UserSearch className="w-3.5 h-3.5" />
+                          View as specific user
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         ) : (
@@ -212,6 +249,10 @@ export default function Sidebar() {
           </div>
         )}
       </div>
+
+      {userPickerOpen && (
+        <UserPickerDialog open={userPickerOpen} onClose={() => setUserPickerOpen(false)} />
+      )}
     </nav>
   );
 

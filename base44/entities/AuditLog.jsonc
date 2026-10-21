@@ -16,7 +16,17 @@
     },
     "action": {
       "type": "string",
-      "description": "e.g. impersonate_agency, suspend_agency, api_call"
+      "description": "e.g. impersonate_session_start, impersonate_page_view, impersonate_session_end, login_as, api_call"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "session_start",
+        "page_view",
+        "session_end",
+        "generic"
+      ],
+      "default": "generic"
     },
     "target_type": {
       "type": "string"
@@ -25,6 +35,35 @@
       "type": "string"
     },
     "target_name": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Groups all events in one impersonation session"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Stated reason for the impersonation session"
+    },
+    "session_start": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "session_end": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "viewed_path": {
+      "type": "string",
+      "description": "Route path viewed during impersonation"
+    },
+    "viewed_record_id": {
+      "type": "string"
+    },
+    "viewed_record_type": {
+      "type": "string"
+    },
+    "viewed_record_name": {
       "type": "string"
     },
     "details": {
@@ -40,5 +79,27 @@
   "required": [
     "action",
     "actor_name"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
