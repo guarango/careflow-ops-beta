@@ -105,6 +105,14 @@
         }
       }
     },
+    "bsp_document_url": {
+      "type": "string",
+      "description": "Uploaded BSP document (stored privately)"
+    },
+    "fba_document_url": {
+      "type": "string",
+      "description": "Uploaded Functional Behavior Assessment document (stored privately)"
+    },
     "plain_language_summary": {
       "type": "string",
       "description": "Written at 6th-grade level for person and family"
@@ -335,6 +343,69 @@
             }
           }
         }
+      }
+    },
+    "human_rights_restrictions": {
+      "type": "array",
+      "description": "Structured human rights restrictions with all 8 required fields per CMS/regulatory standards",
+      "items": {
+        "type": "object",
+        "properties": {
+          "restriction_type": {
+            "type": "string",
+            "description": "e.g. Physical restraint, Environmental restriction, Medication-related"
+          },
+          "informed_consent": {
+            "type": "string",
+            "description": "a. Informed consent of the person or their legal representative"
+          },
+          "assessed_need": {
+            "type": "string",
+            "description": "b. The specific, individualized assessed need justifying the restriction"
+          },
+          "positive_interventions": {
+            "type": "string",
+            "description": "c. Positive interventions and supports used before the modification"
+          },
+          "less_intrusive_methods": {
+            "type": "string",
+            "description": "d. Less intrusive methods tried that did not work"
+          },
+          "condition_description": {
+            "type": "string",
+            "description": "e. Description of the condition, proportionate to the need"
+          },
+          "data_collection_method": {
+            "type": "string",
+            "description": "f. How data is collected and reviewed to measure effectiveness"
+          },
+          "review_date": {
+            "type": "string",
+            "format": "date",
+            "description": "g. Time limit / next review date"
+          },
+          "no_harm_assurance": {
+            "type": "string",
+            "description": "h. Assurance that interventions cause no harm"
+          },
+          "hrc_approval_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Human Rights Committee approval date"
+          },
+          "attached_document_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Privately stored supporting documents"
+          }
+        },
+        "required": [
+          "restriction_type",
+          "assessed_need",
+          "review_date"
+        ]
       }
     },
     "reinforcement_system": {
