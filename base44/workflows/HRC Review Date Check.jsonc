@@ -1,0 +1,45 @@
+{
+  "description": "Runs daily to check for upcoming and overdue Human Rights Committee review dates on BSP restrictions, notifying admins 30 days, 7 days, on the day, and when overdue",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "hrc_review_date_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_check": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkHRCReviewDates",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Check HRC Review Dates",
+            "description": "Scan BSPs for upcoming/overdue human rights review dates"
+          }
+        }
+      }
+    ]
+  },
+  "name": "HRC Review Date Check",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "America/Denver",
+      "interval_value": 1,
+      "interval_unit": "days",
+      "interval_anchor": "2026-10-21T06:00:00Z",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}
