@@ -38,7 +38,7 @@ function checkBillability(shift, sessionNotes, evvLogs, authorizations, serviceC
   );
   if (!auth) blockers.push("No authorization");
   else {
-    const remaining = a.remaining_units ?? (a.authorized_units - (a.used_units || 0));
+    const remaining = auth.remaining_units ?? (auth.authorized_units - (auth.used_units || 0));
     if (remaining <= 0) blockers.push("Units exhausted");
   }
 
