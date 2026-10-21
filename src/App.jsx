@@ -40,6 +40,10 @@ import TrainingBuilder from './pages/TrainingBuilder';
 import MyTrainings from './pages/MyTrainings';
 import TrainingVerification from './pages/TrainingVerification';
 import TrainingHoursReport from './pages/TrainingHoursReport';
+import MonthlySummaries from './pages/MonthlySummaries';
+import MonthlySummaryDetail from './pages/MonthlySummaryDetail';
+import QuarterlySummaries from './pages/QuarterlySummaries';
+import QuarterlySummaryDetail from './pages/QuarterlySummaryDetail';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -90,6 +94,10 @@ const AuthenticatedApp = () => {
         <Route path="/my-trainings" element={<RouteGuard path="/my-trainings"><MyTrainings /></RouteGuard>} />
         <Route path="/hr/training-verify" element={<RouteGuard path="/hr/training-verify"><TrainingVerification /></RouteGuard>} />
         <Route path="/reports/training-hours" element={<RouteGuard path="/reports/training-hours"><TrainingHoursReport /></RouteGuard>} />
+        <Route path="/summaries/monthly" element={<RouteGuard path="/summaries/monthly"><MonthlySummaries /></RouteGuard>} />
+        <Route path="/summaries/monthly/:id" element={<RouteGuard path="/summaries/monthly"><MonthlySummaryDetail /></RouteGuard>} />
+        <Route path="/summaries/quarterly" element={<RouteGuard path="/summaries/quarterly"><QuarterlySummaries /></RouteGuard>} />
+        <Route path="/summaries/quarterly/:id" element={<RouteGuard path="/summaries/quarterly"><QuarterlySummaryDetail /></RouteGuard>} />
         </Route>
       {/* Standalone routes — no sidebar layout */}
       <Route path="/super-admin" element={<SuperAdmin />} />

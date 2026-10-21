@@ -26,6 +26,7 @@ const ALL_NAV = [
       { path: "/session-notes", label: "Session Notes", icon: ClipboardList },
       { path: "/bsp", label: "Behavior Support", icon: Brain },
       { path: "/isp", label: "ISP Plans", icon: FileText },
+      { path: "/summaries/monthly", label: "Summaries", icon: FileText },
     ],
   },
   {

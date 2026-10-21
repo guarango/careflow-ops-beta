@@ -1,0 +1,189 @@
+{
+  "name": "MonthlySummary",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "month_year": {
+      "type": "string",
+      "description": "e.g. 'October 2026'"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Pending Review",
+        "Signed",
+        "Returned"
+      ],
+      "default": "Draft"
+    },
+    "ai_generated": {
+      "type": "boolean",
+      "default": false
+    },
+    "ai_generated_at": {
+      "type": "string"
+    },
+    "how_month_went": {
+      "type": "string",
+      "description": "Narrative summary of the month"
+    },
+    "goals_summary": {
+      "type": "array",
+      "description": "Per-goal progress with numbers and source note references",
+      "items": {
+        "type": "object",
+        "properties": {
+          "goal_title": {
+            "type": "string"
+          },
+          "sessions_charted": {
+            "type": "number"
+          },
+          "progress_summary": {
+            "type": "string"
+          },
+          "source_note_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "notable_events": {
+      "type": "string",
+      "description": "Incidents, behavioral events, health changes"
+    },
+    "source_note_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "All session notes referenced"
+    },
+    "source_data": {
+      "type": "object",
+      "properties": {
+        "note_count": {
+          "type": "number"
+        },
+        "incident_count": {
+          "type": "number"
+        },
+        "med_pass_count": {
+          "type": "number"
+        },
+        "goals_charted_count": {
+          "type": "number"
+        }
+      }
+    },
+    "signed_by": {
+      "type": "string",
+      "description": "StaffMember ID of signer"
+    },
+    "signed_by_name": {
+      "type": "string"
+    },
+    "signed_by_role": {
+      "type": "string"
+    },
+    "signed_at": {
+      "type": "string"
+    },
+    "signature_timestamp": {
+      "type": "string"
+    },
+    "returned_note": {
+      "type": "string"
+    },
+    "returned_by": {
+      "type": "string"
+    },
+    "returned_at": {
+      "type": "string"
+    },
+    "quarterly_summary_id": {
+      "type": "string",
+      "description": "Linked quarterly summary once assembled"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "month_year",
+    "period_start",
+    "period_end",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_id": {
+            "$in": "{{user.data.assigned_client_ids}}"
+          },
+          "data.status": "Signed"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

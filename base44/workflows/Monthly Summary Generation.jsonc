@@ -1,0 +1,44 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "monthly_summary_generation",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "generate": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "generateMonthlySummaries"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Generate AI monthly summaries",
+            "description": "Drafts summaries for all active clients"
+          }
+        }
+      }
+    ]
+  },
+  "description": "On the 1st of each month, drafts AI monthly summaries for every active client from the previous month's session notes, goals, incidents, and med logs",
+  "name": "Monthly Summary Generation",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 1 * *",
+      "one_time_date": null,
+      "timezone": "America/Denver",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

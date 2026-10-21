@@ -1,0 +1,44 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "quarterly_deadline_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "check_deadlines": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkQuarterlyDeadlines"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Check quarterly deadlines",
+            "description": "7-day, 2-day reminders and overdue escalation"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Daily check of quarterly summaries: reminds managers 7 and 2 days before due date, escalates to admin if overdue",
+  "name": "Quarterly Summary Deadline Check",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * *",
+      "one_time_date": null,
+      "timezone": "America/Denver",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

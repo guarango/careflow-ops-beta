@@ -1,0 +1,218 @@
+{
+  "name": "QuarterlySummary",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "quarter": {
+      "type": "string",
+      "description": "e.g. 'Q1 2026'"
+    },
+    "quarter_number": {
+      "type": "number"
+    },
+    "year": {
+      "type": "number"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "15 calendar days after quarter ends"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Pending Review",
+        "Signed",
+        "Sent to SC",
+        "Overdue"
+      ],
+      "default": "Draft"
+    },
+    "monthly_summary_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "monthly_summary_dates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "services_provided": {
+      "type": "array",
+      "description": "Each service with date range, general summary, response, notable events, goal progress",
+      "items": {
+        "type": "object",
+        "properties": {
+          "service_type": {
+            "type": "string"
+          },
+          "service_code": {
+            "type": "string"
+          },
+          "date_range_start": {
+            "type": "string"
+          },
+          "date_range_end": {
+            "type": "string"
+          },
+          "general_summary": {
+            "type": "string"
+          },
+          "response_to_services": {
+            "type": "string"
+          },
+          "notable_events": {
+            "type": "string"
+          },
+          "goal_progress": {
+            "type": "string"
+          },
+          "goal_progress_exempt": {
+            "type": "boolean",
+            "default": false,
+            "description": "True for ELS, MTP, PBA, Professional Medication Monitoring, Respite"
+          }
+        }
+      }
+    },
+    "overall_status_summary": {
+      "type": "string",
+      "description": "General summary of client's status across the quarter"
+    },
+    "signed_by": {
+      "type": "string",
+      "description": "StaffMember ID of signer"
+    },
+    "signed_by_name": {
+      "type": "string"
+    },
+    "signed_by_role": {
+      "type": "string"
+    },
+    "signed_at": {
+      "type": "string"
+    },
+    "signature_timestamp": {
+      "type": "string"
+    },
+    "sent_to_support_coordinator": {
+      "type": "boolean",
+      "default": false
+    },
+    "sent_to_sc_at": {
+      "type": "string"
+    },
+    "sent_to_sc_method": {
+      "type": "string",
+      "description": "e.g. 'Email', 'Portal', 'Fax'"
+    },
+    "sent_to_sc_by": {
+      "type": "string"
+    },
+    "reminder_7day_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "reminder_2day_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "escalated_to_admin": {
+      "type": "boolean",
+      "default": false
+    },
+    "escalated_at": {
+      "type": "string"
+    },
+    "returned_note": {
+      "type": "string"
+    },
+    "returned_by": {
+      "type": "string"
+    },
+    "returned_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "quarter",
+    "period_start",
+    "period_end",
+    "due_date",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_id": {
+            "$in": "{{user.data.assigned_client_ids}}"
+          },
+          "data.status": "Sent to SC"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
