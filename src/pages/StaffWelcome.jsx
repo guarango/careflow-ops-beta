@@ -60,7 +60,7 @@ export default function StaffWelcome() {
             <Button
               size="lg"
               className="bg-[#0b81b7] hover:bg-[#0a6f9d] text-white px-8 h-12 text-base font-semibold rounded-lg shadow-sm"
-              onClick={() => navigateToLogin()}
+              onClick={() => navigateToLogin('/')}
             >
               Staff Sign In
               <ArrowRight className="w-4 h-4 ml-2" />
