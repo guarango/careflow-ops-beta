@@ -215,6 +215,18 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
     }
   };
 
+  const saveMessageTemplates = async (rule, customTemplates) => {
+    setSaving(true);
+    try {
+      await base44.entities.NotificationSettings.update(rule.id, buildUpdatePayload(rule, { message_templates: customTemplates }));
+      setRules(rs => rs.map(r => r.id === rule.id ? { ...r, message_templates: customTemplates } : r));
+    } catch (err) {
+      console.error("Failed to save message templates:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getCategoryRules = (catKey) => rules.filter(r => r.category === catKey);
   const getSummary = (catKey) => {
     const catRules = getCategoryRules(catKey);
@@ -352,6 +364,7 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
         rule={previewRule}
         open={!!previewRule}
         onClose={() => setPreviewRule(null)}
+        onSave={saveMessageTemplates}
       />
 
       <Dialog open={resetConfirm} onOpenChange={setResetConfirm}>

@@ -113,6 +113,32 @@
         }
       }
     },
+    "message_templates": {
+      "type": "object",
+      "description": "Custom message templates per channel (falls back to generated defaults when empty)",
+      "properties": {
+        "sms": {
+          "type": "string",
+          "description": "Custom SMS body"
+        },
+        "push_title": {
+          "type": "string",
+          "description": "Custom push notification title"
+        },
+        "push_body": {
+          "type": "string",
+          "description": "Custom push notification body"
+        },
+        "email_subject": {
+          "type": "string",
+          "description": "Custom email subject line"
+        },
+        "email_body": {
+          "type": "string",
+          "description": "Custom email body"
+        }
+      }
+    },
     "digest_enabled": {
       "type": "boolean",
       "default": true,
