@@ -31,10 +31,14 @@ export default function NotificationBell({ currentUser, dark = true }) {
 
   const fetchNotifications = async () => {
     if (!currentUser?.id) return;
-    const all = await base44.entities.AppNotification.filter({ recipient_user_id: currentUser.id });
-    // Sort reverse chronological
-    all.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-    setNotifications(all);
+    try {
+      const all = await base44.entities.AppNotification.filter({ recipient_user_id: currentUser.id });
+      all.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      setNotifications(all);
+    } catch (err) {
+      // Swallow network errors so the bell keeps polling without breaking the UI
+      console.warn("NotificationBell fetch failed:", err?.message);
+    }
   };
 
   useEffect(() => {
