@@ -30,18 +30,19 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
   const loadRules = useCallback(async () => {
     setLoading(true);
     try {
+      const agencyId = agency?.id || "default";
       const page = await base44.entities.NotificationSettings.filter(
-        { agency_id: agency?.id || "default" },
+        { agency_id: agencyId },
         { limit: 200 }
       );
       let records = page?.items || [];
 
       // If no rules exist yet, seed defaults
-      if (records.length === 0 && agency?.id) {
+      if (records.length === 0) {
         const seedData = DEFAULT_RULES.map(r => ({
           ...r,
           channels: { ...r.channels },
-          agency_id: agency.id,
+          agency_id: agencyId,
         }));
         const created = await base44.entities.NotificationSettings.bulkCreate(seedData);
         records = created || [];
@@ -50,9 +51,9 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
       // Merge with defaults for any missing rules
       const existingKeys = new Set(records.map(r => r.event_key));
       const missing = DEFAULT_RULES.filter(d => !existingKeys.has(d.event_key));
-      if (missing.length > 0 && agency?.id) {
+      if (missing.length > 0) {
         const created = await base44.entities.NotificationSettings.bulkCreate(
-          missing.map(r => ({ ...r, channels: { ...r.channels }, agency_id: agency.id }))
+          missing.map(r => ({ ...r, channels: { ...r.channels }, agency_id: agencyId }))
         );
         records = [...records, ...(created || [])];
       }
@@ -170,9 +171,9 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
       let digestRule = rules.find(r => r.event_key === "_digest");
       if (digestRule) {
         await base44.entities.NotificationSettings.update(digestRule.id, buildUpdatePayload(digestRule, { enabled: newVal }));
-      } else if (agency?.id) {
+      } else {
         digestRule = await base44.entities.NotificationSettings.create({
-          agency_id: agency.id,
+          agency_id: agency?.id || "default",
           event_key: "_digest",
           label: "Daily Digest",
           category: "hr_team",
@@ -197,11 +198,12 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
     setResetConfirm(false);
     setSaving(true);
     try {
-      await base44.entities.NotificationSettings.deleteMany({ agency_id: agency?.id || "default" });
+      const agencyId = agency?.id || "default";
+      await base44.entities.NotificationSettings.deleteMany({ agency_id: agencyId });
       const seedData = DEFAULT_RULES.map(r => ({
         ...r,
         channels: { ...r.channels },
-        agency_id: agency?.id || "default",
+        agency_id: agencyId,
       }));
       const created = await base44.entities.NotificationSettings.bulkCreate(seedData);
       setRules(created || []);
