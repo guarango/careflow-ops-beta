@@ -266,6 +266,10 @@ function NotificationRulesSettings() {
 
   const toggleRule = async (rule) => {
     await base44.entities.NotificationSettings.update(rule.id, {
+      event_key: rule.event_key,
+      label: rule.label,
+      category: rule.category,
+      severity: rule.severity,
       enabled: !rule.enabled,
       updated_by: "admin",
       updated_at: new Date().toISOString(),
