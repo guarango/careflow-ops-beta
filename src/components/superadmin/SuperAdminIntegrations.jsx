@@ -1,31 +1,20 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  BarChart3, Globe, TrendingUp, CheckCircle2, XCircle, AlertCircle,
-  Plug, Store, Activity, Users, Loader2, Edit, Search
+  CheckCircle2, XCircle, AlertCircle, Activity, Loader2, Edit, Search, MapPin
 } from "lucide-react";
 import { INTEGRATIONS, INTEGRATION_CATEGORIES } from "@/lib/integrationRegistry";
 import { useToast } from "@/components/ui/use-toast";
-import IntegrationAuditLog from "@/components/integrations/IntegrationAuditLog";
-import { useQuery as useRQ } from "@tanstack/react-query";
-
-const TIER_OPTIONS = [
-  { value: "all", label: "All Tiers" },
-  { value: "professional_enterprise", label: "Pro + Enterprise" },
-  { value: "enterprise_only", label: "Enterprise Only" },
-];
 
 function MarketplaceEditor({ meta, existing, onSave, onClose }) {
-  const [tier, setTier] = useState(existing?.tier_access || meta.tier || "all");
   const [published, setPublished] = useState(existing?.is_published ?? true);
   const [beta, setBeta] = useState(existing?.is_beta ?? false);
   const [sortOrder, setSortOrder] = useState(existing?.sort_order ?? 0);
@@ -37,25 +26,16 @@ function MarketplaceEditor({ meta, existing, onSave, onClose }) {
         <div>
           <p className="font-bold text-foreground">{meta.name}</p>
           <p className="text-xs text-muted-foreground">{meta.vendor}</p>
+          {meta.state && meta.state !== "CUSTOM" && (
+            <Badge variant="secondary" className="text-[10px] mt-1"><MapPin className="w-3 h-3 mr-1" />{meta.state_name}</Badge>
+          )}
         </div>
-      </div>
-
-      <div>
-        <label className="text-xs text-muted-foreground mb-1 block">Tier Access</label>
-        <Select value={tier} onValueChange={setTier}>
-          <SelectTrigger className="text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TIER_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-foreground">Published</p>
-          <p className="text-xs text-muted-foreground">Visible to agency admins in the marketplace</p>
+          <p className="text-xs text-muted-foreground">Visible to agency admins</p>
         </div>
         <Switch checked={published} onCheckedChange={setPublished} />
       </div>
@@ -63,7 +43,7 @@ function MarketplaceEditor({ meta, existing, onSave, onClose }) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-foreground">Beta</p>
-          <p className="text-xs text-muted-foreground">Shows a beta badge on the marketplace card</p>
+          <p className="text-xs text-muted-foreground">Shows a beta badge</p>
         </div>
         <Switch checked={beta} onCheckedChange={setBeta} />
       </div>
@@ -73,7 +53,7 @@ function MarketplaceEditor({ meta, existing, onSave, onClose }) {
         <Input type="number" value={sortOrder} onChange={e => setSortOrder(Number(e.target.value))} className="text-sm w-24" />
       </div>
 
-      <Button onClick={() => onSave({ tier_access: tier, is_published: published, is_beta: beta, sort_order: sortOrder })} className="w-full">
+      <Button onClick={() => onSave({ is_published: published, is_beta: beta, sort_order: sortOrder })} className="w-full">
         Save
       </Button>
     </div>
@@ -113,12 +93,10 @@ export default function SuperAdminIntegrations({ agencies = [] }) {
 
   const marketplaceMap = Object.fromEntries(marketplaceItems.map(m => [m.integration_key, m]));
 
-  // Platform-wide health stats
   const totalActive = allIntegrationRecords.filter(r => r.is_active).length;
   const totalErrors = allIntegrationRecords.filter(r => r.status === "error").length;
   const totalRecords24h = allIntegrationRecords.reduce((s, r) => s + (r.records_synced_24h || 0), 0);
 
-  // Per-integration adoption
   const adoptionByKey = allIntegrationRecords.reduce((acc, r) => {
     if (r.is_active) acc[r.integration_key] = (acc[r.integration_key] || 0) + 1;
     return acc;
@@ -130,13 +108,12 @@ export default function SuperAdminIntegrations({ agencies = [] }) {
 
   return (
     <div className="space-y-6">
-      {/* Platform KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Published Integrations", value: INTEGRATIONS.length, color: "text-primary" },
+          { label: "Published EVV Integrations", value: INTEGRATIONS.length, color: "text-primary" },
           { label: "Active Connections (all tenants)", value: totalActive, color: "text-accent" },
           { label: "Error Connections", value: totalErrors, color: totalErrors > 0 ? "text-destructive" : "text-muted-foreground" },
-          { label: "Records Synced (24h)", value: totalRecords24h.toLocaleString(), color: "text-foreground" },
+          { label: "Records Submitted (24h)", value: totalRecords24h.toLocaleString(), color: "text-foreground" },
         ].map(s => (
           <div key={s.label} className="bg-card border border-border rounded-xl p-4">
             <p className="text-xs text-muted-foreground">{s.label}</p>
@@ -147,18 +124,16 @@ export default function SuperAdminIntegrations({ agencies = [] }) {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="marketplace" className="gap-2"><Store className="w-4 h-4" /> Marketplace</TabsTrigger>
-          <TabsTrigger value="adoption" className="gap-2"><TrendingUp className="w-4 h-4" /> Adoption</TabsTrigger>
+          <TabsTrigger value="marketplace" className="gap-2">Marketplace</TabsTrigger>
           <TabsTrigger value="health" className="gap-2"><Activity className="w-4 h-4" /> Platform Health</TabsTrigger>
         </TabsList>
 
-        {/* Marketplace management */}
         <TabsContent value="marketplace" className="space-y-4 mt-4">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Search integrations…" className="pl-9 text-sm" />
+                placeholder="Search EVV integrations…" className="pl-9 text-sm" />
             </div>
           </div>
 
@@ -167,8 +142,7 @@ export default function SuperAdminIntegrations({ agencies = [] }) {
               <thead>
                 <tr className="border-b border-border bg-muted/40">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Integration</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Category</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Tier</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">State</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground">Published</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground">Beta</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground">Adoption</th>
@@ -180,7 +154,6 @@ export default function SuperAdminIntegrations({ agencies = [] }) {
                   const item = marketplaceMap[meta.key];
                   const isPublished = item?.is_published ?? true;
                   const isBeta = item?.is_beta ?? false;
-                  const tierAccess = item?.tier_access || meta.tier || "all";
                   const adoption = adoptionByKey[meta.key] || 0;
                   return (
                     <tr key={meta.key} className="border-b border-border last:border-0 hover:bg-muted/20">
@@ -194,12 +167,13 @@ export default function SuperAdminIntegrations({ agencies = [] }) {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${INTEGRATION_CATEGORIES[meta.category]?.color}`}>
-                          {INTEGRATION_CATEGORIES[meta.category]?.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground capitalize">
-                        {tierAccess === "all" ? "All tiers" : tierAccess === "professional_enterprise" ? "Pro+" : "Enterprise"}
+                        {meta.state && meta.state !== "CUSTOM" ? (
+                          <span className="flex items-center gap-1 text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                            <MapPin className="w-3 h-3" /> {meta.state_name}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {isPublished
@@ -227,42 +201,12 @@ export default function SuperAdminIntegrations({ agencies = [] }) {
           </div>
         </TabsContent>
 
-        {/* Adoption */}
-        <TabsContent value="adoption" className="space-y-4 mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {INTEGRATIONS
-              .map(meta => ({ meta, count: adoptionByKey[meta.key] || 0 }))
-              .sort((a, b) => b.count - a.count)
-              .slice(0, 20)
-              .map(({ meta, count }) => (
-                <div key={meta.key} className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl">
-                  <span className="text-xl">{meta.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{meta.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 bg-secondary rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className="bg-primary h-full rounded-full transition-all"
-                          style={{ width: agencies.length > 0 ? `${(count / agencies.length) * 100}%` : "0%" }}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {count} / {agencies.length} agencies
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </TabsContent>
-
-        {/* Health */}
         <TabsContent value="health" className="space-y-4 mt-4">
           <div className="space-y-3">
             {allIntegrationRecords.filter(r => r.status === "error").length === 0 ? (
               <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
                 <CheckCircle2 className="w-4 h-4 text-green-600" />
-                <p className="text-sm text-green-700 font-medium">All active integrations across all tenants are healthy.</p>
+                <p className="text-sm text-green-700 font-medium">All active EVV integrations across all tenants are healthy.</p>
               </div>
             ) : (
               <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-3">
@@ -312,7 +256,6 @@ export default function SuperAdminIntegrations({ agencies = [] }) {
         </TabsContent>
       </Tabs>
 
-      {/* Edit dialog */}
       <Dialog open={!!editTarget} onOpenChange={() => setEditTarget(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>

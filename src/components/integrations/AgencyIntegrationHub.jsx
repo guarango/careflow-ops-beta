@@ -5,16 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, RefreshCw, Activity, Loader2 } from "lucide-react";
+import { Search, RefreshCw, Activity, Loader2, MapPin, FileText, ExternalLink } from "lucide-react";
 import { INTEGRATIONS, INTEGRATION_CATEGORIES } from "@/lib/integrationRegistry";
 import IntegrationCard from "./IntegrationCard";
 import IntegrationAuditLog from "./IntegrationAuditLog";
 import { useToast } from "@/components/ui/use-toast";
-
-const CATEGORY_TABS = [
-  { key: "all", label: "All" },
-  ...Object.entries(INTEGRATION_CATEGORIES).map(([key, val]) => ({ key, label: val.label })),
-];
 
 export default function AgencyIntegrationHub({ agencyId }) {
   const { toast } = useToast();
@@ -34,21 +29,20 @@ export default function AgencyIntegrationHub({ agencyId }) {
         agency_id: agencyId,
         integration_key: record.integration_key,
         integration_name: record.integration_name,
-        direction: "bidirectional",
-        record_type: "manual_sync",
+        direction: "outbound",
+        record_type: "evv_submission",
         record_count: 0,
         status: "success",
         triggered_by: "manual",
-        payload_summary: "Manual sync triggered from Integration Hub",
+        payload_summary: "Manual EVV sync triggered from Integration Hub",
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integration_logs", agencyId] });
-      toast({ title: "Sync triggered", description: "Manual sync initiated successfully." });
+      toast({ title: "Sync triggered", description: "Manual EVV sync initiated successfully." });
     },
   });
 
-  // Build a map of integration records by key
   const recordMap = Object.fromEntries(records.map(r => [r.integration_key, r]));
 
   const filtered = INTEGRATIONS.filter(meta => {
@@ -66,10 +60,10 @@ export default function AgencyIntegrationHub({ agencyId }) {
       {/* Summary bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Available", value: INTEGRATIONS.length, color: "text-primary" },
+          { label: "Available EVV Integrations", value: INTEGRATIONS.length, color: "text-primary" },
           { label: "Connected", value: connectedCount, color: "text-accent" },
           { label: "Errors", value: errorCount, color: errorCount > 0 ? "text-destructive" : "text-muted-foreground" },
-          { label: "Records Synced (24h)", value: records.reduce((s, r) => s + (r.records_synced_24h || 0), 0).toLocaleString(), color: "text-foreground" },
+          { label: "Records Submitted (24h)", value: records.reduce((s, r) => s + (r.records_synced_24h || 0), 0).toLocaleString(), color: "text-foreground" },
         ].map(s => (
           <div key={s.label} className="bg-card border border-border rounded-xl p-4">
             <p className="text-xs text-muted-foreground">{s.label}</p>
@@ -83,12 +77,15 @@ export default function AgencyIntegrationHub({ agencyId }) {
           <div className="relative flex-1 min-w-48">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search integrations…" className="pl-9 text-sm" />
+              placeholder="Search EVV integrations…" className="pl-9 text-sm" />
           </div>
         </div>
 
         <TabsList className="flex-wrap h-auto gap-1 mb-6">
-          {CATEGORY_TABS.map(tab => (
+          {[
+            { key: "all", label: "All" },
+            ...Object.entries(INTEGRATION_CATEGORIES).map(([key, val]) => ({ key, label: val.label })),
+          ].map(tab => (
             <TabsTrigger key={tab.key} value={tab.key} className="text-xs">
               {tab.label}
               {tab.key !== "all" && (
@@ -127,7 +124,7 @@ export default function AgencyIntegrationHub({ agencyId }) {
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Activity className="w-4 h-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold text-foreground">Integration Audit Log</h3>
+          <h3 className="text-sm font-semibold text-foreground">EVV Submission Audit Log</h3>
         </div>
         <IntegrationAuditLog agencyId={agencyId} limit={50} />
       </div>

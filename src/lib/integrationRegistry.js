@@ -1,472 +1,163 @@
 /**
- * Static registry of all available integrations.
- * Each entry defines metadata, config fields, and default field mappings.
- * New integrations are added here without requiring a platform redeploy.
+ * State EVV Integration Registry
+ *
+ * Pre-configured Electronic Visit Verification (EVV) integrations for state
+ * Medicaid programs. Utah EVV (UEVV) is the first implementation per the
+ * 21st Century Cures Act §12006.
+ *
+ * Each state EVV integration defines:
+ *  - Submission methods (SOAP API, CSV portal, REST API)
+ *  - Authentication requirements
+ *  - Required EVV data elements (Cures Act mandated)
+ *  - Field mappings from CareFlow's data model to the state's EVV format
+ *  - HCPCS service codes that require EVV
+ *
+ * To add a new state: copy the Utah entry, update the endpoints/auth/methods,
+ * and adjust field_mappings for the state's data format.
  */
 
 export const INTEGRATION_CATEGORIES = {
-  mmis: { label: "State MMIS / Medicaid", color: "bg-blue-100 text-blue-700" },
-  ehr: { label: "Electronic Health Records", color: "bg-purple-100 text-purple-700" },
-  payroll: { label: "Payroll", color: "bg-green-100 text-green-700" },
-  accounting: { label: "Accounting", color: "bg-emerald-100 text-emerald-700" },
-  background_check: { label: "Background Check", color: "bg-orange-100 text-orange-700" },
-  lms: { label: "Learning Management", color: "bg-pink-100 text-pink-700" },
-  communication: { label: "Communication", color: "bg-cyan-100 text-cyan-700" },
-  document: { label: "Document Storage", color: "bg-slate-100 text-slate-700" },
-  fax: { label: "Electronic Fax", color: "bg-amber-100 text-amber-700" },
-  other: { label: "Other", color: "bg-gray-100 text-gray-700" },
+  evv: { label: "State EVV", color: "bg-blue-100 text-blue-700" },
+  custom: { label: "Custom API", color: "bg-slate-100 text-slate-700" },
 };
 
-export const INTEGRATIONS = [
-  // ── MMIS ─────────────────────────────────────────────────────────────────
-  {
-    key: "utah_umap", name: "Utah UMAP", vendor: "Utah MMIS", category: "mmis",
-    description: "Real-time eligibility verification, claims submission, and PA status inquiry via the Utah Medicaid Access Portal.",
-    icon: "🏔️", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "api_endpoint", label: "API Endpoint", type: "text", default: "https://umap.utah.gov/api/v1" },
-      { id: "provider_id", label: "Medicaid Provider ID", type: "text" },
-      { id: "api_key", label: "API Key", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["eligibility_270_271", "claims_837", "pa_278"],
-  },
-  {
-    key: "colorado_interchange", name: "Colorado interChange", vendor: "Colorado MMIS", category: "mmis",
-    description: "Eligibility verification and claims submission via Colorado interChange.",
-    icon: "🏔️", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "submitter_id", label: "Submitter ID", type: "text" },
-      { id: "api_key", label: "API Key", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["eligibility_270_271", "claims_837"],
-  },
-  {
-    key: "texas_tmhp", name: "Texas TMHP", vendor: "TMHP", category: "mmis",
-    description: "Eligibility verification, prior authorization, and claims submission via Texas Medicaid & Healthcare Partnership.",
-    icon: "⭐", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "provider_npi", label: "Provider NPI", type: "text" },
-      { id: "submitter_id", label: "TMHP Submitter ID", type: "text" },
-      { id: "api_key", label: "API Key", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["eligibility_270_271", "claims_837", "pa_278"],
-  },
-  {
-    key: "ohio_medicaid", name: "Ohio Medicaid (MITS)", vendor: "Ohio MMIS", category: "mmis",
-    description: "Eligibility verification via Ohio MITS portal and EVV data submission via Sandata.",
-    icon: "🌻", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "provider_id", label: "Ohio Provider ID", type: "text" },
-      { id: "sandata_token", label: "Sandata EVV Token", type: "password" },
-      { id: "mits_api_key", label: "MITS API Key", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["eligibility_270_271", "evv"],
-  },
-  {
-    key: "ny_emednY", name: "New York eMedNY", vendor: "eMedNY", category: "mmis",
-    description: "Eligibility verification, claims submission, and OPWDD service documentation exchange.",
-    icon: "🗽", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "provider_npi", label: "Provider NPI", type: "text" },
-      { id: "submitter_id", label: "eMedNY Submitter ID", type: "text" },
-      { id: "api_key", label: "API Key", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["eligibility_270_271", "claims_837"],
-  },
-  {
-    key: "florida_medicaid", name: "Florida Medicaid", vendor: "ACS/Conduent", category: "mmis",
-    description: "Eligibility verification and claims submission via ACS/Conduent Florida Medicaid.",
-    icon: "🌴", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "provider_id", label: "Florida Provider ID", type: "text" },
-      { id: "conduent_api_key", label: "Conduent API Key", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["eligibility_270_271", "claims_837"],
-  },
-  {
-    key: "california_medi_cal", name: "California Medi-Cal", vendor: "Availity", category: "mmis",
-    description: "Eligibility verification and claims submission via CAREWare and Availity.",
-    icon: "🌅", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "availity_org_id", label: "Availity Org ID", type: "text" },
-      { id: "availity_api_key", label: "Availity API Key", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["eligibility_270_271", "claims_837"],
-  },
-
-  // ── EHR ──────────────────────────────────────────────────────────────────
-  {
-    key: "epic_fhir", name: "Epic (FHIR R4)", vendor: "Epic Systems", category: "ehr",
-    description: "Bidirectional patient demographics, medication lists, and care plan exchange via HL7 FHIR R4.",
-    icon: "🏥", tier: "professional_enterprise", requiresBaa: true,
-    fields: [
-      { id: "fhir_base_url", label: "FHIR Base URL", type: "text", placeholder: "https://yourorg.epic.com/api/FHIR/R4" },
-      { id: "client_id", label: "OAuth Client ID", type: "text" },
-      { id: "client_secret", label: "OAuth Client Secret", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["fhir_patient", "fhir_medication", "fhir_careplan"],
-  },
-  {
-    key: "cerner_fhir", name: "Cerner / Oracle Health", vendor: "Oracle Health", category: "ehr",
-    description: "Bidirectional patient demographics and medication exchange via Cerner FHIR R4 API.",
-    icon: "🏥", tier: "professional_enterprise", requiresBaa: true,
-    fields: [
-      { id: "fhir_base_url", label: "FHIR Base URL", type: "text" },
-      { id: "client_id", label: "Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["fhir_patient", "fhir_medication"],
-  },
-  {
-    key: "pointclickcare", name: "PointClickCare", vendor: "PointClickCare", category: "ehr",
-    description: "Bidirectional resident demographics, medication administration, and incident exchange for residential facilities.",
-    icon: "🏠", tier: "professional_enterprise", requiresBaa: true,
-    fields: [
-      { id: "pcc_org_uuid", label: "PCC Organization UUID", type: "text" },
-      { id: "client_id", label: "Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["fhir_patient", "fhir_medication", "incidents"],
-  },
-  {
-    key: "netsmart_myavatar", name: "Netsmart myAvatar", vendor: "Netsmart Technologies", category: "ehr",
-    description: "Bidirectional client demographics, treatment plans, and service documentation exchange.",
-    icon: "🧠", tier: "enterprise_only", requiresBaa: true,
-    fields: [
-      { id: "api_base_url", label: "myAvatar API Base URL", type: "text" },
-      { id: "api_username", label: "API Username", type: "text" },
-      { id: "api_password", label: "API Password", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["fhir_patient", "fhir_careplan", "service_docs"],
-  },
-  {
-    key: "welligent", name: "Welligent", vendor: "Welligent", category: "ehr",
-    description: "Bidirectional client records and service documentation exchange.",
-    icon: "💊", tier: "enterprise_only", requiresBaa: true,
-    fields: [
-      { id: "api_base_url", label: "Welligent API URL", type: "text" },
-      { id: "api_key", label: "API Key", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["fhir_patient", "service_docs"],
-  },
-
-  // ── PAYROLL ───────────────────────────────────────────────────────────────
-  {
-    key: "adp_workforce", name: "ADP Workforce Now", vendor: "ADP", category: "payroll",
-    description: "Export approved timecards and import payroll confirmations. Supports pay rate changes and overtime data.",
-    icon: "💰", tier: "professional_enterprise", requiresBaa: false,
-    fields: [
-      { id: "client_id", label: "ADP Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-      { id: "company_code", label: "Company Code", type: "text" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["timecards", "payroll_confirmation"],
-  },
-  {
-    key: "paychex_flex", name: "Paychex Flex", vendor: "Paychex", category: "payroll",
-    description: "Bidirectional timecard export and payroll confirmation import.",
-    icon: "💰", tier: "professional_enterprise", requiresBaa: false,
-    fields: [
-      { id: "client_id", label: "Paychex Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-      { id: "account_id", label: "Account ID", type: "text" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["timecards", "payroll_confirmation"],
-  },
-  {
-    key: "gusto", name: "Gusto", vendor: "Gusto", category: "payroll",
-    description: "Timecard export, payroll confirmation import, and benefits administration data exchange.",
-    icon: "🌿", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "api_token", label: "Gusto API Token", type: "password" },
-      { id: "company_id", label: "Company ID", type: "text" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["timecards", "payroll_confirmation", "benefits"],
-  },
-  {
-    key: "quickbooks_payroll", name: "QuickBooks Payroll", vendor: "Intuit", category: "payroll",
-    description: "Export approved timecards and import payroll confirmations via QuickBooks Payroll.",
-    icon: "📗", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "client_id", label: "QB Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-      { id: "realm_id", label: "Realm (Company) ID", type: "text" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["timecards", "payroll_confirmation"],
-  },
-
-  // ── ACCOUNTING ────────────────────────────────────────────────────────────
-  {
-    key: "quickbooks_online", name: "QuickBooks Online", vendor: "Intuit", category: "accounting",
-    description: "Export invoices, payments, and payroll journal entries. Import vendor bills and expenses.",
-    icon: "📗", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "client_id", label: "QB Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-      { id: "realm_id", label: "Realm ID", type: "text" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["invoices", "payments", "journal_entries"],
-  },
-  {
-    key: "xero", name: "Xero", vendor: "Xero", category: "accounting",
-    description: "Export invoices, payments, and payroll journal entries. Import vendor bills and expenses.",
-    icon: "🔵", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "client_id", label: "Xero Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-      { id: "tenant_id", label: "Tenant ID", type: "text" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["invoices", "payments", "journal_entries"],
-  },
-  {
-    key: "sage_intacct", name: "Sage Intacct", vendor: "Sage", category: "accounting",
-    description: "Full accounting sync with program-level cost center support for multi-program DD agencies.",
-    icon: "💼", tier: "professional_enterprise", requiresBaa: false,
-    fields: [
-      { id: "company_id", label: "Sage Company ID", type: "text" },
-      { id: "user_id", label: "API User ID", type: "text" },
-      { id: "user_password", label: "API User Password", type: "password" },
-      { id: "sender_id", label: "Sender ID", type: "text" },
-      { id: "sender_password", label: "Sender Password", type: "password" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["invoices", "payments", "journal_entries", "cost_centers"],
-  },
-  {
-    key: "netsuite", name: "NetSuite", vendor: "Oracle", category: "accounting",
-    description: "Full accounting sync with multi-entity consolidation for enterprise agency groups.",
-    icon: "🔶", tier: "enterprise_only", requiresBaa: false,
-    fields: [
-      { id: "account_id", label: "NetSuite Account ID", type: "text" },
-      { id: "consumer_key", label: "Consumer Key", type: "text" },
-      { id: "consumer_secret", label: "Consumer Secret", type: "password" },
-      { id: "token_id", label: "Token ID", type: "text" },
-      { id: "token_secret", label: "Token Secret", type: "password" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["invoices", "payments", "journal_entries", "multi_entity"],
-  },
-
-  // ── BACKGROUND CHECK ──────────────────────────────────────────────────────
-  {
-    key: "sterling", name: "Sterling", vendor: "Sterling", category: "background_check",
-    description: "Initiate and receive background checks directly from staff HR profiles. Auto-updates HR module on completion.",
-    icon: "🔍", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "account_id", label: "Sterling Account ID", type: "text" },
-      { id: "api_key", label: "API Key", type: "password" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["background_check_orders", "results"],
-  },
-  {
-    key: "checkr", name: "Checkr", vendor: "Checkr", category: "background_check",
-    description: "Initiate and receive background checks. Configurable screening criteria with auto-flagging.",
-    icon: "✅", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "api_key", label: "Checkr API Key", type: "password" },
-      { id: "package_slug", label: "Default Package", type: "text", placeholder: "tasker_standard" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["background_check_orders", "results"],
-  },
-  {
-    key: "intellicheck", name: "IntelliCheck", vendor: "IntelliCheck", category: "background_check",
-    description: "Background checks with state-specific DD provider requirements and ID verification.",
-    icon: "🔎", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "api_key", label: "API Key", type: "password" },
-      { id: "account_code", label: "Account Code", type: "text" },
-    ],
-    directions: ["outbound", "inbound"],
-    supports: ["background_check_orders", "results", "id_verification"],
-  },
-  {
-    key: "oig_exclusion", name: "OIG Exclusion List", vendor: "U.S. DHHS OIG", category: "background_check",
-    description: "Monthly automated screening of all staff against the federal OIG exclusion list. Medicaid compliance requirement.",
-    icon: "🏛️", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "alert_email", label: "Alert Email", type: "text" },
-    ],
-    directions: ["inbound"],
-    supports: ["exclusion_screening"],
-  },
-  {
-    key: "sam_gov", name: "SAM.gov Exclusion", vendor: "GSA", category: "background_check",
-    description: "Federal exclusion screening via System for Award Management (SAM.gov).",
-    icon: "🏛️", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "api_key", label: "SAM.gov API Key", type: "password" },
-    ],
-    directions: ["inbound"],
-    supports: ["exclusion_screening"],
-  },
-  {
-    key: "nursys", name: "NURSYS License Verify", vendor: "NCSBN", category: "background_check",
-    description: "Real-time nursing license verification via the NURSYS database. Triggers alerts on license status changes.",
-    icon: "🩺", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "api_key", label: "NURSYS API Key", type: "password" },
-    ],
-    directions: ["inbound"],
-    supports: ["license_verification"],
-  },
-
-  // ── LMS ───────────────────────────────────────────────────────────────────
-  {
-    key: "relias", name: "Relias", vendor: "Relias", category: "lms",
-    description: "Bidirectional course completions, certification records, and training assignments with the leading DD/behavioral health LMS.",
-    icon: "📚", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "subdomain", label: "Relias Subdomain", type: "text", placeholder: "yourorg" },
-      { id: "api_key", label: "API Key", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["course_completions", "certifications", "assignments"],
-  },
-  {
-    key: "cornerstone", name: "Cornerstone OnDemand", vendor: "Cornerstone", category: "lms",
-    description: "Bidirectional training completion and certification sync.",
-    icon: "🎓", tier: "professional_enterprise", requiresBaa: true,
-    fields: [
-      { id: "subdomain", label: "Cornerstone Subdomain", type: "text" },
-      { id: "api_key", label: "API Key", type: "password" },
-      { id: "corp_name", label: "Corp Name", type: "text" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["course_completions", "certifications"],
-  },
-  {
-    key: "talentlms", name: "TalentLMS", vendor: "TalentLMS", category: "lms",
-    description: "Bidirectional training completion and certification sync.",
-    icon: "🎓", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "subdomain", label: "TalentLMS Subdomain", type: "text" },
-      { id: "api_key", label: "API Key", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["course_completions", "certifications"],
-  },
-  {
-    key: "moodle", name: "Moodle LMS", vendor: "Moodle", category: "lms",
-    description: "Bidirectional training completion and certification sync for agencies using open-source Moodle.",
-    icon: "📖", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "site_url", label: "Moodle Site URL", type: "text" },
-      { id: "token", label: "Web Service Token", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["course_completions", "certifications"],
-  },
-
-  // ── COMMUNICATION ─────────────────────────────────────────────────────────
-  {
-    key: "google_calendar", name: "Google Calendar", vendor: "Google", category: "communication",
-    description: "Bidirectional staff schedule sync. Shifts appear on staff Google Calendar. Staff opt-in from mobile profile.",
-    icon: "📅", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "oauth_client_id", label: "OAuth Client ID", type: "text" },
-      { id: "oauth_client_secret", label: "OAuth Client Secret", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["schedule_sync", "time_off"],
-  },
-  {
-    key: "outlook_calendar", name: "Microsoft Outlook Calendar", vendor: "Microsoft", category: "communication",
-    description: "Bidirectional staff schedule sync via Microsoft 365. Staff opt-in from mobile profile.",
-    icon: "📅", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "tenant_id", label: "Azure Tenant ID", type: "text" },
-      { id: "client_id", label: "App Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["schedule_sync", "time_off"],
-  },
-  {
-    key: "zoom", name: "Zoom", vendor: "Zoom", category: "communication",
-    description: "Schedule and launch Zoom meetings for supervision, team meetings, and telehealth visits from CareOps Pro.",
-    icon: "📹", tier: "professional_enterprise", requiresBaa: true,
-    fields: [
-      { id: "account_id", label: "Zoom Account ID", type: "text" },
-      { id: "client_id", label: "Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-    ],
-    directions: ["outbound"],
-    supports: ["meetings"],
-  },
-  {
-    key: "ms_teams", name: "Microsoft Teams", vendor: "Microsoft", category: "communication",
-    description: "Schedule and launch Teams meetings for supervision, team meetings, and support visits.",
-    icon: "💬", tier: "professional_enterprise", requiresBaa: true,
-    fields: [
-      { id: "tenant_id", label: "Azure Tenant ID", type: "text" },
-      { id: "client_id", label: "App Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-    ],
-    directions: ["outbound"],
-    supports: ["meetings"],
-  },
-
-  // ── DOCUMENT STORAGE ─────────────────────────────────────────────────────
-  {
-    key: "google_drive", name: "Google Drive", vendor: "Google", category: "document",
-    description: "Automatically save completed audit packages, signed documents, and exported reports to Google Drive.",
-    icon: "💾", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "oauth_client_id", label: "OAuth Client ID", type: "text" },
-      { id: "oauth_client_secret", label: "Client Secret", type: "password" },
-      { id: "target_folder_id", label: "Target Folder ID", type: "text" },
-    ],
-    directions: ["outbound"],
-    supports: ["document_archive"],
-  },
-  {
-    key: "sharepoint_onedrive", name: "SharePoint / OneDrive", vendor: "Microsoft", category: "document",
-    description: "Automatically save completed documents and reports to SharePoint or OneDrive.",
-    icon: "💾", tier: "all", requiresBaa: false,
-    fields: [
-      { id: "tenant_id", label: "Azure Tenant ID", type: "text" },
-      { id: "client_id", label: "App Client ID", type: "text" },
-      { id: "client_secret", label: "Client Secret", type: "password" },
-      { id: "site_url", label: "SharePoint Site URL", type: "text" },
-    ],
-    directions: ["outbound"],
-    supports: ["document_archive"],
-  },
-
-  // ── FAX ───────────────────────────────────────────────────────────────────
-  {
-    key: "efax", name: "eFax / Sfax", vendor: "eFax Corporate", category: "fax",
-    description: "Send and receive HIPAA-compliant electronic faxes directly from CareOps Pro. Inbound faxes route to a CareOps inbox.",
-    icon: "📠", tier: "all", requiresBaa: true,
-    fields: [
-      { id: "api_key", label: "eFax API Key", type: "password" },
-      { id: "fax_number", label: "Inbound Fax Number", type: "text", placeholder: "+18005551234" },
-      { id: "account_id", label: "Account ID", type: "text" },
-    ],
-    directions: ["inbound", "outbound"],
-    supports: ["fax_send", "fax_receive"],
-  },
+// ── Cures Act Required EVV Data Elements ──────────────────────────────────
+export const EVV_REQUIRED_ELEMENTS = [
+  { key: "service_type", label: "Type of service performed", source_field: "service_code", description: "HCPCS code identifying the service" },
+  { key: "recipient_id", label: "Individual receiving the service", source_field: "client_medicaid_id", description: "Client Medicaid ID" },
+  { key: "service_date", label: "Date of the service", source_field: "shift_date", description: "Calendar date of service delivery" },
+  { key: "service_location", label: "Location of service delivery", source_field: "service_location", description: "Address where service was provided" },
+  { key: "provider_id", label: "Individual providing the service", source_field: "staff_npi", description: "NPI of the staff member providing care" },
+  { key: "service_start_time", label: "Time the service begins", source_field: "evv_clock_in", description: "EVV-verified clock-in time (UTC)" },
+  { key: "service_end_time", label: "Time the service ends", source_field: "evv_clock_out", description: "EVV-verified clock-out time (UTC)" },
+  { key: "record_creation_date", label: "Date of electronic record creation", source_field: "system_timestamp", description: "When the EVV record was created in the system" },
 ];
+
+// ── Utah EVV (UEVV) ───────────────────────────────────────────────────────
+const UTAH_EVV = {
+  key: "utah_evv",
+  name: "Utah EVV (UEVV)",
+  vendor: "Utah DHHS - BLTSS",
+  category: "evv",
+  description: "Electronic Visit Verification submission to Utah Medicaid. Required for all Personal Care Services (PCS) and Home Health Services (HHS) claims under the 21st Century Cures Act.",
+  icon: "🏔️",
+  tier: "all",
+  requiresBaa: true,
+  directions: ["outbound"],
+  supports: ["evv_submission", "evv_correction"],
+  // State-specific metadata
+  state: "UT",
+  state_name: "Utah",
+  spec_version: "1.7",
+  contact_email: "dmhf_evv@utah.gov",
+  documentation_url: "https://medicaid.utah.gov/evv/",
+  technical_spec_url: "https://medicaid-documents.dhhs.utah.gov/Documents/pdfs/BLTSS%20EVV_Technical_Specifications_v1.7.pdf",
+  test_mode_supported: true,
+  // Submission methods
+  submission_methods: [
+    {
+      method: "soap",
+      label: "SOAP API (Real-time)",
+      endpoint: "https://evv.medicaid.utah.gov/evv-api/services/EVVSubmission",
+      auth_type: "certificate",
+      description: "Real-time SOAP message exchange with WS-Security. Requires digital certificate (X.509) for XML signature. Synchronous acknowledgement response.",
+    },
+    {
+      method: "csv",
+      label: "CSV Portal Upload",
+      endpoint: "https://evv.medicaid.utah.gov/evvsubmit/",
+      auth_type: "utah_id_sso",
+      description: "Upload CSV files via the Utah EVV Portal. Requires UtahID SSO login. Recommended for batches > 2,000 records. Use the CSV template for column formatting.",
+    },
+  ],
+  default_submission_method: "soap",
+  // Required EVV data elements with field mappings
+  field_mappings: [
+    { element: "service_type", source_field: "service_code", transform: "hcpcs_code", required: true },
+    { element: "recipient_id", source_field: "client_medicaid_id", transform: "direct", required: true },
+    { element: "service_date", source_field: "shift_date", transform: "date_only", required: true },
+    { element: "service_location", source_field: "house_address", transform: "format_address", required: true },
+    { element: "provider_id", source_field: "staff_npi", transform: "direct", required: true },
+    { element: "service_start_time", source_field: "evv_clock_in", transform: "to_utc_iso8601", required: true },
+    { element: "service_end_time", source_field: "evv_clock_out", transform: "to_utc_iso8601", required: true },
+    { element: "record_creation_date", source_field: "system_timestamp", transform: "to_utc_iso8601", required: true },
+  ],
+  // Utah HCPCS codes requiring EVV (from Utah Medicaid EVV documentation)
+  evv_required_codes: [
+    "T1019", "T1020", "T1021", "T1005", "T2017",
+    "S5125", "S5126", "S5130", "S5135", "S5150", "S5151",
+    "S5108", "S5115", "S5120",
+    "G0151", "G0153", "G0238", "G0270", "G0299", "G0300",
+    "S9122", "S9123", "S9124", "S9128", "S9129", "S9131",
+    "T1000", "T1002", "T1003", "T1022", "T1027", "T1502",
+  ],
+  // Config fields for the integration
+  fields: [
+    { id: "provider_npi", label: "Agency NPI", type: "text", placeholder: "1234567890", required: true },
+    { id: "provider_id", label: "Utah Medicaid Provider ID", type: "text", required: true },
+    { id: "submission_method", label: "Default Submission Method", type: "select", options: [
+      { value: "soap", label: "SOAP API (Real-time)" },
+      { value: "csv", label: "CSV Portal Upload" },
+    ], default: "soap" },
+    { id: "api_endpoint", label: "SOAP API Endpoint", type: "text", default: "https://evv.medicaid.utah.gov/evv-api/services/EVVSubmission" },
+    { id: "csv_portal_url", label: "CSV Portal URL", type: "text", default: "https://evv.medicaid.utah.gov/evvsubmit/" },
+    { id: "certificate_thumbprint", label: "Digital Certificate Thumbprint", type: "text", placeholder: "X.509 certificate thumbprint for SOAP WS-Security" },
+    { id: "certificate_expiry", label: "Certificate Expiry Date", type: "date" },
+    { id: "test_mode", label: "Test Mode (submit to test environment)", type: "boolean", default: false },
+  ],
+};
+
+// ── Custom State EVV Template ─────────────────────────────────────────────
+const CUSTOM_STATE_EVV = {
+  key: "custom_state_evv",
+  name: "Custom State EVV",
+  vendor: "State Medicaid",
+  category: "custom",
+  description: "Configure a custom EVV integration for a state not yet pre-configured. Define the API endpoint, authentication method, and field mappings per the state's technical specifications.",
+  icon: "🔌",
+  tier: "all",
+  requiresBaa: true,
+  directions: ["outbound"],
+  supports: ["evv_submission"],
+  state: "CUSTOM",
+  state_name: "Custom",
+  spec_version: null,
+  test_mode_supported: true,
+  submission_methods: [
+    {
+      method: "api",
+      label: "API (REST/SOAP)",
+      endpoint: "",
+      auth_type: "api_key",
+      description: "Configure the API endpoint and authentication method per the state's technical specifications.",
+    },
+  ],
+  default_submission_method: "api",
+  field_mappings: EVV_REQUIRED_ELEMENTS.map(e => ({ element: e.key, source_field: e.source_field, transform: "direct", required: true })),
+  evv_required_codes: [],
+  fields: [
+    { id: "state_code", label: "State Code (e.g. CO, AZ)", type: "text", placeholder: "CO", required: true },
+    { id: "provider_npi", label: "Agency NPI", type: "text", required: true },
+    { id: "provider_id", label: "State Medicaid Provider ID", type: "text", required: true },
+    { id: "submission_method", label: "Submission Method", type: "select", options: [
+      { value: "soap", label: "SOAP API" },
+      { value: "rest", label: "REST API" },
+      { value: "csv", label: "CSV Upload" },
+    ], default: "rest" },
+    { id: "api_endpoint", label: "API Endpoint URL", type: "text", placeholder: "https://..." },
+    { id: "auth_type", label: "Authentication Method", type: "select", options: [
+      { value: "certificate", label: "Digital Certificate (X.509)" },
+      { value: "oauth", label: "OAuth 2.0" },
+      { value: "api_key", label: "API Key" },
+      { value: "basic", label: "Basic Auth (Username/Password)" },
+    ], default: "api_key" },
+    { id: "api_key", label: "API Key / Token", type: "password" },
+    { id: "test_mode", label: "Test Mode", type: "boolean", default: false },
+  ],
+};
+
+// ── Exports ───────────────────────────────────────────────────────────────
+export const INTEGRATIONS = [UTAH_EVV, CUSTOM_STATE_EVV];
 
 export function getIntegration(key) {
   return INTEGRATIONS.find(i => i.key === key);
@@ -474,4 +165,8 @@ export function getIntegration(key) {
 
 export function getIntegrationsByCategory(category) {
   return INTEGRATIONS.filter(i => i.category === category);
+}
+
+export function getEVVStates() {
+  return INTEGRATIONS.filter(i => i.category === "evv");
 }

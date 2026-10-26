@@ -7,7 +7,7 @@
     },
     "integration_key": {
       "type": "string",
-      "description": "e.g. adp_workforce, epic_fhir, relias"
+      "description": "Registry key (e.g. utah_evv, custom_state_evv)"
     },
     "integration_name": {
       "type": "string"
@@ -15,17 +15,16 @@
     "category": {
       "type": "string",
       "enum": [
-        "mmis",
-        "ehr",
-        "payroll",
-        "accounting",
-        "background_check",
-        "lms",
-        "communication",
-        "document",
-        "fax",
-        "other"
+        "evv",
+        "custom"
       ]
+    },
+    "state": {
+      "type": "string",
+      "description": "US state code (UT, CO, etc.)"
+    },
+    "state_name": {
+      "type": "string"
     },
     "status": {
       "type": "string",
@@ -41,28 +40,61 @@
       "type": "boolean",
       "default": false
     },
+    "submission_method": {
+      "type": "string",
+      "enum": [
+        "soap",
+        "rest",
+        "csv"
+      ],
+      "description": "Primary EVV submission method"
+    },
+    "api_endpoint": {
+      "type": "string",
+      "description": "State EVV API endpoint URL"
+    },
+    "auth_type": {
+      "type": "string",
+      "enum": [
+        "certificate",
+        "oauth",
+        "api_key",
+        "basic",
+        "utah_id_sso"
+      ]
+    },
+    "test_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "Submit to state test/sandbox environment"
+    },
     "credentials": {
       "type": "object",
       "description": "Encrypted credentials map"
     },
     "field_mappings": {
-      "type": "object"
+      "type": "object",
+      "description": "Mapping from CareFlow data fields to state EVV data elements"
     },
-    "webhook_events": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "last_submission_at": {
+      "type": "string",
+      "description": "Last EVV record batch submission timestamp"
     },
-    "sync_schedule": {
+    "last_submission_batch_id": {
+      "type": "string"
+    },
+    "last_submission_record_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_submission_status": {
       "type": "string",
       "enum": [
-        "realtime",
-        "hourly",
-        "daily",
-        "manual"
-      ],
-      "default": "daily"
+        "accepted",
+        "rejected",
+        "partial",
+        "pending"
+      ]
     },
     "last_sync_at": {
       "type": "string"
