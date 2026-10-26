@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { RolePreviewProvider } from '@/lib/RolePreviewContext';
@@ -46,9 +46,20 @@ import QuarterlySummaries from './pages/QuarterlySummaries';
 import QuarterlySummaryDetail from './pages/QuarterlySummaryDetail';
 import Recognition from './pages/Recognition';
 import OAuthConsent from './pages/OAuthConsent';
+import StaffWelcome from './pages/StaffWelcome';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const location = useLocation();
+
+  // Public routes — render without auth check
+  if (location.pathname === '/welcome') {
+    return (
+      <Routes>
+        <Route path="/welcome" element={<StaffWelcome />} />
+      </Routes>
+    );
+  }
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
