@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/shared/PageHeader";
 import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
-  Pill, Clock, Shield, DollarSign, Target, CalendarDays, Tag, UserCog,
-  TrendingUp, Check, X, Lock, Briefcase, Info, RotateCcw, Save
+  Pill, Clock, Shield, DollarSign, Target, CalendarDays, UserCog,
+  Check, X, Briefcase, Info, RotateCcw, Lock,
 } from "lucide-react";
 import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
 import { useRole } from "@/hooks/useRole";
@@ -53,112 +52,7 @@ const FEATURE_LABELS = {
 
 const ROLES = ["dsp", "manager", "admin", "super_admin"];
 
-const ROLE_HEADER_COLORS = {
-  dsp:         "bg-blue-500 text-white",
-  manager:     "bg-violet-500 text-white",
-  admin:       "bg-primary text-primary-foreground",
-  super_admin: "bg-destructive text-white",
-};
-
-const ROLE_DESCRIPTIONS = {
-  dsp:         "Sees only assigned clients. Clocks in/out, writes session notes, charts goals, passes meds, files incidents, views own schedule, timecard, and trainings. No admin access.",
-  manager:     "Oversees assigned clients and houses. Approves notes and timecards, reviews incidents, builds schedules, verifies trainings for their team. No billing, rates, or agency settings.",
-  admin:       "Full agency access. HR and Billing areas need the matching bundle.",
-  super_admin: "Platform owner; all agencies; Login As.",
-};
-
-function MockSidebar({ role, bundles, navAccess }) {
-  const visibleNav = ALL_NAV.filter(item => {
-    const allowed = navAccess[item.path];
-    if (!allowed) return role === "admin" || role === "super_admin";
-    if (!allowed.includes(role)) return false;
-    if (item.path === "/hr" && role === "admin") return bundles.hr;
-    if (item.path === "/finance" && role === "admin") return bundles.billing;
-    return true;
-  });
-  const hiddenNav = ALL_NAV.filter(item => !visibleNav.includes(item));
-
-  return (
-    <div className="flex gap-4">
-      <div className="flex-1">
-        <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Visible ({visibleNav.length})</p>
-        <div className="space-y-1">
-          {visibleNav.map(item => (
-            <div key={item.path} className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-green-50 border border-green-100 text-sm">
-              <item.icon className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
-              <span>{item.label}</span>
-              <Check className="w-3 h-3 text-green-600 ml-auto" />
-            </div>
-          ))}
-        </div>
-      </div>
-      {hiddenNav.length > 0 && (
-        <div className="flex-1">
-          <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Hidden ({hiddenNav.length})</p>
-          <div className="space-y-1">
-            {hiddenNav.map(item => (
-              <div key={item.path} className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-red-50/60 border border-red-100 text-sm text-muted-foreground">
-                <Lock className="w-3.5 h-3.5 flex-shrink-0 text-red-300" />
-                <span className="line-through">{item.label}</span>
-                <X className="w-3 h-3 text-red-400 ml-auto" />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FeatureMatrix({ role, bundles, canMap }) {
-  return (
-    <div className="space-y-1.5">
-      {Object.entries(FEATURE_LABELS).map(([key, label]) => {
-        const allowed = canMap[key];
-        const hasAccess = allowed ? allowed.includes(role) : false;
-        return (
-          <div key={key} className={`flex items-center justify-between px-3 py-2 rounded-md text-sm border ${hasAccess ? "bg-green-50 border-green-100" : "bg-red-50/40 border-red-100"}`}>
-            <span className={hasAccess ? "text-foreground" : "text-muted-foreground"}>{label}</span>
-            {hasAccess
-              ? <span className="flex items-center gap-1 text-xs text-green-700 font-medium"><Check className="w-3.5 h-3.5" />Allowed</span>
-              : <span className="flex items-center gap-1 text-xs text-red-500 font-medium"><Lock className="w-3.5 h-3.5" />Restricted</span>
-            }
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function RoleCard({ role, navAccess, canMap }) {
-  const bundles = role === "admin" ? { hr: true, billing: true } : { hr: false, billing: false };
-  return (
-    <Card className="overflow-hidden">
-      <div className={`px-5 py-4 ${ROLE_HEADER_COLORS[role]}`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold">{getRoleLabel(role)}</h2>
-            <p className="text-xs opacity-80 mt-0.5">{ROLE_DESCRIPTIONS[role]}</p>
-          </div>
-          <Badge className="bg-white/20 text-white border-white/30 text-sm px-3 py-1">{getRoleLabel(role)}</Badge>
-        </div>
-      </div>
-      <CardContent className="p-5 space-y-6">
-        <div>
-          <h3 className="text-sm font-semibold mb-3">Navigation Access</h3>
-          <MockSidebar role={role} bundles={bundles} navAccess={navAccess} />
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold mb-3">Feature Permissions</h3>
-          <FeatureMatrix role={role} bundles={bundles} canMap={canMap} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 export default function RolePreview() {
-  const [compareMode, setCompareMode] = useState("side-by-side");
   const { isSuperAdmin } = useRole();
   const { matrix, togglePermission, resetToDefaults, saving } = usePermissions();
 
@@ -171,21 +65,17 @@ export default function RolePreview() {
         title="Role Permissions"
         subtitle="Permission model for DSP, Manager, Admin, and Super Admin"
         action={
-          <div className="flex gap-2">
-            {isSuperAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => resetToDefaults()}
-                disabled={saving}
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Reset to Defaults
-              </Button>
-            )}
-            <Button variant={compareMode === "side-by-side" ? "default" : "outline"} size="sm" onClick={() => setCompareMode("side-by-side")}>Side by Side</Button>
-            <Button variant={compareMode === "tabs" ? "default" : "outline"} size="sm" onClick={() => setCompareMode("tabs")}>Tabbed</Button>
-          </div>
+          isSuperAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => resetToDefaults()}
+              disabled={saving}
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset to Defaults
+            </Button>
+          )
         }
       />
 
@@ -193,13 +83,13 @@ export default function RolePreview() {
       <div className="mb-6 p-4 bg-muted rounded-lg flex items-start gap-2">
         <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
         <p className="text-xs text-muted-foreground">
-          <strong>Bundles:</strong> Admin cards below show full access (both bundles enabled). An Admin without the HR or Billing bundle cannot open those areas.
+          <strong>Bundles:</strong> Admin access to HR and Billing areas requires the matching bundle. An Admin without the HR or Billing bundle cannot open those areas.
           {isSuperAdmin && " Click any checkmark or X below to toggle access for that role."}
         </p>
       </div>
 
-      {/* Full comparison matrix */}
-      <Card className="mb-6">
+      {/* Full permissions matrix */}
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Full Permissions Matrix</CardTitle>
         </CardHeader>
@@ -267,19 +157,6 @@ export default function RolePreview() {
           </table>
         </CardContent>
       </Card>
-
-      {compareMode === "side-by-side" ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-          {ROLES.map(role => <RoleCard key={role} role={role} navAccess={navAccess} canMap={canMap} />)}
-        </div>
-      ) : (
-        <Tabs defaultValue="dsp">
-          <TabsList>
-            {ROLES.map(role => <TabsTrigger key={role} value={role}>{getRoleLabel(role)}</TabsTrigger>)}
-          </TabsList>
-          {ROLES.map(role => <TabsContent key={role} value={role}><RoleCard role={role} navAccess={navAccess} canMap={canMap} /></TabsContent>)}
-        </Tabs>
-      )}
     </div>
   );
 }
