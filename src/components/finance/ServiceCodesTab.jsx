@@ -93,7 +93,7 @@ export default function ServiceCodesTab() {
             <DialogHeader><DialogTitle>{editing ? "Edit Service Code" : "Add Service Code"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>Code *</Label><Input className="font-mono" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="e.g. T2016" /></div>
+                <div><Label>Code</Label><Input className="font-mono" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="e.g. T2016" /></div>
                 <div><Label>Unit Type *</Label><Select value={form.unit_type} onValueChange={v => setForm({ ...form, unit_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{unitTypes.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select></div>
               </div>
               <div><Label>Description *</Label><Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
@@ -117,7 +117,7 @@ export default function ServiceCodesTab() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-              <Button onClick={handleSave} disabled={!form.code || !form.description || !form.rate}>{editing ? "Update" : "Create"}</Button>
+              <Button onClick={handleSave} disabled={!form.description || !form.rate}>{editing ? "Update" : "Create"}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
