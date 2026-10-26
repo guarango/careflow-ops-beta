@@ -112,6 +112,11 @@
         },
         {
           "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
             "role": "admin"
           }
         }
@@ -125,8 +130,8 @@
     "update": {
       "$or": [
         {
-          "id": {
-            "$in": "{{user.data.assigned_client_ids}}"
+          "user_condition": {
+            "role": "manager"
           }
         },
         {
