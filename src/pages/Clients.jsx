@@ -33,8 +33,9 @@ const emptyClient = {
 };
 
 export default function Clients() {
-  const { isAdmin } = useRole();
+  const { isAdmin, can } = useRole();
   const { isDSPMode, assignedClientIds } = useAssignedClients();
+  const canEditClients = can("editClients");
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyClient);
