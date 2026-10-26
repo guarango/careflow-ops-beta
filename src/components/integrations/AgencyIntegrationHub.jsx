@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Search, RefreshCw, Activity, Loader2, MapPin, FileText, ExternalLink } from "lucide-react";
+
 import { INTEGRATIONS, INTEGRATION_CATEGORIES } from "@/lib/integrationRegistry";
 import IntegrationCard from "./IntegrationCard";
 import IntegrationAuditLog from "./IntegrationAuditLog";
+import EvvSubmissionPanel from "./EvvSubmissionPanel";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AgencyIntegrationHub({ agencyId }) {
@@ -119,6 +121,17 @@ export default function AgencyIntegrationHub({ agencyId }) {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* EVV Submission Panel */}
+      {records.length > 0 && records.some(r => r.is_active) && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground">EVV Submission Queue</h3>
+          </div>
+          <EvvSubmissionPanel agencyId={agencyId} integration={records.find(r => r.is_active)} />
+        </div>
+      )}
 
       {/* Audit log */}
       <div>
