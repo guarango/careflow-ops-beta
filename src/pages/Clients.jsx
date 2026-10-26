@@ -136,7 +136,7 @@ export default function Clients() {
 
   return (
     <div>
-      <PageHeader title="Client Records" subtitle={`${visibleClients.length} clients`} action={!isDSPMode && <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Client</Button>} />
+      <PageHeader title="Client Records" subtitle={`${visibleClients.length} clients`} action={canEditClients && <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Client</Button>} />
 
       <Card className="mb-6">
         <CardContent className="py-3">
@@ -158,7 +158,7 @@ export default function Clients() {
       </Card>
 
       {filtered.length === 0 && !isLoading ? (
-        <EmptyState icon={Heart} title="No clients" description={isDSPMode ? "No assigned clients match your search." : "Add your first client to get started."} action={!isDSPMode && <Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Client</Button>} />
+        <EmptyState icon={Heart} title="No clients" description={isDSPMode ? "No assigned clients match your search." : "Add your first client to get started."} action={canEditClients && <Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Client</Button>} />
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filtered.map((c) => {
@@ -229,62 +229,64 @@ export default function Clients() {
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing ? "Edit Client" : "Add Client"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{!canEditClients ? "View Client" : editing ? "Edit Client" : "Add Client"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>First Name *</Label><Input value={form.first_name} onChange={(e) => setForm({...form, first_name: e.target.value})} /></div>
-              <div><Label>Last Name *</Label><Input value={form.last_name} onChange={(e) => setForm({...form, last_name: e.target.value})} /></div>
-              <div><Label>Date of Birth</Label><Input type="date" value={form.date_of_birth} onChange={(e) => setForm({...form, date_of_birth: e.target.value})} /></div>
+              <div><Label>First Name *</Label><Input value={form.first_name} onChange={(e) => setForm({...form, first_name: e.target.value})} disabled={!canEditClients} /></div>
+              <div><Label>Last Name *</Label><Input value={form.last_name} onChange={(e) => setForm({...form, last_name: e.target.value})} disabled={!canEditClients} /></div>
+              <div><Label>Date of Birth</Label><Input type="date" value={form.date_of_birth} onChange={(e) => setForm({...form, date_of_birth: e.target.value})} disabled={!canEditClients} /></div>
               <div>
                 <Label>Gender</Label>
-                <Select value={form.gender} onValueChange={(v) => setForm({...form, gender: v})}>
+                <Select value={form.gender} onValueChange={(v) => setForm({...form, gender: v})} disabled={!canEditClients}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>{genders.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="col-span-2"><Label>Diagnosis</Label><Input value={form.diagnosis} onChange={(e) => setForm({...form, diagnosis: e.target.value})} /></div>
-              <div><Label>Guardian Name</Label><Input value={form.guardian_name} onChange={(e) => setForm({...form, guardian_name: e.target.value})} /></div>
-              <div><Label>Guardian Phone</Label><Input value={form.guardian_phone} onChange={(e) => setForm({...form, guardian_phone: e.target.value})} /></div>
-              <div className="col-span-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({...form, address: e.target.value})} /></div>
+              <div className="col-span-2"><Label>Diagnosis</Label><Input value={form.diagnosis} onChange={(e) => setForm({...form, diagnosis: e.target.value})} disabled={!canEditClients} /></div>
+              <div><Label>Guardian Name</Label><Input value={form.guardian_name} onChange={(e) => setForm({...form, guardian_name: e.target.value})} disabled={!canEditClients} /></div>
+              <div><Label>Guardian Phone</Label><Input value={form.guardian_phone} onChange={(e) => setForm({...form, guardian_phone: e.target.value})} disabled={!canEditClients} /></div>
+              <div className="col-span-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({...form, address: e.target.value})} disabled={!canEditClients} /></div>
               <div>
                 <Label>House / Location</Label>
-                <Select value={form.house_id || ""} onValueChange={(v) => setForm({...form, house_id: v})}>
+                <Select value={form.house_id || ""} onValueChange={(v) => setForm({...form, house_id: v})} disabled={!canEditClients}>
                   <SelectTrigger><SelectValue placeholder="Select house" /></SelectTrigger>
                   <SelectContent>
                     {houses.map(h => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Insurance Provider</Label><Input value={form.insurance_provider} onChange={(e) => setForm({...form, insurance_provider: e.target.value})} /></div>
-              <div><Label>Insurance ID</Label><Input value={form.insurance_id} onChange={(e) => setForm({...form, insurance_id: e.target.value})} /></div>
+              <div><Label>Insurance Provider</Label><Input value={form.insurance_provider} onChange={(e) => setForm({...form, insurance_provider: e.target.value})} disabled={!canEditClients} /></div>
+              <div><Label>Insurance ID</Label><Input value={form.insurance_id} onChange={(e) => setForm({...form, insurance_id: e.target.value})} disabled={!canEditClients} /></div>
               <div>
                 <Label>Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({...form, status: v})}>
+                <Select value={form.status} onValueChange={(v) => setForm({...form, status: v})} disabled={!canEditClients}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{clientStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div className="border-t pt-4">
-              <ServiceEnrollments
-                enrollments={form.service_enrollments || []}
-                onChange={(enrollments) => setForm({...form, service_enrollments: enrollments})}
-                serviceCodes={serviceCodes}
-              />
-            </div>
+            {canEditClients && (
+              <div className="border-t pt-4">
+                <ServiceEnrollments
+                  enrollments={form.service_enrollments || []}
+                  onChange={(enrollments) => setForm({...form, service_enrollments: enrollments})}
+                  serviceCodes={serviceCodes}
+                />
+              </div>
+            )}
 
-            <div><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} rows={3} /></div>
+            <div><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} rows={3} disabled={!canEditClients} /></div>
 
-            {editing && (
+            {editing && canEditClients && (
               <div className="border-t pt-4">
                 <AssignedStaffSection clientId={editing.id} isAdmin={isAdmin} />
               </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!form.first_name || !form.last_name}>{editing ? "Update" : "Create"}</Button>
+            <Button variant="outline" onClick={closeDialog}>{canEditClients ? "Cancel" : "Close"}</Button>
+            {canEditClients && <Button onClick={handleSave} disabled={!form.first_name || !form.last_name}>{editing ? "Update" : "Create"}</Button>}
           </DialogFooter>
         </DialogContent>
       </Dialog>
