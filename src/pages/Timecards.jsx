@@ -24,7 +24,7 @@ import CorrectionReviewDialog from "@/components/timecards/CorrectionReviewDialo
 import { computeOvertimeMap, filterByPeriod } from "@/lib/overtimeUtils";
 import { exportCSV, exportPDF } from "@/components/timecards/payrollExportUtils";
 import { useToast } from "@/components/ui/use-toast";
-import AccessDenied from "@/components/shared/AccessDenied";
+
 
 const emptyTC = {
   staff_id: "", staff_name: "", date: "", clock_in: "", clock_out: "",
@@ -263,10 +263,6 @@ export default function Timecards() {
       }).catch(() => {}); // silent
     } catch (_) {}
   };
-
-  if (!can("timecards.view")) {
-    return <AccessDenied />;
-  }
 
   return (
     <div>
