@@ -45,6 +45,7 @@ import MonthlySummaryDetail from './pages/MonthlySummaryDetail';
 import QuarterlySummaries from './pages/QuarterlySummaries';
 import QuarterlySummaryDetail from './pages/QuarterlySummaryDetail';
 import Recognition from './pages/Recognition';
+import OAuthConsent from './pages/OAuthConsent';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -106,6 +107,7 @@ const AuthenticatedApp = () => {
       <Route path="/onboarding" element={<OnboardingWizard />} />
       <Route path="/sign/:requestId" element={<SignDocument />} />
       <Route path="/api/docs" element={<APIDocs />} />
+      <Route path="/oauth/consent" element={<OAuthConsent />} />
       <Route path="*" element={<PageNotFound />} />
 
     </Routes>
