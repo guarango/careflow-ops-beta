@@ -31,6 +31,18 @@
         }
       }
     },
+    "is_deactivated": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, the user account is deactivated and cannot access the app.",
+      "rls": {
+        "update": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
+    },
     "hr_bundle": {
       "type": "boolean",
       "default": false,

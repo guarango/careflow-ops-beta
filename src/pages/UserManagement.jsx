@@ -16,6 +16,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useRole } from "@/hooks/useRole";
 import { useImpersonation } from "@/lib/ImpersonationContext";
 import { getRoleLabel, getRoleBadgeColor, ROLE_DESCRIPTIONS } from "@/lib/permissions";
+import EditUserDialog from "@/components/users/EditUserDialog";
+import UserActionsMenu from "@/components/users/UserActionsMenu";
 
 const ROLE_CARDS = [
   { key: "dsp",         icon: Users,       color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
@@ -32,6 +34,9 @@ export default function UserManagement() {
   const [billingBundle, setBillingBundle] = useState(false);
   const [loading, setLoading] = useState(false);
   const [impersonating, setImpersonating] = useState(false);
+  const [editUser, setEditUser] = useState(null);
+  const [showEdit, setShowEdit] = useState(false);
+  const [savingUser, setSavingUser] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { isSuperAdmin } = useRole();
@@ -82,6 +87,58 @@ export default function UserManagement() {
       toast({ title: "Login As failed", description: err.message, variant: "destructive" });
     } finally {
       setImpersonating(false);
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setEditUser(user);
+    setShowEdit(true);
+  };
+
+  const handleSaveUser = async ({ userId, role, hrBundle, billingBundle, isSuperAdmin }) => {
+    setSavingUser(true);
+    try {
+      const res = await base44.functions.invoke("manageUsers", { action: "update", userId, role, hrBundle, billingBundle, isSuperAdmin });
+      if (res.data?.error) throw new Error(res.data.error);
+      toast({ title: "User updated", description: "Role and bundles have been saved." });
+      setShowEdit(false);
+      refetch();
+    } catch (err) {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingUser(false);
+    }
+  };
+
+  const handleResetPassword = async (user) => {
+    try {
+      const res = await base44.functions.invoke("manageUsers", { action: "reset_password", email: user.email });
+      if (res.data?.error) throw new Error(res.data.error);
+      toast({ title: "Reset email sent", description: `A password reset link has been sent to ${user.email}.` });
+    } catch (err) {
+      toast({ title: "Reset failed", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleToggleDeactivated = async (user, deactivated) => {
+    try {
+      const res = await base44.functions.invoke("manageUsers", { action: "set_deactivated", userId: user.id, deactivated });
+      if (res.data?.error) throw new Error(res.data.error);
+      toast({ title: deactivated ? "User deactivated" : "User reactivated", description: `${user.full_name || user.email} is ${deactivated ? "now deactivated" : "active again"}.` });
+      refetch();
+    } catch (err) {
+      toast({ title: "Action failed", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    try {
+      const res = await base44.functions.invoke("manageUsers", { action: "delete", userId: user.id });
+      if (res.data?.error) throw new Error(res.data.error);
+      toast({ title: "User deleted", description: `${user.full_name || user.email} has been removed.` });
+      refetch();
+    } catch (err) {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
     }
   };
 
@@ -138,6 +195,7 @@ export default function UserManagement() {
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Bundles</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Joined</TableHead>
                 {isSuperAdmin && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
@@ -167,23 +225,38 @@ export default function UserManagement() {
                         {role !== "admin" && <span className="text-xs text-muted-foreground">—</span>}
                       </div>
                     </TableCell>
+                    <TableCell>
+                      {u.is_deactivated ? (
+                        <Badge variant="outline" className="text-[11px] bg-red-500/10 text-red-600 border-red-500/20">Deactivated</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[11px] bg-green-500/10 text-green-600 border-green-500/20">Active</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{u.created_date ? new Date(u.created_date).toLocaleDateString() : "—"}</TableCell>
                     {isSuperAdmin && (
-                      <TableCell className="text-right">
-                        {role !== "super_admin" ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs"
-                            disabled={impersonating}
-                            onClick={() => handleLoginAs(u)}
-                          >
-                            <LogIn className="w-3 h-3 mr-1" />
-                            Login As
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
+                      <TableCell className="text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {role !== "super_admin" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs"
+                              disabled={impersonating}
+                              onClick={() => handleLoginAs(u)}
+                            >
+                              <LogIn className="w-3 h-3 mr-1" />
+                              Login As
+                            </Button>
+                          )}
+                          <UserActionsMenu
+                            user={u}
+                            isSuperAdmin={isSuperAdmin}
+                            onEdit={handleEditUser}
+                            onResetPassword={handleResetPassword}
+                            onToggleDeactivated={handleToggleDeactivated}
+                            onDelete={handleDeleteUser}
+                          />
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
@@ -191,7 +264,7 @@ export default function UserManagement() {
               })}
               {users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={isSuperAdmin ? 6 : 5} className="text-center text-muted-foreground py-8 text-sm">No users found.</TableCell>
+                  <TableCell colSpan={isSuperAdmin ? 7 : 6} className="text-center text-muted-foreground py-8 text-sm">No users found.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -274,6 +347,15 @@ export default function UserManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit User Dialog */}
+      <EditUserDialog
+        user={editUser}
+        open={showEdit}
+        onOpenChange={setShowEdit}
+        onSave={handleSaveUser}
+        loading={savingUser}
+      />
     </div>
   );
 }

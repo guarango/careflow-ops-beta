@@ -73,6 +73,36 @@ export default async function(req) {
       return Response.json({ success: true, email, role, updated: false, pending: true, message: 'Invite sent. Role and assignments will be applied automatically when the user accepts.' });
     }
 
+    // ─── Reset a user's password ─────────────────────────────────────
+    if (action === 'reset_password') {
+      const { email } = body;
+      if (!email || !email.includes('@')) {
+        return Response.json({ error: 'Valid email is required' }, { status: 400 });
+      }
+      await base44.auth.resetPasswordRequest(email);
+      return Response.json({ success: true, message: 'Password reset email sent' });
+    }
+
+    // ─── Deactivate / reactivate a user ─────────────────────────────
+    if (action === 'set_deactivated') {
+      const { userId, deactivated } = body;
+      if (!userId) return Response.json({ error: 'User ID is required' }, { status: 400 });
+      await base44.asServiceRole.entities.User.update(userId, { is_deactivated: !!deactivated });
+      return Response.json({ success: true, deactivated: !!deactivated });
+    }
+
+    // ─── Delete a user ───────────────────────────────────────────────
+    if (action === 'delete') {
+      const { userId } = body;
+      if (!userId) return Response.json({ error: 'User ID is required' }, { status: 400 });
+      // Prevent deleting yourself or the app owner
+      if (userId === user.id) {
+        return Response.json({ error: 'You cannot delete your own account' }, { status: 400 });
+      }
+      await base44.asServiceRole.entities.User.delete(userId);
+      return Response.json({ success: true });
+    }
+
     // ─── Update an existing user's role/bundles ──────────────────────
     if (action === 'update') {
       const { userId, role, hrBundle, billingBundle, isSuperAdmin } = body;
