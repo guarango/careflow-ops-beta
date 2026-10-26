@@ -7,12 +7,11 @@ import PageHeader from "@/components/shared/PageHeader";
 import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, Target, CalendarDays, Tag, UserCog,
-  TrendingUp, Check, X, Lock, Briefcase, Info, UserSearch, ShieldAlert
+  TrendingUp, Check, X, Lock, Briefcase, Info, RotateCcw, Save
 } from "lucide-react";
-import { NAV_ACCESS, CAN, getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
+import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
 import { useRole } from "@/hooks/useRole";
-import { useImpersonation } from "@/lib/ImpersonationContext";
-import UserPickerDialog from "@/components/shared/UserPickerDialog";
+import { usePermissions } from "@/lib/PermissionsContext";
 
 const ALL_NAV = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
@@ -68,12 +67,11 @@ const ROLE_DESCRIPTIONS = {
   super_admin: "Platform owner; all agencies; Login As.",
 };
 
-function MockSidebar({ role, bundles }) {
+function MockSidebar({ role, bundles, navAccess }) {
   const visibleNav = ALL_NAV.filter(item => {
-    const allowed = NAV_ACCESS[item.path];
+    const allowed = navAccess[item.path];
     if (!allowed) return role === "admin" || role === "super_admin";
     if (!allowed.includes(role)) return false;
-    // Check bundle requirements for /hr and /finance
     if (item.path === "/hr" && role === "admin") return bundles.hr;
     if (item.path === "/finance" && role === "admin") return bundles.billing;
     return true;
@@ -112,19 +110,12 @@ function MockSidebar({ role, bundles }) {
   );
 }
 
-function FeatureMatrix({ role, bundles }) {
+function FeatureMatrix({ role, bundles, canMap }) {
   return (
     <div className="space-y-1.5">
       {Object.entries(FEATURE_LABELS).map(([key, label]) => {
-        const hasAccess = (() => {
-          const allowed = CAN[key];
-          if (!allowed) return false;
-          if (!allowed.includes(role)) return false;
-          // Check bundle requirements
-          if (key === "editStaff" && role === "admin") return bundles.hr;
-          if ((key === "accessBilling" || key === "editServiceCodes" || key === "exportPayroll") && role === "admin") return bundles.billing;
-          return true;
-        })();
+        const allowed = canMap[key];
+        const hasAccess = allowed ? allowed.includes(role) : false;
         return (
           <div key={key} className={`flex items-center justify-between px-3 py-2 rounded-md text-sm border ${hasAccess ? "bg-green-50 border-green-100" : "bg-red-50/40 border-red-100"}`}>
             <span className={hasAccess ? "text-foreground" : "text-muted-foreground"}>{label}</span>
@@ -139,7 +130,7 @@ function FeatureMatrix({ role, bundles }) {
   );
 }
 
-function RoleCard({ role }) {
+function RoleCard({ role, navAccess, canMap }) {
   const bundles = role === "admin" ? { hr: true, billing: true } : { hr: false, billing: false };
   return (
     <Card className="overflow-hidden">
@@ -155,11 +146,11 @@ function RoleCard({ role }) {
       <CardContent className="p-5 space-y-6">
         <div>
           <h3 className="text-sm font-semibold mb-3">Navigation Access</h3>
-          <MockSidebar role={role} bundles={bundles} />
+          <MockSidebar role={role} bundles={bundles} navAccess={navAccess} />
         </div>
         <div>
           <h3 className="text-sm font-semibold mb-3">Feature Permissions</h3>
-          <FeatureMatrix role={role} bundles={bundles} />
+          <FeatureMatrix role={role} bundles={bundles} canMap={canMap} />
         </div>
       </CardContent>
     </Card>
@@ -169,20 +160,27 @@ function RoleCard({ role }) {
 export default function RolePreview() {
   const [compareMode, setCompareMode] = useState("side-by-side");
   const { isSuperAdmin } = useRole();
-  const { impersonation, returnToSelf } = useImpersonation();
-  const [userPickerOpen, setUserPickerOpen] = useState(false);
+  const { matrix, togglePermission, resetToDefaults, saving } = usePermissions();
+
+  const navAccess = matrix.navAccess;
+  const canMap = matrix.can;
 
   return (
     <div>
       <PageHeader
-        title="Role Preview"
+        title="Role Permissions"
         subtitle="Permission model for DSP, Manager, Admin, and Super Admin"
         action={
           <div className="flex gap-2">
-            {isSuperAdmin && !impersonation && (
-              <Button variant="outline" size="sm" onClick={() => setUserPickerOpen(true)}>
-                <UserSearch className="w-4 h-4 mr-2" />
-                View as User
+            {isSuperAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => resetToDefaults()}
+                disabled={saving}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset to Defaults
               </Button>
             )}
             <Button variant={compareMode === "side-by-side" ? "default" : "outline"} size="sm" onClick={() => setCompareMode("side-by-side")}>Side by Side</Button>
@@ -191,54 +189,12 @@ export default function RolePreview() {
         }
       />
 
-      {impersonation && (
-        <Card className="mb-6 border-orange-500/30 bg-orange-500/5">
-          <CardContent className="py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <ShieldAlert className="w-5 h-5 text-orange-500" />
-              <div>
-                <p className="text-sm font-medium">
-                  Currently viewing as {impersonation.targetUser?.full_name || impersonation.targetUser?.email} ({getRoleLabel(impersonation.targetUser?.role)})
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Reason: {impersonation.reason} · Read-only mode · 30-minute timeout
-                </p>
-              </div>
-            </div>
-            <Button size="sm" onClick={() => returnToSelf()}>Return to my account</Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {isSuperAdmin && !impersonation && (
-        <Card className="mb-6 border-primary/20 bg-primary/5">
-          <CardContent className="py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <UserSearch className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm font-medium">View as a specific user</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Pick any user to see exactly what they see — read-only, 30-minute timeout, fully audited.
-                </p>
-              </div>
-            </div>
-            <Button size="sm" onClick={() => setUserPickerOpen(true)}>
-              <UserSearch className="w-4 h-4 mr-2" />
-              Select User
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {userPickerOpen && (
-        <UserPickerDialog open={userPickerOpen} onClose={() => setUserPickerOpen(false)} />
-      )}
-
       {/* Bundle note */}
       <div className="mb-6 p-4 bg-muted rounded-lg flex items-start gap-2">
         <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
         <p className="text-xs text-muted-foreground">
           <strong>Bundles:</strong> Admin cards below show full access (both bundles enabled). An Admin without the HR or Billing bundle cannot open those areas.
+          {isSuperAdmin && " Click any checkmark or X below to toggle access for that role."}
         </p>
       </div>
 
@@ -272,16 +228,15 @@ export default function RolePreview() {
                     </div>
                   </td>
                   {ROLES.map(role => {
-                    const allowed = NAV_ACCESS[item.path];
+                    const allowed = navAccess[item.path];
                     let hasAccess = allowed ? allowed.includes(role) : (role === "admin" || role === "super_admin");
-                    if (hasAccess && item.path === "/hr" && role === "admin") hasAccess = true; // shown with bundle in card
-                    if (hasAccess && item.path === "/finance" && role === "admin") hasAccess = true;
                     return (
                       <td key={role} className="px-4 py-2 text-center">
-                        {hasAccess
-                          ? <Check className="w-4 h-4 text-green-600 mx-auto" />
-                          : <X className="w-4 h-4 text-red-400 mx-auto" />
-                        }
+                        <PermissionToggle
+                          hasAccess={hasAccess}
+                          editable={isSuperAdmin}
+                          onClick={() => isSuperAdmin && togglePermission("nav", item.path, role)}
+                        />
                       </td>
                     );
                   })}
@@ -294,14 +249,15 @@ export default function RolePreview() {
                 <tr key={key} className="border-b last:border-0 hover:bg-muted/20">
                   <td className="px-4 py-2 text-muted-foreground">{label}</td>
                   {ROLES.map(role => {
-                    const allowed = CAN[key];
+                    const allowed = canMap[key];
                     const hasAccess = allowed ? allowed.includes(role) : false;
                     return (
                       <td key={role} className="px-4 py-2 text-center">
-                        {hasAccess
-                          ? <Check className="w-4 h-4 text-green-600 mx-auto" />
-                          : <X className="w-4 h-4 text-red-400 mx-auto" />
-                        }
+                        <PermissionToggle
+                          hasAccess={hasAccess}
+                          editable={isSuperAdmin}
+                          onClick={() => isSuperAdmin && togglePermission("can", key, role)}
+                        />
                       </td>
                     );
                   })}
@@ -314,16 +270,43 @@ export default function RolePreview() {
 
       {compareMode === "side-by-side" ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-          {ROLES.map(role => <RoleCard key={role} role={role} />)}
+          {ROLES.map(role => <RoleCard key={role} role={role} navAccess={navAccess} canMap={canMap} />)}
         </div>
       ) : (
         <Tabs defaultValue="dsp">
           <TabsList>
             {ROLES.map(role => <TabsTrigger key={role} value={role}>{getRoleLabel(role)}</TabsTrigger>)}
           </TabsList>
-          {ROLES.map(role => <TabsContent key={role} value={role}><RoleCard role={role} /></TabsContent>)}
+          {ROLES.map(role => <TabsContent key={role} value={role}><RoleCard role={role} navAccess={navAccess} canMap={canMap} /></TabsContent>)}
         </Tabs>
       )}
     </div>
+  );
+}
+
+/**
+ * Clickable checkmark / X toggle. Only interactive when `editable` is true (Super Admin).
+ */
+function PermissionToggle({ hasAccess, editable, onClick }) {
+  if (!editable) {
+    return hasAccess
+      ? <Check className="w-4 h-4 text-green-600 mx-auto" />
+      : <X className="w-4 h-4 text-red-400 mx-auto" />;
+  }
+  return (
+    <button
+      onClick={onClick}
+      title={hasAccess ? "Click to revoke" : "Click to grant"}
+      className={`mx-auto p-1 rounded-md transition-colors hover:scale-110 ${
+        hasAccess
+          ? "text-green-600 hover:bg-green-100"
+          : "text-red-400 hover:bg-red-100"
+      }`}
+    >
+      {hasAccess
+        ? <Check className="w-4 h-4" />
+        : <X className="w-4 h-4" />
+      }
+    </button>
   );
 }

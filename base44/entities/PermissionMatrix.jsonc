@@ -1,0 +1,45 @@
+{
+  "name": "PermissionMatrix",
+  "type": "object",
+  "properties": {
+    "matrix_key": {
+      "type": "string",
+      "description": "Singleton key (e.g. 'default')"
+    },
+    "nav_access": {
+      "type": "object",
+      "description": "Override map for navigation path -> role array (merged with defaults)"
+    },
+    "can": {
+      "type": "object",
+      "description": "Override map for permission code -> role array (merged with defaults)"
+    },
+    "updated_by": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "matrix_key"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

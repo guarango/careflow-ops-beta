@@ -1,12 +1,13 @@
 import { useAuth } from "@/lib/AuthContext";
 import { useRolePreview } from "@/lib/RolePreviewContext";
-import { can, canAccessPath } from "@/lib/permissions";
+import { usePermissions } from "@/lib/PermissionsContext";
 import { useImpersonation } from "@/lib/ImpersonationContext";
 
 export function useRole() {
   const { user } = useAuth();
   const { previewRole } = useRolePreview();
   const { impersonation, isReadOnly } = useImpersonation();
+  const permissions = usePermissions();
 
   // When impersonating, use the target user's role/bundles
   const effectiveUser = impersonation?.targetUser || user;
@@ -37,8 +38,8 @@ export function useRole() {
     isBCBA:        false,
     isNurse:       false,
     isProgramDirector: false,
-    // Permission checks — single source
-    can:           (permission) => can(role, permission, bundles),
-    canAccessPath: (path) => canAccessPath(role, path, bundles),
+    // Permission checks — single source (uses stored overrides merged with defaults)
+    can:           (permission) => permissions.can(role, permission, bundles),
+    canAccessPath: (path) => permissions.canAccessPath(role, path, bundles),
   };
 }

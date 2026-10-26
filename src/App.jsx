@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { RolePreviewProvider } from '@/lib/RolePreviewContext';
 import { ImpersonationProvider } from '@/lib/ImpersonationContext';
+import { PermissionsProvider } from '@/lib/PermissionsContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 import AppLayout from './components/layout/AppLayout';
@@ -130,12 +131,14 @@ function App() {
     <AuthProvider>
       <RolePreviewProvider>
         <ImpersonationProvider>
-          <QueryClientProvider client={queryClientInstance}>
-            <Router>
-              <AuthenticatedApp />
-            </Router>
-            <Toaster />
-          </QueryClientProvider>
+          <PermissionsProvider>
+            <QueryClientProvider client={queryClientInstance}>
+              <Router>
+                <AuthenticatedApp />
+              </Router>
+              <Toaster />
+            </QueryClientProvider>
+          </PermissionsProvider>
         </ImpersonationProvider>
       </RolePreviewProvider>
     </AuthProvider>
