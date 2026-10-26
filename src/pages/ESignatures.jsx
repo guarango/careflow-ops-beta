@@ -321,7 +321,36 @@ function TrackingTab({ staff }) {
           });
         }
       }
-      await base44.entities.SignatureRequest.bulkCreate(requests);
+      const created = await base44.entities.SignatureRequest.bulkCreate(requests);
+
+      // Build staff_id -> user_id map for notifications
+      const userIdMap = {};
+      for (const r of payload.recipients) {
+        if (r.user_id) userIdMap[r.staff_id] = r.user_id;
+      }
+
+      // Create in-app notifications so staff see the request at login
+      const notifications = [];
+      for (const req of created) {
+        const userId = userIdMap[req.staff_id];
+        if (!userId) continue;
+        notifications.push({
+          type: "document_to_sign",
+          recipient_user_id: userId,
+          recipient_email: req.staff_email || "",
+          recipient_role: "staff",
+          staff_id: req.staff_id,
+          staff_name: req.staff_name,
+          related_record_id: req.id,
+          related_record_type: "signature_request",
+          message: `You have a document to sign: "${req.template_name}"${req.packet_name ? ` (from ${req.packet_name})` : ""}. Due ${req.due_date}.`,
+          deep_link: `/sign?request_id=${req.id}`,
+          status: "unread",
+        });
+      }
+      if (notifications.length > 0) {
+        await base44.entities.AppNotification.bulkCreate(notifications).catch(() => {});
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sig-requests"] });

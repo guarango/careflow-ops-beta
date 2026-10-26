@@ -38,15 +38,15 @@ export default function SendSignatureDialog({ open, onClose, templates, packets,
     let recipients = [];
     if (recipientType === "individual") {
       const s = staff.find(st => st.id === staffId);
-      recipients = [{ staff_id: s.id, staff_name: `${s.first_name} ${s.last_name}`, staff_email: s.email || "", staff_role: s.role || "" }];
+      recipients = [{ staff_id: s.id, staff_name: `${s.first_name} ${s.last_name}`, staff_email: s.email || "", staff_role: s.role || "", user_id: s.user_id || "" }];
     } else if (recipientType === "role") {
       recipients = staff.filter(s => s.role === role && s.status === "Active").map(s => ({
-        staff_id: s.id, staff_name: `${s.first_name} ${s.last_name}`, staff_email: s.email || "", staff_role: s.role || ""
+        staff_id: s.id, staff_name: `${s.first_name} ${s.last_name}`, staff_email: s.email || "", staff_role: s.role || "", user_id: s.user_id || ""
       }));
     } else {
       // group = all active staff
       recipients = staff.filter(s => s.status === "Active").map(s => ({
-        staff_id: s.id, staff_name: `${s.first_name} ${s.last_name}`, staff_email: s.email || "", staff_role: s.role || ""
+        staff_id: s.id, staff_name: `${s.first_name} ${s.last_name}`, staff_email: s.email || "", staff_role: s.role || "", user_id: s.user_id || ""
       }));
     }
 
