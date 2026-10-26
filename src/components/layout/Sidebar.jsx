@@ -188,7 +188,7 @@ export default function Sidebar() {
 
       {/* Role switcher */}
       <div className="px-3 py-3 border-t border-[#1E293B] shrink-0">
-        {(realRole === "admin" || realRole === "super_admin") ? (
+        {realRole === "super_admin" ? (
           <div className="relative">
             {impersonation ? (
               <div className="space-y-2">
