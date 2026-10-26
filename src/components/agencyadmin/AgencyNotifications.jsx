@@ -22,7 +22,7 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [previewRule, setPreviewRule] = useState(null);
   const [resetConfirm, setResetConfirm] = useState(false);
   const [digestEnabled, setDigestEnabled] = useState(true);
@@ -72,6 +72,17 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
     else { setRules(DEFAULT_RULES); setLoading(false); }
   }, [agency?.id, loadRules]);
 
+  const buildUpdatePayload = (rule, overrides) => ({
+    event_key: rule.event_key,
+    label: rule.label,
+    category: rule.category,
+    severity: rule.severity,
+    enabled: rule.enabled,
+    ...overrides,
+    updated_by: "admin",
+    updated_at: new Date().toISOString(),
+  });
+
   const toggleChannel = async (ruleId, channel) => {
     const rule = rules.find(r => r.id === ruleId);
     if (!rule) return;
@@ -85,7 +96,7 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
     setRules(rs => rs.map(r => r.id === ruleId ? { ...r, channels: newChannels } : r));
     setSaving(true);
     try {
-      await base44.entities.NotificationSettings.update(ruleId, { channels: newChannels });
+      await base44.entities.NotificationSettings.update(ruleId, buildUpdatePayload(rule, { channels: newChannels }));
     } catch (err) {
       console.error("Failed to update channel:", err);
       setRules(rs => rs.map(r => r.id === ruleId ? { ...r, channels: rule.channels } : r));
@@ -101,7 +112,7 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
     setRules(rs => rs.map(r => r.id === ruleId ? { ...r, enabled: newEnabled } : r));
     setSaving(true);
     try {
-      await base44.entities.NotificationSettings.update(ruleId, { enabled: newEnabled });
+      await base44.entities.NotificationSettings.update(ruleId, buildUpdatePayload(rule, { enabled: newEnabled }));
     } catch (err) {
       console.error("Failed to toggle rule:", err);
       setRules(rs => rs.map(r => r.id === ruleId ? { ...r, enabled: rule.enabled } : r));
@@ -122,7 +133,7 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
     setRules(rs => rs.map(r => r.id === ruleId ? { ...r, recipients: newRecipients } : r));
     setSaving(true);
     try {
-      await base44.entities.NotificationSettings.update(ruleId, { recipients: newRecipients });
+      await base44.entities.NotificationSettings.update(ruleId, buildUpdatePayload(rule, { recipients: newRecipients }));
     } catch (err) {
       console.error("Failed to update recipients:", err);
       setRules(rs => rs.map(r => r.id === ruleId ? { ...r, recipients: current } : r));
@@ -143,7 +154,7 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
     if (!rule) return;
     setSaving(true);
     try {
-      await base44.entities.NotificationSettings.update(ruleId, { timing: rule.timing });
+      await base44.entities.NotificationSettings.update(ruleId, buildUpdatePayload(rule, { timing: rule.timing }));
     } catch (err) {
       console.error("Failed to save timing:", err);
     } finally {
@@ -158,7 +169,7 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
     try {
       let digestRule = rules.find(r => r.event_key === "_digest");
       if (digestRule) {
-        await base44.entities.NotificationSettings.update(digestRule.id, { enabled: newVal });
+        await base44.entities.NotificationSettings.update(digestRule.id, buildUpdatePayload(digestRule, { enabled: newVal }));
       } else if (agency?.id) {
         digestRule = await base44.entities.NotificationSettings.create({
           agency_id: agency.id,
@@ -200,10 +211,6 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
     } finally {
       setSaving(false);
     }
-  };
-
-  const toggleCategory = (catKey) => {
-    setExpandedCategories(p => ({ ...p, [catKey]: !p[catKey] }));
   };
 
   const getCategoryRules = (catKey) => rules.filter(r => r.category === catKey);
@@ -260,17 +267,17 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
         {CATEGORIES.map(cat => {
           const Icon = CATEGORY_ICONS[cat.icon] || Bell;
           const summary = getSummary(cat.key);
-          const isExpanded = expandedCategories[cat.key];
+          const isSelected = selectedCategory === cat.key;
           return (
             <button
               key={cat.key}
-              onClick={() => toggleCategory(cat.key)}
+              onClick={() => setSelectedCategory(isSelected ? null : cat.key)}
               className={`text-left p-4 rounded-xl border transition-all hover:shadow-md ${
-                isExpanded ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"
+                isSelected ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border bg-card hover:border-primary/30"
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <Icon className={`w-5 h-5 ${isExpanded ? "text-primary" : "text-muted-foreground"}`} />
+                <Icon className={`w-5 h-5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
                 {summary.critical > 0 && (
                   <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0.5">
                     {summary.critical} critical
@@ -284,16 +291,16 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
         })}
       </div>
 
-      {/* Category tables */}
-      {CATEGORIES.map(cat => {
+      {/* Category table (single selection) */}
+      {selectedCategory && (() => {
+        const cat = CATEGORIES.find(c => c.key === selectedCategory);
+        if (!cat) return null;
         const catRules = getCategoryRules(cat.key);
-        const isExpanded = expandedCategories[cat.key];
-        if (!isExpanded) return null;
         return (
-          <div key={cat.key} className="bg-card border border-border rounded-xl overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/30">
               <h3 className="text-sm font-bold text-foreground">{cat.label}</h3>
-              <button onClick={() => toggleCategory(cat.key)} className="text-muted-foreground hover:text-foreground">
+              <button onClick={() => setSelectedCategory(null)} className="text-muted-foreground hover:text-foreground">
                 <ChevronUp className="w-4 h-4" />
               </button>
             </div>
@@ -337,7 +344,7 @@ export default function AgencyNotifications({ agency, saving: externalSaving }) 
             </div>
           </div>
         );
-      })}
+      })()}
 
       <MessagePreviewModal
         rule={previewRule}
