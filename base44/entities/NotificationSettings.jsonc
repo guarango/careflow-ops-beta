@@ -2,9 +2,13 @@
   "name": "NotificationSettings",
   "type": "object",
   "properties": {
-    "rule_name": {
+    "agency_id": {
       "type": "string",
-      "description": "Unique rule identifier (e.g. forgot_clockout, med_pass_missed)"
+      "description": "Agency this rule belongs to"
+    },
+    "event_key": {
+      "type": "string",
+      "description": "Stable slug (e.g. med_pass_not_documented, critical_incident)"
     },
     "label": {
       "type": "string",
@@ -13,72 +17,106 @@
     "description": {
       "type": "string"
     },
+    "category": {
+      "type": "string",
+      "enum": [
+        "client_safety",
+        "medication",
+        "charting",
+        "shifts_evv",
+        "staff_compliance",
+        "hr_team"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "critical",
+        "action",
+        "fyi"
+      ]
+    },
+    "is_locked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Locked rules cannot be disabled; Push/SMS/Email cannot all be turned off on Critical rules"
+    },
     "enabled": {
       "type": "boolean",
       "default": true
     },
-    "category": {
-      "type": "string",
-      "enum": [
-        "timekeeping",
-        "medication",
-        "charting",
-        "compliance",
-        "documents",
-        "deadlines"
-      ],
-      "description": "Rule category"
+    "channels": {
+      "type": "object",
+      "description": "Channel toggles (in-app is always on)",
+      "properties": {
+        "push": {
+          "type": "boolean",
+          "default": false
+        },
+        "email": {
+          "type": "boolean",
+          "default": false
+        },
+        "sms": {
+          "type": "boolean",
+          "default": false
+        }
+      }
     },
-    "stages": {
+    "recipients": {
       "type": "array",
-      "description": "Escalation stages with timing, recipient, and channels",
       "items": {
-        "type": "object",
-        "properties": {
-          "stage_name": {
-            "type": "string",
-            "description": "e.g. dsp_15min, manager_1hr"
-          },
-          "label": {
+        "type": "string",
+        "enum": [
+          "dsp_on_shift",
+          "assigned_dsps",
+          "client_manager",
+          "house_manager",
+          "admin",
+          "hr_bundle",
+          "billing_bundle",
+          "self"
+        ]
+      },
+      "description": "Recipient roles for this rule"
+    },
+    "timing": {
+      "type": "object",
+      "description": "Editable timing thresholds (e.g. after_minutes, days_before, count, days)"
+    },
+    "escalation": {
+      "type": "object",
+      "description": "Escalation config if not resolved, or null",
+      "properties": {
+        "after_minutes": {
+          "type": "number"
+        },
+        "to_roles": {
+          "type": "array",
+          "items": {
             "type": "string"
-          },
-          "delay_minutes": {
-            "type": "number",
-            "description": "Minutes after trigger event (0 = immediate)"
-          },
-          "recipient": {
-            "type": "string",
-            "enum": [
-              "dsp",
-              "manager",
-              "admin",
-              "hr",
-              "reporting_staff"
-            ]
-          },
-          "channels": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "in_app",
-                "email",
-                "sms",
-                "push"
-              ]
-            }
-          },
-          "message_template": {
-            "type": "string",
-            "description": "Privacy-safe template \u2014 no client names, diagnoses, or medications"
           }
         },
-        "required": [
-          "stage_name",
-          "recipient",
-          "channels"
-        ]
+        "channels": {
+          "type": "object",
+          "properties": {
+            "push": {
+              "type": "boolean"
+            },
+            "email": {
+              "type": "boolean"
+            },
+            "sms": {
+              "type": "boolean"
+            }
+          }
+        }
       }
+    },
+    "digest_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Master toggle for the daily 7AM digest email to Managers and Admins"
     },
     "updated_by": {
       "type": "string"
@@ -88,8 +126,10 @@
     }
   },
   "required": [
-    "rule_name",
+    "event_key",
     "label",
+    "category",
+    "severity",
     "enabled"
   ],
   "rls": {

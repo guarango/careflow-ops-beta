@@ -1,0 +1,56 @@
+{
+  "name": "NotificationPreference",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User this preference belongs to"
+    },
+    "agency_id": {
+      "type": "string"
+    },
+    "rule_overrides": {
+      "type": "object",
+      "description": "Per-rule channel overrides: { event_key: { push: bool, email: bool, sms: bool } }. Users can only turn OFF channels, never above agency settings."
+    },
+    "sms_opted_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "User opted in to SMS notifications"
+    },
+    "sms_phone": {
+      "type": "string",
+      "description": "Phone number for SMS (may differ from primary phone)"
+    },
+    "digest_preference": {
+      "type": "string",
+      "enum": [
+        "immediate",
+        "daily_digest",
+        "both"
+      ],
+      "default": "both",
+      "description": "For Managers/Admins: immediate, daily digest, or both (Action Required and FYI only)"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  }
+}

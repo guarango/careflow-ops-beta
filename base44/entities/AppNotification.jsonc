@@ -20,6 +20,26 @@
         "incident_deadline"
       ]
     },
+    "event_key": {
+      "type": "string",
+      "description": "The notification rule event_key that fired this notification"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "critical",
+        "action",
+        "fyi"
+      ]
+    },
+    "source_entity": {
+      "type": "string",
+      "description": "Entity type the notification originated from"
+    },
+    "source_id": {
+      "type": "string",
+      "description": "Entity record ID the notification originated from"
+    },
     "recipient_user_id": {
       "type": "string"
     },
@@ -72,17 +92,27 @@
     },
     "deep_link": {
       "type": "string",
-      "description": "App-relative path to jump to the item (e.g. /emar, /session-notes)"
+      "description": "App-relative path to jump to the item"
     },
     "status": {
       "type": "string",
       "enum": [
+        "open",
+        "acknowledged",
+        "resolved",
         "unread",
         "read",
-        "acknowledged",
         "dismissed"
       ],
       "default": "unread"
+    },
+    "resolved_at": {
+      "type": "string",
+      "description": "When the underlying item was fixed and the notification auto-resolved"
+    },
+    "escalated_at": {
+      "type": "string",
+      "description": "When the notification was escalated to the next recipient tier"
     },
     "acknowledged_note": {
       "type": "string"
@@ -93,7 +123,7 @@
     },
     "reminder_rule": {
       "type": "string",
-      "description": "Name of the notification rule that fired (e.g. forgot_clockout, med_pass_missed)"
+      "description": "Name of the notification rule that fired"
     },
     "channels": {
       "type": "array",
