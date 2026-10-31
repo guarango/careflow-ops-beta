@@ -114,15 +114,21 @@ export default function SessionNotes() {
       hasSummary: !!data.summary,
       goalCount: data.goal_data?.length,
     });
+    const sdkCall = editingNote?.id
+      ? base44.entities.SessionNote.update(editingNote.id, data)
+      : base44.entities.SessionNote.create(data);
     try {
-      if (editingNote?.id) {
-        await base44.entities.SessionNote.update(editingNote.id, data);
-      } else {
-        await base44.entities.SessionNote.create(data);
-      }
-      console.log("[SessionNote Submit] SDK call resolved successfully");
+      const result = await Promise.race([
+        sdkCall,
+        new Promise((_, reject) => setTimeout(
+          () => reject(new Error("Session note save timed out after 15 seconds. The record was not saved — your input is preserved.")),
+          15000
+        )),
+      ]);
+      console.log("[SessionNote Submit] SDK call resolved successfully", result?.id);
     } catch (e) {
-      console.error("[SessionNote Submit] SDK call FAILED:", e?.status, e?.message, e?.data);
+      console.error("[SessionNote Submit] SDK call FAILED:", e?.status, e?.message, e?.data, e);
+      toast.error("Session note save failed: " + (e?.message || "Unknown error"));
       throw e;
     }
     queryClient.invalidateQueries({ queryKey: ["session-notes"] });
