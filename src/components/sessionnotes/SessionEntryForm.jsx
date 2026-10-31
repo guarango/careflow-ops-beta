@@ -150,13 +150,10 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
     setSubmitting(true);
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     try {
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Submit timed out. Please check your connection and try again.")), 30000));
-      await Promise.race([
-        onSave({ ...form, status: "Submitted", submitted_at: new Date().toISOString() }),
-        timeout,
-      ]);
+      await onSave({ ...form, status: "Submitted", submitted_at: new Date().toISOString() });
     } catch (e) {
       setSubmitError(e?.message || "Failed to submit session note. Please try again.");
+    } finally {
       setSubmitting(false);
     }
   };
@@ -168,6 +165,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
       await onSave({ ...form, status: "Draft", submitted_at: null });
     } catch (e) {
       setSubmitError(e?.message || "Failed to save draft. Please try again.");
+    } finally {
       setSubmitting(false);
     }
   };
@@ -244,7 +242,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
         </div>
       </div>
 
-      <div className="space-y-5 pb-24">
+      <div className="space-y-5 pb-28">
         {/* Returned comment */}
         {form.status === "Returned" && form.returned_comment && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
@@ -525,10 +523,10 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
       </div>
 
       {/* Sticky bottom actions */}
-      <div className="fixed bottom-0 inset-x-0 z-30 bg-background border-t border-border">
+      <div className="fixed bottom-0 inset-x-0 z-50 bg-background border-t border-border shadow-lg">
         <div className="max-w-2xl mx-auto px-4 py-3 flex gap-3 justify-end">
           {submitError && (
-            <span className="text-xs text-destructive font-medium self-center mr-auto">{submitError}</span>
+            <span role="alert" className="text-xs text-destructive font-medium self-center mr-auto">{submitError}</span>
           )}
           {isLocked ? (
             <>

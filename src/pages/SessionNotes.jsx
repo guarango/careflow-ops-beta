@@ -107,19 +107,11 @@ export default function SessionNotes() {
   const handleSave = async (formData) => {
     const data = sanitizeDates({ ...formData, is_late: checkIsLate(formData) });
     if (editingNote?.id) {
-      try {
-        await updateMutation.mutateAsync({ id: editingNote.id, data });
-        queryClient.invalidateQueries({ queryKey: ["session-notes"] });
-        setView("list"); setSelectedClient(null); setEditingNote(null);
-      } catch (e) {
-        toast.error("Failed to submit session note: " + (e?.message || "Unknown error"));
-      }
+      await updateMutation.mutateAsync({ id: editingNote.id, data });
+      queryClient.invalidateQueries({ queryKey: ["session-notes"] });
+      setView("list"); setSelectedClient(null); setEditingNote(null);
     } else {
-      try {
-        await createMutation.mutateAsync(data);
-      } catch (e) {
-        toast.error("Failed to save session note: " + (e?.message || "Unknown error"));
-      }
+      await createMutation.mutateAsync(data);
     }
   };
 

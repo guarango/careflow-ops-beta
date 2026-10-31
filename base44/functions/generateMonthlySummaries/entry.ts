@@ -20,16 +20,9 @@ Deno.serve(async (req) => {
     const now = new Date();
     let targetYear, targetMonth;
 
-    if (body.client_id) {
-      // Regenerate for a single client — use provided month or previous month
-      if (body.year && body.month) {
-        targetYear = body.year;
-        targetMonth = body.month; // 0-indexed
-      } else {
-        const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        targetYear = target.getFullYear();
-        targetMonth = target.getMonth();
-      }
+    if (body.year != null && body.month != null) {
+      targetYear = body.year;
+      targetMonth = body.month; // 0-indexed
     } else {
       // Default: previous month
       const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -51,30 +44,23 @@ Deno.serve(async (req) => {
       ? clients.filter(c => c.id === body.client_id)
       : clients;
 
-    // Fetch previous month's session notes
-    const notesPage = await base44.asServiceRole.entities.SessionNote.list({sort: '-created_date', limit: 5000});
-    const allNotes = Array.isArray(notesPage) ? notesPage : (notesPage.items || []);
-    const monthNotes = allNotes.filter(n =>
-      n.date && n.date >= periodStartStr && n.date <= periodEndStr
-    );
+    // Fetch session notes for the target month (server-side date filter)
+    const monthNotes = await base44.asServiceRole.entities.SessionNote.filter({
+      date: { $gte: periodStartStr, $lte: periodEndStr }
+    });
 
-    // Fetch goals
-    const goalsPage = await base44.asServiceRole.entities.ClientGoal.list({sort: '-created_date', limit: 5000});
-    const allGoals = Array.isArray(goalsPage) ? goalsPage : (goalsPage.items || []);
+    // Fetch goals (all — needed for progress_entries per client)
+    const allGoals = await base44.asServiceRole.entities.ClientGoal.filter({});
 
-    // Fetch incidents
-    const incidentsPage = await base44.asServiceRole.entities.IncidentReport.list({sort: '-created_date', limit: 2000});
-    const allIncidents = Array.isArray(incidentsPage) ? incidentsPage : (incidentsPage.items || []);
-    const monthIncidents = allIncidents.filter(i =>
-      i.date && i.date >= periodStartStr && i.date <= periodEndStr
-    );
+    // Fetch incidents for the target month
+    const monthIncidents = await base44.asServiceRole.entities.IncidentReport.filter({
+      date: { $gte: periodStartStr, $lte: periodEndStr }
+    });
 
-    // Fetch med logs
-    const medLogsPage = await base44.asServiceRole.entities.MedicationLog.list({sort: '-created_date', limit: 5000});
-    const allMedLogs = Array.isArray(medLogsPage) ? medLogsPage : (medLogsPage.items || []);
-    const monthMedLogs = allMedLogs.filter(l =>
-      l.date && l.date >= periodStartStr && l.date <= periodEndStr
-    );
+    // Fetch med logs for the target month
+    const monthMedLogs = await base44.asServiceRole.entities.MedicationLog.filter({
+      date: { $gte: periodStartStr, $lte: periodEndStr }
+    });
 
     // Check for existing summaries (skip if already exists and not forcing)
     const existing = await base44.asServiceRole.entities.MonthlySummary.filter({

@@ -24,6 +24,10 @@ export default function MonthlySummaries() {
   const [search, setSearch] = useState("");
   const [generating, setGenerating] = useState(false);
 
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
+
   const { data: summaries = [], isLoading } = useQuery({
     queryKey: ["monthly-summaries"],
     queryFn: () => base44.entities.MonthlySummary.list("-period_start"),
@@ -42,7 +46,11 @@ export default function MonthlySummaries() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      await base44.functions.invoke("generateMonthlySummaries", {});
+      await base44.functions.invoke("generateMonthlySummaries", {
+        year: selectedYear,
+        month: selectedMonth,
+        force_regenerate: true,
+      });
       queryClient.invalidateQueries({ queryKey: ["monthly-summaries"] });
     } catch (e) {
       console.error(e);
@@ -62,10 +70,28 @@ export default function MonthlySummaries() {
             AI-drafted monthly summaries for each active client, ready for review and signature
           </p>
         </div>
-        <Button onClick={handleGenerate} disabled={generating} className="gap-2">
-          <Sparkles className="w-4 h-4" />
-          {generating ? "Generating..." : "Generate AI Drafts"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={String(selectedMonth)} onValueChange={v => setSelectedMonth(Number(v))}>
+            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {["January","February","March","April","May","June","July","August","September","October","November","December"].map((m, i) => (
+                <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={String(selectedYear)} onValueChange={v => setSelectedYear(Number(v))}>
+            <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => (
+                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={handleGenerate} disabled={generating} className="gap-2">
+            <Sparkles className="w-4 h-4" />
+            {generating ? "Generating..." : "Generate AI Drafts"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
