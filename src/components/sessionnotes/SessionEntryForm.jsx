@@ -13,6 +13,7 @@ import CleanUpButton from "@/components/shared/CleanUpButton";
 import { cn } from "@/lib/utils";
 import { useOffline } from "@/hooks/useOffline";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 
 const LOCATIONS = ["Day Program", "Community Outing", "Residence", "Vocational Site", "Telehealth", "Other"];
 
@@ -97,9 +98,11 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
 
   const triggerAutosave = useCallback(() => {
     if (!onAutosave) return;
+    if (submittingRef.current) return;
     if (formRef.current.status !== "Draft" && formRef.current.status !== "Returned" && formRef.current.status !== "Needs Revision") return;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
+      if (submittingRef.current) return;
       onAutosave(formRef.current);
     }, 3000);
   }, [onAutosave]);
@@ -126,6 +129,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
   };
 
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [submitError, setSubmitError] = useState(null);
   const [flagErrors, setFlagErrors] = useState({});
 
@@ -148,6 +152,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
     }
     setSubmitError(null);
     setSubmitting(true);
+    submittingRef.current = true;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     try {
       console.log("[SessionNote] handleSubmit — calling onSave");
@@ -155,13 +160,17 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
       console.log("[SessionNote] handleSubmit — onSave resolved");
     } catch (e) {
       console.error("[SessionNote] handleSubmit — caught error:", e?.status, e?.message, e?.data, e);
-      setSubmitError(e?.message || "Failed to submit session note. Please try again.");
+      const msg = e?.message || "Failed to submit session note. Please try again.";
+      setSubmitError(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
+      submittingRef.current = false;
     }
   };
   const handleDraft = async () => {
     setSubmitting(true);
+    submittingRef.current = true;
     setSubmitError(null);
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     try {
@@ -170,9 +179,12 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
       console.log("[SessionNote] handleDraft — onSave resolved");
     } catch (e) {
       console.error("[SessionNote] handleDraft — caught error:", e?.status, e?.message, e?.data, e);
-      setSubmitError(e?.message || "Failed to save draft. Please try again.");
+      const msg = e?.message || "Failed to save draft. Please try again.";
+      setSubmitError(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
+      submittingRef.current = false;
     }
   };
 
