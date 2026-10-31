@@ -150,8 +150,11 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
     setSubmitting(true);
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     try {
+      console.log("[SessionNote] handleSubmit — calling onSave");
       await onSave({ ...form, status: "Submitted", submitted_at: new Date().toISOString() });
+      console.log("[SessionNote] handleSubmit — onSave resolved");
     } catch (e) {
+      console.error("[SessionNote] handleSubmit — caught error:", e?.status, e?.message, e?.data, e);
       setSubmitError(e?.message || "Failed to submit session note. Please try again.");
     } finally {
       setSubmitting(false);
@@ -162,8 +165,11 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
     setSubmitError(null);
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     try {
+      console.log("[SessionNote] handleDraft — calling onSave");
       await onSave({ ...form, status: "Draft", submitted_at: null });
+      console.log("[SessionNote] handleDraft — onSave resolved");
     } catch (e) {
+      console.error("[SessionNote] handleDraft — caught error:", e?.status, e?.message, e?.data, e);
       setSubmitError(e?.message || "Failed to save draft. Please try again.");
     } finally {
       setSubmitting(false);

@@ -106,13 +106,25 @@ export default function SessionNotes() {
 
   const handleSave = async (formData) => {
     const data = sanitizeDates({ ...formData, is_late: checkIsLate(formData) });
-    // Call SDK directly — avoids react-query mutateAsync hang on submit
-    if (editingNote?.id) {
-      await base44.entities.SessionNote.update(editingNote.id, data);
-    } else {
-      await base44.entities.SessionNote.create(data);
+    console.log("[SessionNote Submit] Payload:", {
+      id: editingNote?.id,
+      status: data.status,
+      submitted_at: data.submitted_at,
+      client_id: data.client_id,
+      hasSummary: !!data.summary,
+      goalCount: data.goal_data?.length,
+    });
+    try {
+      if (editingNote?.id) {
+        await base44.entities.SessionNote.update(editingNote.id, data);
+      } else {
+        await base44.entities.SessionNote.create(data);
+      }
+      console.log("[SessionNote Submit] SDK call resolved successfully");
+    } catch (e) {
+      console.error("[SessionNote Submit] SDK call FAILED:", e?.status, e?.message, e?.data);
+      throw e;
     }
-    // Fire side effects without blocking the submit path
     queryClient.invalidateQueries({ queryKey: ["session-notes"] });
     setView("list"); setSelectedClient(null); setEditingNote(null);
   };
