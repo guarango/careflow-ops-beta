@@ -3,7 +3,7 @@ import { AlertTriangle, ShieldAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-const FLAGS = [
+export const FLAGS = [
   { key: "fall_or_injury", detailKey: "fall_detail", label: "Fall, Injury, or Incident", color: "border-red-300 bg-red-50", badgeColor: "bg-red-100 text-red-700", icon: "🩹", placeholder: "Describe what happened, location, body part affected..." },
   { key: "medication_refusal", detailKey: "medication_refusal_detail", label: "Medication Refusal", color: "border-orange-300 bg-orange-50", badgeColor: "bg-orange-100 text-orange-700", icon: "💊", placeholder: "Which medication, what was person's behavior..." },
   { key: "behavioral_escalation", detailKey: "behavioral_detail", label: "Behavioral Escalation", color: "border-amber-300 bg-amber-50", badgeColor: "bg-amber-100 text-amber-700", icon: "⚠️", placeholder: "Describe behavior, antecedent, response used..." },

@@ -188,7 +188,7 @@ export default function UserManagement() {
       {/* Users Table */}
       <Card>
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>

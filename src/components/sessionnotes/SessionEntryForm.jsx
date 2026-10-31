@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, CheckCircle2, Save, Wifi, WifiOff, Heart, Lock, Clock, History } from "lucide-react";
-import HealthSafetyFlags from "./HealthSafetyFlags";
+import HealthSafetyFlags, { FLAGS } from "./HealthSafetyFlags";
 import GoalDataCard from "./GoalDataCard";
 import AddendumDialog from "./AddendumDialog";
 import DictationButton from "@/components/shared/DictationButton";
@@ -125,13 +125,51 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
     }));
   };
 
-  const handleSubmit = () => {
-    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
-    onSave({ ...form, status: "Submitted", submitted_at: new Date().toISOString() });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [flagErrors, setFlagErrors] = useState({});
+
+  const validateFlags = () => {
+    const errors = {};
+    for (const f of FLAGS) {
+      if (form.health_safety_flags?.[f.key] && !(form.health_safety_flags?.[f.detailKey] || "").trim()) {
+        errors[f.detailKey] = `Please describe the ${f.label.toLowerCase()} or uncheck it`;
+      }
+    }
+    return errors;
   };
-  const handleDraft = () => {
+
+  const handleSubmit = async () => {
+    const errors = validateFlags();
+    setFlagErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setSubmitError("Please fill in all required health & safety details before submitting.");
+      return;
+    }
+    setSubmitError(null);
+    setSubmitting(true);
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
-    onSave({ ...form, status: "Draft", submitted_at: null });
+    try {
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Submit timed out. Please check your connection and try again.")), 30000));
+      await Promise.race([
+        onSave({ ...form, status: "Submitted", submitted_at: new Date().toISOString() }),
+        timeout,
+      ]);
+    } catch (e) {
+      setSubmitError(e?.message || "Failed to submit session note. Please try again.");
+      setSubmitting(false);
+    }
+  };
+  const handleDraft = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    try {
+      await onSave({ ...form, status: "Draft", submitted_at: null });
+    } catch (e) {
+      setSubmitError(e?.message || "Failed to save draft. Please try again.");
+      setSubmitting(false);
+    }
   };
 
   const handleAddendum = ({ text, reason }) => {
@@ -487,27 +525,32 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
       </div>
 
       {/* Sticky bottom actions */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-background border-t border-border px-4 py-3 flex gap-3 justify-end max-w-2xl mx-auto">
-        {isLocked ? (
-          <>
-            {canAddAddendum && (
-              <Button size="sm" onClick={() => setShowAddendum(true)} className="gap-1.5 bg-blue-600 hover:bg-blue-700">
-                <History className="w-4 h-4" />Add Addendum
+      <div className="fixed bottom-0 inset-x-0 z-30 bg-background border-t border-border">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex gap-3 justify-end">
+          {submitError && (
+            <span className="text-xs text-destructive font-medium self-center mr-auto">{submitError}</span>
+          )}
+          {isLocked ? (
+            <>
+              {canAddAddendum && (
+                <Button size="sm" onClick={() => setShowAddendum(true)} className="gap-1.5 bg-blue-600 hover:bg-blue-700">
+                  <History className="w-4 h-4" />Add Addendum
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={onCancel}>Close</Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" onClick={handleDraft} disabled={submitting || saving} className="gap-1.5">
+                <Save className="w-4 h-4" />Save Draft
               </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={onCancel}>Close</Button>
-          </>
-        ) : (
-          <>
-            <Button variant="outline" size="sm" onClick={handleDraft} disabled={saving} className="gap-1.5">
-              <Save className="w-4 h-4" />Save Draft
-            </Button>
-            <Button size="sm" onClick={handleSubmit} disabled={saving || !form.client_id || !form.date || !form.staff_name || !form.service_code_id || !form.start_time || !form.end_time || !form.summary || !sigChecked} className="gap-1.5">
-              <CheckCircle2 className="w-4 h-4" />
-              {saving ? "Submitting..." : form.status === "Returned" ? "Resubmit Note" : "Submit Session Note"}
-            </Button>
-          </>
-        )}
+              <Button size="sm" onClick={handleSubmit} disabled={submitting || saving || !form.client_id || !form.date || !form.staff_name || !form.service_code_id || !form.start_time || !form.end_time || !form.summary || !sigChecked} className="gap-1.5">
+                <CheckCircle2 className="w-4 h-4" />
+                {submitting || saving ? "Submitting..." : form.status === "Returned" ? "Resubmit Note" : "Submit Session Note"}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {showAddendum && (

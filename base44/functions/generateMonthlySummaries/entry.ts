@@ -52,24 +52,28 @@ Deno.serve(async (req) => {
       : clients;
 
     // Fetch previous month's session notes
-    const allNotes = await base44.asServiceRole.entities.SessionNote.list('-created_date', 5000);
+    const notesPage = await base44.asServiceRole.entities.SessionNote.list({sort: '-created_date', limit: 5000});
+    const allNotes = Array.isArray(notesPage) ? notesPage : (notesPage.items || []);
     const monthNotes = allNotes.filter(n =>
-      n.date >= periodStartStr && n.date <= periodEndStr
+      n.date && n.date >= periodStartStr && n.date <= periodEndStr
     );
 
     // Fetch goals
-    const allGoals = await base44.asServiceRole.entities.ClientGoal.list('-created_date', 5000);
+    const goalsPage = await base44.asServiceRole.entities.ClientGoal.list({sort: '-created_date', limit: 5000});
+    const allGoals = Array.isArray(goalsPage) ? goalsPage : (goalsPage.items || []);
 
     // Fetch incidents
-    const allIncidents = await base44.asServiceRole.entities.IncidentReport.list('-created_date', 2000);
+    const incidentsPage = await base44.asServiceRole.entities.IncidentReport.list({sort: '-created_date', limit: 2000});
+    const allIncidents = Array.isArray(incidentsPage) ? incidentsPage : (incidentsPage.items || []);
     const monthIncidents = allIncidents.filter(i =>
-      i.date >= periodStartStr && i.date <= periodEndStr
+      i.date && i.date >= periodStartStr && i.date <= periodEndStr
     );
 
     // Fetch med logs
-    const allMedLogs = await base44.asServiceRole.entities.MedicationLog.list('-created_date', 5000);
+    const medLogsPage = await base44.asServiceRole.entities.MedicationLog.list({sort: '-created_date', limit: 5000});
+    const allMedLogs = Array.isArray(medLogsPage) ? medLogsPage : (medLogsPage.items || []);
     const monthMedLogs = allMedLogs.filter(l =>
-      l.date >= periodStartStr && l.date <= periodEndStr
+      l.date && l.date >= periodStartStr && l.date <= periodEndStr
     );
 
     // Check for existing summaries (skip if already exists and not forcing)

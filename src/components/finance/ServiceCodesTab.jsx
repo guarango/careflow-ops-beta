@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, MapPin, ShieldOff } from "lucide-react";
+import { Plus, MapPin, ShieldOff, AlertTriangle } from "lucide-react";
 
 const rateTypes = ["Hourly", "Daily", "Per Unit", "Monthly"];
 const unitTypes = ["15-minute", "Hourly", "Daily"];
@@ -44,8 +44,19 @@ export default function ServiceCodesTab() {
   const openEdit = (c) => { setForm(c); setEditing(c); setShowDialog(true); };
   const handleSave = () => { if (editing) updateMutation.mutate({ id: editing.id, data: form }); else createMutation.mutate(form); };
 
+  const zeroRateCount = codes.filter(c => !c.rate || c.rate === 0).length;
+
   return (
     <div>
+      {canEdit && zeroRateCount > 0 && (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Rate not configured</p>
+            <p className="text-xs text-amber-700 mt-0.5">{zeroRateCount} of {codes.length} service codes have a $0.00 rate. Billing, unit tracking, and payroll export will compute to zero until rates are entered. Click a code to set its rate.</p>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">
           {canEdit ? "State billing codes, rates, and unit configuration." : "Service codes (rates hidden — requires Billing bundle)."}
