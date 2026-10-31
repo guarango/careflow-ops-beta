@@ -242,7 +242,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
         </div>
       </div>
 
-      <div className="space-y-5 pb-28">
+      <div className="space-y-5 pb-40">
         {/* Returned comment */}
         {form.status === "Returned" && form.returned_comment && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
