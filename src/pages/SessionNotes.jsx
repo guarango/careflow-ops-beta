@@ -96,20 +96,38 @@ export default function SessionNotes() {
     setView("entry");
   };
 
-  const handleSave = (formData) => {
-    const data = { ...formData, is_late: checkIsLate(formData) };
+  const sanitizeDates = (data) => {
+    const cleaned = { ...data };
+    for (const k of Object.keys(cleaned)) {
+      if (cleaned[k] === "") cleaned[k] = null;
+    }
+    return cleaned;
+  };
+
+  const handleSave = async (formData) => {
+    const data = sanitizeDates({ ...formData, is_late: checkIsLate(formData) });
     if (editingNote?.id) {
-      updateMutation.mutate({ id: editingNote.id, data });
-      queryClient.invalidateQueries({ queryKey: ["session-notes"] });
-      setView("list"); setSelectedClient(null); setEditingNote(null);
+      try {
+        await updateMutation.mutateAsync({ id: editingNote.id, data });
+        queryClient.invalidateQueries({ queryKey: ["session-notes"] });
+        setView("list"); setSelectedClient(null); setEditingNote(null);
+      } catch (e) {
+        toast.error("Failed to submit session note: " + (e?.message || "Unknown error"));
+      }
     } else {
-      createMutation.mutate(data);
+      try {
+        await createMutation.mutateAsync(data);
+      } catch (e) {
+        toast.error("Failed to save session note: " + (e?.message || "Unknown error"));
+      }
     }
   };
 
   const handleAutosave = (formData) => {
     if (!editingNote?.id) return; // only autosave existing notes
-    const data = { ...formData, is_late: checkIsLate(formData) };
+    // Never autosave a submit — only drafts
+    if (formData.status === "Submitted") return;
+    const data = sanitizeDates({ ...formData, is_late: checkIsLate(formData) });
     updateMutation.mutate({ id: editingNote.id, data });
   };
 

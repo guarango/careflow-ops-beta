@@ -14,6 +14,7 @@ import BSPDSPView from "./BSPDSPView";
 import HumanRightsRestrictionForm from "./HumanRightsRestrictionForm";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useRole } from "@/hooks/useRole";
 
 const FUNCTION_COLORS = {
   "Escape/Avoidance": "bg-purple-100 text-purple-700",
@@ -110,6 +111,9 @@ function BehaviorReadView({ b }) {
 
 export default function BSPDetailView({ bsp: initialBsp, onEdit, onBack }) {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("plan");
+  const { can } = useRole();
+  const canEditBSP = can("editGoals");
 
   const { data: incidents = [] } = useQuery({
     queryKey: ["behavior-incidents", initialBsp.id],
@@ -161,9 +165,9 @@ export default function BSPDetailView({ bsp: initialBsp, onEdit, onBack }) {
             {bsp.next_review_date && ` · Review due: ${format(new Date(bsp.next_review_date), "MMM d, yyyy")}`}
           </p>
         </div>
-        <Button size="sm" variant="outline" onClick={onEdit} className="gap-1.5 shrink-0">
+        {canEditBSP && <Button size="sm" variant="outline" onClick={onEdit} className="gap-1.5 shrink-0">
           <Edit className="w-4 h-4" />Edit Plan
-        </Button>
+        </Button>}
       </div>
 
       {/* Critical alerts */}
@@ -192,7 +196,7 @@ export default function BSPDetailView({ bsp: initialBsp, onEdit, onBack }) {
         </div>
       )}
 
-      <Tabs defaultValue="plan">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex-wrap h-auto gap-1 mb-5">
           <TabsTrigger value="dsp">DSP Quick Reference</TabsTrigger>
           <TabsTrigger value="plan">Support Plan</TabsTrigger>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   CalendarDays, Clock, CheckCircle2, AlertCircle, Bell,
-  Smartphone, ChevronRight, AlertTriangle, Target, Pill as PillIcon, Info,
+  ChevronRight, AlertTriangle, Target, Pill as PillIcon, Info,
   FileSignature
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -53,7 +53,6 @@ export default function DSPDashboard({ user }) {
   const [elapsed, setElapsed] = useState("");
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
-  const firstName = user?.full_name?.split(" ")[0] || "there";
   const today = format(new Date(), "EEEE, MMMM d, yyyy");
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -72,6 +71,7 @@ export default function DSPDashboard({ user }) {
     enabled: !!user?.email,
   });
   const staffRecord = staffRecords[0];
+  const firstName = staffRecord?.first_name || user?.full_name?.split(/[ @]/)[0] || "there";
 
   // Fetch assigned clients
   const { data: allClients = [] } = useQuery({
@@ -370,21 +370,6 @@ export default function DSPDashboard({ user }) {
         </CardContent>
       </Card>
 
-      {/* Mobile app banner */}
-      <Card className="border border-blue-200 bg-blue-50/60">
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <Smartphone className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground">Use the Mobile Field App</p>
-            <p className="text-xs text-muted-foreground">Clock in/out, session notes, goal data & more — optimized for your phone</p>
-          </div>
-          <a href="/mobile" className="flex-shrink-0 bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors">
-            Open
-          </a>
-        </CardContent>
-      </Card>
     </div>
   );
 }

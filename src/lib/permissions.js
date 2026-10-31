@@ -31,7 +31,7 @@ export const NAV_ACCESS = {
   "/incidents":     ["dsp", "manager", "admin", "super_admin"],
   "/staff":         ["manager", "admin", "super_admin"],
   "/schedule":      ["dsp", "manager", "admin", "super_admin"],
-  "/timecards":     ["dsp", "manager", "admin", "super_admin"],
+  "/timecards":     ["manager", "admin", "super_admin"],
   "/hr":            ["admin", "super_admin"],
   "/compliance":   ["manager", "admin", "super_admin"],
   "/finance":      ["manager", "admin", "super_admin"],
@@ -51,7 +51,7 @@ export const NAV_ACCESS = {
   "/summaries/monthly":    ["manager", "admin", "super_admin"],
   "/summaries/quarterly":  ["manager", "admin", "super_admin"],
   "/sign":          ["dsp", "manager", "admin", "super_admin"],
-  "/recognition":  ["dsp", "manager", "admin", "super_admin"],
+  "/recognition":  ["manager", "admin", "super_admin"],
 };
 
 // Paths that require an Admin bundle (super_admin bypasses)

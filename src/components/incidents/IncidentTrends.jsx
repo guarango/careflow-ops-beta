@@ -65,7 +65,7 @@ export default function IncidentTrends({ incidents }) {
         <div className="flex flex-wrap items-end gap-3 mb-4">
           <div><Label className="text-xs">From</Label><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 text-sm" /></div>
           <div><Label className="text-xs">To</Label><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 text-sm" /></div>
-          <span className="text-sm text-muted-foreground">{filtered.length} incidents</span>
+          <span className="text-sm text-muted-foreground">{filtered.length} incident{filtered.length !== 1 ? "s" : ""} · {from} to {to}</span>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {charts.map((c) => (

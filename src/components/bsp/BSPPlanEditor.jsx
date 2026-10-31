@@ -18,6 +18,7 @@ const FRAMEWORKS = ["HCBS Waiver", "ICF/IDD", "State Behavioral Support Requirem
 const ASSESSMENT_METHODS = ["Direct Observation", "ABC Data Review", "Caregiver Interview", "Standardized Assessment", "Record Review", "Functional Analysis", "Preference Assessment"];
 
 export default function BSPPlanEditor({ plan, clients, onSave, onCancel, saving }) {
+  const [activeTab, setActiveTab] = useState("identity");
   const [form, setForm] = useState(plan || {
     client_id: "", client_name: "", status: "Draft",
     plan_date: new Date().toISOString().split("T")[0],
@@ -107,7 +108,7 @@ export default function BSPPlanEditor({ plan, clients, onSave, onCancel, saving 
         </p>
       </div>
 
-      <Tabs defaultValue="identity">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex-wrap h-auto gap-1 mb-5">
           <TabsTrigger value="identity">Plan Identity</TabsTrigger>
           <TabsTrigger value="fba">FBA Summary</TabsTrigger>

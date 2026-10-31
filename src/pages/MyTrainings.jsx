@@ -38,11 +38,19 @@ export default function MyTrainings() {
   const activeAssignment = myAssignments.find(a => a.id === activeAssignmentId);
   const trainingForActive = activeAssignment ? trainingList.find(t => t.id === activeAssignment.training_id) : null;
 
-  if (activeAssignment && trainingForActive) {
+  if (activeAssignment) {
+    // Fall back to a minimal training object from the assignment if the published record isn't found
+    const training = trainingForActive || {
+      id: activeAssignment.training_id,
+      title: activeAssignment.training_title || "Training",
+      description: "",
+      outline: [],
+      status: "Published",
+    };
     return (
       <TakeTraining
         assignment={activeAssignment}
-        training={trainingForActive}
+        training={training}
         onExit={() => setActiveAssignmentId(null)}
       />
     );

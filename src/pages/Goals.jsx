@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Target, Plus, Search, ArrowLeft, ChevronRight, AlertTriangle, Clock, LayoutGrid, List } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
+import { useRole } from "@/hooks/useRole";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import ClientGoalCard from "@/components/goals/ClientGoalCard";
 import GoalFormDialog from "@/components/goals/GoalFormDialog";
@@ -75,6 +76,8 @@ const EMPTY_FORM = {
 
 export default function Goals() {
   const { isDSPMode, assignedClientIds } = useAssignedClients();
+  const { can } = useRole();
+  const canEditGoals = can("editGoals");
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -183,9 +186,9 @@ export default function Goals() {
               <p className="text-xs text-muted-foreground">{clientGoals.length} goal{clientGoals.length !== 1 ? "s" : ""} · {activeGoals.length} active</p>
             </div>
           </div>
-          <Button size="sm" onClick={() => openNew(currentClient)} className="gap-1.5">
+          {canEditGoals && <Button size="sm" onClick={() => openNew(currentClient)} className="gap-1.5">
             <Plus className="w-4 h-4" />Add Goal
-          </Button>
+          </Button>}
         </div>
 
         {clientGoals.length === 0 ? (
@@ -195,13 +198,13 @@ export default function Goals() {
             {activeGoals.length > 0 && (
               <>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Active Goals ({activeGoals.length})</p>
-                {activeGoals.map(g => <GoalListItem key={g.id} goal={g} onClick={() => setSelectedGoal(g)} onEdit={openEdit} />)}
+                {activeGoals.map(g => <GoalListItem key={g.id} goal={g} onClick={() => setSelectedGoal(g)} onEdit={openEdit} canEditGoals={canEditGoals} />)}
               </>
             )}
             {inactiveGoals.length > 0 && (
               <div className="mt-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Other Goals ({inactiveGoals.length})</p>
-                {inactiveGoals.map(g => <GoalListItem key={g.id} goal={g} onClick={() => setSelectedGoal(g)} onEdit={openEdit} />)}
+                {inactiveGoals.map(g => <GoalListItem key={g.id} goal={g} onClick={() => setSelectedGoal(g)} onEdit={openEdit} canEditGoals={canEditGoals} />)}
               </div>
             )}
           </div>
@@ -227,7 +230,7 @@ export default function Goals() {
       <PageHeader
         title="Client Goals"
         subtitle={`${visibleGoals.length} goals tracked across ${activeClients.length} clients`}
-        action={<Button onClick={() => openNew()} className="gap-1.5"><Plus className="w-4 h-4" />Add Goal</Button>}
+        action={canEditGoals && <Button onClick={() => openNew()} className="gap-1.5"><Plus className="w-4 h-4" />Add Goal</Button>}
       />
 
       <Card className="mb-4">
@@ -301,7 +304,7 @@ export default function Goals() {
 }
 
 // ── Goal list item row component ──────────────────────────────────────────────
-function GoalListItem({ goal, onClick, onEdit }) {
+function GoalListItem({ goal, onClick, onEdit, canEditGoals }) {
   const alertCount = hasAlerts(goal) ? 1 : 0;
   const entries = goal.progress_entries || [];
   const lastEntry = entries[entries.length - 1];
@@ -336,7 +339,7 @@ function GoalListItem({ goal, onClick, onEdit }) {
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="sm" className="text-xs h-7" onClick={e => { e.stopPropagation(); onEdit(goal); }}>Edit</Button>
+          {canEditGoals && <Button variant="ghost" size="sm" className="text-xs h-7" onClick={e => { e.stopPropagation(); onEdit(goal); }}>Edit</Button>}
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </div>
       </div>

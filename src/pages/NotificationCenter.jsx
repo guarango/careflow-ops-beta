@@ -106,10 +106,10 @@ export default function NotificationCenter() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Bell className="w-6 h-6 text-primary" />
-            Reminders
+            Notifications
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Your reminders and action items. Tap any reminder to jump to it.
+            Your notifications and action items. Tap any item to jump to it.
           </p>
         </div>
         {unreadCount > 0 && (
@@ -122,7 +122,7 @@ export default function NotificationCenter() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="mine" className="gap-1">
-            My Reminders
+            My Notifications
             {unreadCount > 0 && <Badge className="ml-1 bg-red-500 text-white text-[10px] px-1.5">{unreadCount}</Badge>}
           </TabsTrigger>
           {isAdmin && <TabsTrigger value="all">All Notifications</TabsTrigger>}
@@ -195,7 +195,7 @@ function NotificationList({ notifications, onOpen, onMark, filterType, setFilter
       {notifications.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Bell className="w-12 h-12 mx-auto mb-3 opacity-40" />
-          <p>No reminders. You're all caught up!</p>
+          <p>No notifications. You're all caught up!</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -283,7 +283,7 @@ function NotificationRulesSettings() {
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Settings className="w-4 h-4" />
-            Admin-editable reminder rules. Toggle rules on/off and adjust timing, channels, and escalation.
+            Admin-editable notification rules. Toggle rules on/off and adjust timing, channels, and escalation.
             Messages never include client names, diagnoses, or medications.
           </div>
         </CardContent>

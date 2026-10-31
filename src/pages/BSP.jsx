@@ -13,12 +13,18 @@ import BSPPlanEditor from "@/components/bsp/BSPPlanEditor";
 import BSPDetailView from "@/components/bsp/BSPDetailView";
 import { cn } from "@/lib/utils";
 import { differenceInDays } from "date-fns";
+import { useAssignedClients } from "@/hooks/useAssignedClients";
+import { useRole } from "@/hooks/useRole";
+import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 
 export default function BSP() {
   const [view, setView] = useState("list"); // "list" | "editor" | "detail"
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
+  const { isDSPMode, assignedClientIds } = useAssignedClients();
+  const { can } = useRole();
+  const canEditBSP = can("editGoals"); // clinical/manager-only
 
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ["bsp-plans"],
@@ -32,6 +38,8 @@ export default function BSP() {
     queryKey: ["behavior-incidents-all"],
     queryFn: () => base44.entities.BehaviorIncident.list("-date", 200),
   });
+
+  const visiblePlans = isDSPMode ? plans.filter(p => assignedClientIds.includes(p.client_id)) : plans;
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.BehaviorSupportPlan.create(data),
@@ -58,7 +66,7 @@ export default function BSP() {
     }
   };
 
-  const filtered = plans.filter(p =>
+  const filtered = visiblePlans.filter(p =>
     `${p.client_name} ${p.bsp_author} ${p.status}`.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -100,19 +108,19 @@ export default function BSP() {
   }
 
   // ── LIST ──
-  const pendingApproval = plans.filter(p => p.status === "Pending Approval");
-  const activePlans = plans.filter(p => p.status === "Active");
+  const pendingApproval = visiblePlans.filter(p => p.status === "Pending Approval");
+  const activePlans = visiblePlans.filter(p => p.status === "Active");
 
   return (
     <div>
       <PageHeader
         title="Behavior Support Plans"
         subtitle={`${activePlans.length} active plan${activePlans.length !== 1 ? "s" : ""}`}
-        action={
+        action={canEditBSP && (
           <Button onClick={() => { setSelectedPlan(null); setView("editor"); }} className="gap-1.5">
             <Plus className="w-4 h-4" />New BSP
           </Button>
-        }
+        )}
       />
 
       {/* Philosophy banner */}
@@ -143,7 +151,9 @@ export default function BSP() {
         </CardContent>
       </Card>
 
-      {isLoading ? (
+      {isDSPMode && assignedClientIds.length === 0 ? (
+        <NoDSPClientsState />
+      ) : isLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
@@ -176,7 +186,9 @@ export default function BSP() {
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
                     <p className="font-semibold text-sm">{plan.client_name}</p>
-                    <p className="text-xs text-muted-foreground">{plan.bsp_author} · {plan.bsp_author_credential}</p>
+                    {plan.bsp_author || plan.bsp_author_credential ? (
+                      <p className="text-xs text-muted-foreground">{[plan.bsp_author, plan.bsp_author_credential].filter(Boolean).join(" · ")}</p>
+                    ) : null}
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     <StatusBadge status={plan.status} />

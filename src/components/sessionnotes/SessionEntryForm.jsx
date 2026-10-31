@@ -71,7 +71,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
     goal_data: buildInitialGoalData(),
     session_overall_notes: existingNote?.session_overall_notes || "",
     status: existingNote?.status || "Draft",
-    submitted_at: existingNote?.submitted_at || "",
+    submitted_at: existingNote?.submitted_at || null,
     addenda: existingNote?.addenda || [],
     version: existingNote?.version || 1,
     version_history: existingNote?.version_history || [],
@@ -126,10 +126,12 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
   };
 
   const handleSubmit = () => {
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     onSave({ ...form, status: "Submitted", submitted_at: new Date().toISOString() });
   };
   const handleDraft = () => {
-    onSave({ ...form, status: "Draft" });
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    onSave({ ...form, status: "Draft", submitted_at: null });
   };
 
   const handleAddendum = ({ text, reason }) => {
@@ -229,7 +231,14 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
                 setForm(f => ({ ...f, service_code_id: v, service_code: sc?.code || "" }));
               }}>
                 <SelectTrigger className="h-9"><SelectValue placeholder="Select service code" /></SelectTrigger>
-                <SelectContent>{serviceCodes.map(s => <SelectItem key={s.id} value={s.id}>{s.code} — {s.description}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {serviceCodes.map(s => <SelectItem key={s.id} value={s.id}>{s.code} — {s.description}</SelectItem>)}
+                  {form.service_code_id && !serviceCodes.find(s => s.id === form.service_code_id) && (
+                    <SelectItem value={form.service_code_id} disabled>
+                      {form.service_code || "Unknown"} (no longer available — choose another)
+                    </SelectItem>
+                  )}
+                </SelectContent>
               </Select>
             </div>
             <div className="col-span-2">
