@@ -11,6 +11,8 @@ import ISPPDFExport from "./ISPPDFExport";
 import { validateSupportStrategies } from "./SupportStrategiesEditor";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import SensitiveValue from "@/components/shared/SensitiveValue";
+import { useRole } from "@/hooks/useRole";
 
 const SectionBlock = ({ title, children, className }) => (
   <div className={cn("bg-white border border-border rounded-xl p-4 space-y-3", className)}>
@@ -67,6 +69,7 @@ function SupportStrategiesTab({ plan, goals }) {
 }
 
 export default function ISPDetailView({ plan, onEdit, onBack, onUpdate, updating }) {
+  const { can } = useRole();
   const [activeTab, setActiveTab] = useState("overview");
 
   const { data: goals = [] } = useQuery({
@@ -170,7 +173,7 @@ export default function ISPDetailView({ plan, onEdit, onBack, onUpdate, updating
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SectionBlock title="Plan Identity">
               <KV label="Client" value={plan.client_name} />
-              <KV label="Medicaid ID" value={plan.medicaid_id} />
+              <KV label="Medicaid ID" value={<SensitiveValue value={plan.medicaid_id} field="client Medicaid ID" subject={{ type: "ISP", id: plan.id, name: plan.client_name }} canReveal={can("viewSensitiveIdentifiers")} />} />
               <KV label="Plan Type" value={plan.plan_type} />
               <KV label="Waiver Type" value={plan.waiver_type} />
               <KV label="Funding Source" value={plan.funding_source} />

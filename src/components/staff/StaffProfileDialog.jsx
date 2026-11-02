@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { User, Briefcase, Shield, Award, Plus, Trash2, Paperclip, ExternalLink, Loader2, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import AssignedClientsTab from "./AssignedClientsTab";
+import SensitiveValue from "@/components/shared/SensitiveValue";
 
 const CONTRACT_AREAS = ["DSPD", "DCFS", "Private Pay", "Licensed Program", "Foster Care"];
 const CERT_NAMES = ["CPR/First Aid", "Medication Administration", "CPI / Crisis Prevention", "HIPAA", "Mandated Reporter", "Abuse & Neglect", "Driver's License", "Other"];
@@ -94,7 +95,14 @@ export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = f
                 <div><Label>First Name *</Label><Input value={form.first_name || ""} onChange={e => set("first_name", e.target.value)} /></div>
                 <div><Label>Last Name *</Label><Input value={form.last_name || ""} onChange={e => set("last_name", e.target.value)} /></div>
                 <div><Label>Date of Birth</Label><Input type="date" value={form.date_of_birth || ""} onChange={e => set("date_of_birth", e.target.value)} /></div>
-                <div><Label>SSN (Last 4 digits)</Label><Input value={form.ssn_last4 || ""} maxLength={4} placeholder="####" onChange={e => set("ssn_last4", e.target.value.replace(/\D/g, ""))} /></div>
+                <div>
+                  <Label>SSN (Last 4 digits)</Label>
+                  {isAdmin ? (
+                    <Input value={form.ssn_last4 || ""} maxLength={4} placeholder="####" onChange={e => set("ssn_last4", e.target.value.replace(/\D/g, ""))} />
+                  ) : (
+                    <div className="mt-1"><SensitiveValue value={form.ssn_last4} field="staff SSN" subject={{ type: "StaffMember", id: staff?.id, name: `${form.first_name || ""} ${form.last_name || ""}`.trim() }} canReveal={false} /></div>
+                  )}
+                </div>
                 <div>
                   <Label>Gender</Label>
                   <Select value={form.gender || ""} onValueChange={v => set("gender", v)}>

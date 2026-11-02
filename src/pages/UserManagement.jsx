@@ -18,6 +18,7 @@ import { useImpersonation } from "@/lib/ImpersonationContext";
 import { getRoleLabel, getRoleBadgeColor, ROLE_DESCRIPTIONS } from "@/lib/permissions";
 import EditUserDialog from "@/components/users/EditUserDialog";
 import UserActionsMenu from "@/components/users/UserActionsMenu";
+import LoginAsReasonDialog from "@/components/users/LoginAsReasonDialog";
 
 const ROLE_CARDS = [
   { key: "dsp",         icon: Users,       color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
@@ -34,6 +35,7 @@ export default function UserManagement() {
   const [billingBundle, setBillingBundle] = useState(false);
   const [loading, setLoading] = useState(false);
   const [impersonating, setImpersonating] = useState(false);
+  const [loginAsTarget, setLoginAsTarget] = useState(null);
   const [editUser, setEditUser] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
   const [savingUser, setSavingUser] = useState(false);
@@ -77,16 +79,17 @@ export default function UserManagement() {
     }
   };
 
-  const handleLoginAs = async (targetUser) => {
+  const handleLoginAs = async (targetUser, reason) => {
     setImpersonating(true);
     try {
-      await loginAs(targetUser.id);
+      await loginAs(targetUser.id, reason);
       toast({ title: "Login As active", description: `You are now viewing as ${targetUser.full_name || targetUser.email}.` });
       window.location.href = "/";
     } catch (err) {
       toast({ title: "Login As failed", description: err.message, variant: "destructive" });
     } finally {
       setImpersonating(false);
+      setLoginAsTarget(null);
     }
   };
 
@@ -242,7 +245,7 @@ export default function UserManagement() {
                               size="sm"
                               className="h-7 text-xs"
                               disabled={impersonating}
-                              onClick={() => handleLoginAs(u)}
+                              onClick={() => setLoginAsTarget(u)}
                             >
                               <LogIn className="w-3 h-3 mr-1" />
                               Login As
@@ -355,6 +358,14 @@ export default function UserManagement() {
         onOpenChange={setShowEdit}
         onSave={handleSaveUser}
         loading={savingUser}
+      />
+
+      <LoginAsReasonDialog
+        open={!!loginAsTarget}
+        targetUser={loginAsTarget}
+        starting={impersonating}
+        onClose={() => setLoginAsTarget(null)}
+        onConfirm={(reason) => handleLoginAs(loginAsTarget, reason)}
       />
     </div>
   );
