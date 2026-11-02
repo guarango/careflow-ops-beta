@@ -54,12 +54,26 @@ export const NAV_ACCESS = {
   "/recognition":  ["manager", "admin", "super_admin"],
 };
 
-// Paths that require an Admin bundle (super_admin bypasses)
-const PATH_BUNDLES = {
+// Paths that require an Admin bundle (super_admin bypasses).
+// A path under a listed prefix inherits its bundle, so new sub-pages stay covered.
+export const PATH_BUNDLES = {
   "/hr":      "hr",
-  "/hr/trainings": "hr",
   "/finance": "billing",
 };
+
+const PATH_BUNDLE_PREFIXES = {
+  "/hr": "hr",
+  "/finance": "billing",
+};
+
+export function requiredBundleForPath(path) {
+  const cleanPath = path.split("?")[0];
+  if (PATH_BUNDLES[cleanPath]) return PATH_BUNDLES[cleanPath];
+  for (const [prefix, bundle] of Object.entries(PATH_BUNDLE_PREFIXES)) {
+    if (cleanPath === prefix || cleanPath.startsWith(`${prefix}/`)) return bundle;
+  }
+  return null;
+}
 
 // ─── Feature-level permissions (codes) ───────────────────────────────────
 // Each code maps to roles. requires_bundle means an Admin must also have
@@ -100,10 +114,14 @@ export const CAN = {
   viewTeamSignatures:     ["manager", "admin", "super_admin"],
   manageRecognition:      ["admin", "super_admin"],
   giveKudos:              ["manager", "admin", "super_admin"],
+  // Sensitive field reveals (each reveal is written to the audit log)
+  viewSensitiveIdentifiers: ["manager", "admin", "super_admin"],
+  viewSensitiveHRDetails:   ["admin", "super_admin"],
+  viewSensitiveRates:       ["admin", "super_admin"],
 };
 
 // Permissions that require a bundle (Admin only; super_admin bypasses)
-const BUNDLE_REQUIRED = {
+export const BUNDLE_REQUIRED = {
   editStaff:            "hr",
   accessBilling:        "billing",
   editServiceCodes:     "billing",
@@ -114,6 +132,8 @@ const BUNDLE_REQUIRED = {
   hrAccess:            "hr",
   manageSignatures:   "hr",
   sendSignatureRequests: "hr",
+  viewSensitiveHRDetails: "hr",
+  viewSensitiveRates:  "billing",
 };
 
 // ─── Permission check (single source) ───────────────────────────────────
@@ -133,7 +153,7 @@ export function canAccessPath(role, path, bundles = {}) {
   const allowed = NAV_ACCESS[cleanPath];
   if (!allowed) return role === "admin" || role === "super_admin";
   if (!allowed.includes(role)) return false;
-  const requiredBundle = PATH_BUNDLES[cleanPath];
+  const requiredBundle = requiredBundleForPath(cleanPath);
   if (requiredBundle && role === "admin") {
     return bundles[requiredBundle] === true;
   }

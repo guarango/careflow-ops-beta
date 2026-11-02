@@ -3,6 +3,8 @@ import { base44 } from "@/api/base44Client";
 import {
   NAV_ACCESS as DEFAULT_NAV_ACCESS,
   CAN as DEFAULT_CAN,
+  BUNDLE_REQUIRED,
+  requiredBundleForPath,
 } from "@/lib/permissions";
 
 const PermissionsContext = createContext(null);
@@ -53,6 +55,11 @@ export function PermissionsProvider({ children }) {
     const allowed = matrix.can[permission];
     if (!allowed) return false;
     if (!allowed.includes(role)) return false;
+    // An Admin must also hold the bundle the permission belongs to
+    const requiredBundle = BUNDLE_REQUIRED[permission];
+    if (requiredBundle && role !== "super_admin") {
+      return bundles[requiredBundle] === true;
+    }
     return true;
   }, [matrix]);
 
@@ -61,6 +68,11 @@ export function PermissionsProvider({ children }) {
     const allowed = matrix.navAccess[cleanPath];
     if (!allowed) return role === "admin" || role === "super_admin";
     if (!allowed.includes(role)) return false;
+    // An Admin must also hold the bundle the area belongs to
+    const requiredBundle = requiredBundleForPath(cleanPath);
+    if (requiredBundle && role === "admin") {
+      return bundles[requiredBundle] === true;
+    }
     return true;
   }, [matrix]);
 
