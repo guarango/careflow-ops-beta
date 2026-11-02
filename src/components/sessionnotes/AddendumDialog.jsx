@@ -30,7 +30,7 @@ export default function AddendumDialog({ open, onOpenChange, onAdd }) {
         <div className="space-y-3">
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
             <p className="text-xs text-amber-700">
-              This note is approved and locked. The addendum will be saved as a new version — the original note will never be changed.
+              This note is submitted and locked. The addendum will be saved as a new version — the original note will never be changed.
             </p>
           </div>
           <div>

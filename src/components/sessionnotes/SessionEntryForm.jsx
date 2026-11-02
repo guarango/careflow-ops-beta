@@ -11,6 +11,7 @@ import AddendumDialog from "./AddendumDialog";
 import DictationButton from "@/components/shared/DictationButton";
 import CleanUpButton from "@/components/shared/CleanUpButton";
 import { cn } from "@/lib/utils";
+import { isNoteLocked } from "@/lib/noteVersioning";
 import { useOffline } from "@/hooks/useOffline";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
@@ -79,10 +80,9 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
     offline_created: !isOnline,
   });
 
-  // Whether this note is locked (Approved) — no editing
-  const isLocked = form.status === "Approved";
-  // Whether the current user can edit (Draft or Returned)
-  const canEdit = form.status === "Draft" || form.status === "Returned" || form.status === "Needs Revision";
+  // A submitted note is locked — only Draft and Returned notes stay editable
+  const isLocked = isNoteLocked(form.status);
+  const canEdit = !isLocked;
 
   const setGoalData = (i, updated) => {
     const newGoalData = [...form.goal_data];
@@ -228,7 +228,8 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
           <div className="flex items-center gap-2">
             {isLocked && (
               <span className="flex items-center gap-1 text-xs text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded-full">
-                <Lock className="w-3 h-3" />Locked
+                <Lock className="w-3 h-3" />
+                {form.status === "Approved" ? "Approved — locked" : form.status === "Flagged for Review" ? "Flagged — locked" : "Submitted — locked"}
               </span>
             )}
             {form.status === "Returned" && (
@@ -267,6 +268,19 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
             <p className="text-xs font-bold text-amber-700 mb-1">Manager Feedback:</p>
             <p className="text-sm text-amber-800">{form.returned_comment}</p>
             <p className="text-[10px] text-amber-600 mt-1">— {form.returned_by}, {form.returned_at ? format(new Date(form.returned_at), "MM/dd/yyyy h:mm aa") : ""}</p>
+          </div>
+        )}
+
+        {/* Locked notice */}
+        {isLocked && (
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <p className="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5" />This note is locked
+            </p>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Submitted on {form.submitted_at ? format(new Date(form.submitted_at), "MM/dd/yyyy h:mm aa") : form.date} by {form.staff_name || "the DSP"}. The submitted record can't be edited.
+              {canAddAddendum ? " Use Add Addendum below to append a correction — the original text stays intact." : " Ask a supervisor to return it, or have a manager add an addendum."}
+            </p>
           </div>
         )}
 
@@ -364,10 +378,12 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
 
         {/* Section 3: Health & Safety */}
         <div className="bg-white border border-border rounded-xl p-4">
-          <HealthSafetyFlags
-            flags={form.health_safety_flags}
-            onChange={flags => setForm(f => ({ ...f, health_safety_flags: flags }))}
-          />
+          <fieldset disabled={isLocked}>
+            <HealthSafetyFlags
+              flags={form.health_safety_flags}
+              onChange={flags => setForm(f => ({ ...f, health_safety_flags: flags }))}
+            />
+          </fieldset>
         </div>
 
         {/* Section 4: Goal Cards */}
@@ -421,7 +437,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
               <span className="text-xs">Ask your supervisor to add goals in the Goals module.</span>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className={cn("space-y-3", isLocked && "pointer-events-none opacity-80")}>
               {form.goal_data.map((entry, i) => {
                 const fullGoal = goalForEntry(entry);
                 return (

@@ -19,6 +19,7 @@ import SessionEntryForm from "@/components/sessionnotes/SessionEntryForm";
 import SupervisorReviewPanel from "@/components/sessionnotes/SupervisorReviewPanel";
 import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
+import { buildNoteVersionEntry, initialNoteVersion, isNoteLocked } from "@/lib/noteVersioning";
 
 // ── Late note check ──
 function checkIsLate(note) {
@@ -114,9 +115,18 @@ export default function SessionNotes() {
       hasSummary: !!data.summary,
       goalCount: data.goal_data?.length,
     });
+    const action = data.status === "Submitted"
+      ? (editingNote?.status === "Returned" ? "resubmit" : "submit")
+      : "draft";
+    const versionPatch = editingNote?.id
+      ? buildNoteVersionEntry({ previous: editingNote, next: data, savedBy: user?.full_name, action })
+      : initialNoteVersion(user?.full_name, data.status);
+
+    const payload = versionPatch ? { ...data, ...versionPatch } : data;
+
     const sdkCall = editingNote?.id
-      ? base44.entities.SessionNote.update(editingNote.id, data)
-      : base44.entities.SessionNote.create(data);
+      ? base44.entities.SessionNote.update(editingNote.id, payload)
+      : base44.entities.SessionNote.create(payload);
     try {
       const result = await Promise.race([
         sdkCall,
@@ -137,6 +147,7 @@ export default function SessionNotes() {
 
   const handleAutosave = (formData) => {
     if (!editingNote?.id) return; // only autosave existing notes
+    if (isNoteLocked(editingNote.status)) return; // submitted notes are immutable
     // Never autosave a submit — only drafts
     if (formData.status === "Submitted") return;
     const data = sanitizeDates({ ...formData, is_late: checkIsLate(formData) });
@@ -166,6 +177,17 @@ export default function SessionNotes() {
     } else {
       updates.status = "Flagged for Review";
     }
+    const reviewVersion = (note.version || 1) + 1;
+    updates.version = reviewVersion;
+    updates.version_history = [
+      ...(note.version_history || []),
+      {
+        version: reviewVersion,
+        saved_at: now,
+        saved_by: user?.full_name || "Supervisor",
+        summary_of_changes: `Manager review — ${action}${comment ? `: ${comment}` : ""}`,
+      },
+    ];
     updateMutation.mutate({ id: note.id, data: updates });
   };
 
@@ -283,7 +305,7 @@ export default function SessionNotes() {
                           </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm" className="text-xs h-7" onClick={e => { e.stopPropagation(); client && handleStartEntry(client, n); }}>
-                              {n.status === "Approved" ? "View" : "Edit"}
+                              {isNoteLocked(n.status) ? "View" : "Edit"}
                             </Button>
                           </TableCell>
                         </TableRow>
