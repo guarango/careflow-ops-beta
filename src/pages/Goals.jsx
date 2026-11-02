@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, Plus, Search, ArrowLeft, ChevronRight, AlertTriangle, Clock, LayoutGrid, List } from "lucide-react";
+import { Target, Plus, Search, ArrowLeft, ChevronRight, AlertTriangle, Clock } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import { useRole } from "@/hooks/useRole";
+import { useViewMode } from "@/hooks/useViewMode";
+import ViewToggle from "@/components/shared/ViewToggle";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import ClientGoalCard from "@/components/goals/ClientGoalCard";
 import GoalFormDialog from "@/components/goals/GoalFormDialog";
@@ -84,7 +86,7 @@ export default function Goals() {
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
+  const [viewMode, setViewMode] = useViewMode("goals");
 
   const queryClient = useQueryClient();
 
@@ -240,24 +242,7 @@ export default function Goals() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
             </div>
-            <div className="flex items-center border rounded-lg p-0.5 bg-muted/50">
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-7 px-2"
-                onClick={() => setViewMode("grid")}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-7 px-2"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
+            <ViewToggle value={viewMode} onChange={setViewMode} />
           </div>
         </CardContent>
       </Card>
@@ -265,7 +250,7 @@ export default function Goals() {
       {filteredClients.length === 0 ? (
         <EmptyState icon={Target} title="No clients found" description="Add ISP goals to start tracking client progress." action={<Button onClick={() => openNew()} size="sm"><Plus className="w-4 h-4 mr-1" />Add Goal</Button>} />
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {filteredClients.map(client => (
             <ClientGoalCard
               key={client.id}
