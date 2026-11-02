@@ -16,7 +16,7 @@
     },
     "action": {
       "type": "string",
-      "description": "e.g. impersonate_session_start, impersonate_page_view, impersonate_session_end, login_as, api_call"
+      "description": "e.g. impersonate_session_start, impersonate_page_view, impersonate_session_end, login_as, api_call, sensitive_field_view"
     },
     "event_type": {
       "type": "string",
@@ -87,9 +87,18 @@
       }
     },
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
     },
     "update": {
       "user_condition": {
