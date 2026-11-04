@@ -1,13 +1,18 @@
 /**
  * CareOps Pro — Offline Engine
- * Manages local caching, action queuing, and sync for field workers.
- * All PHI is stored under a user-scoped key so logout wipes it.
+ * Manages the offline action queue and sync for field workers.
+ *
+ * SECURITY: browser storage is NOT encrypted. The encoding below hides nothing,
+ * so never store client PHI (names, diagnoses, medications, note text) here —
+ * queue only what is required to replay the action — and wipe the user's keys
+ * on logout via clearUser().
  */
 
 const STORAGE_PREFIX = "careops_offline_";
 const QUEUE_KEY = "careops_action_queue";
 
-// Simple XOR-based obfuscation (real apps use SubtleCrypto — this simulates encryption layer)
+// Base64 encoding only — NOT encryption. Anything stored here is readable by any
+// script in the page or anyone with access to the browser profile, so store no PHI.
 function encode(data) {
   return btoa(encodeURIComponent(JSON.stringify(data)));
 }

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
+import { requireAdmin } from '../../shared/functionAuth.ts';
 
 // Called by scheduled workflow every 5 minutes
 // Checks shifts where the scheduled end time has passed with no clock-out:
@@ -8,6 +9,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
+    const auth = await requireAdmin(base44);
+    if (auth.error) return auth.error;
 
     const now = new Date();
     const nowMs = now.getTime();

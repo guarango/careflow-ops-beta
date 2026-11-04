@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { requireAdmin } from '../../shared/functionAuth.ts';
 
 // Called by scheduled automation every 5 minutes
 // Checks EVV clock-outs and fires goal documentation alerts
@@ -6,6 +7,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const auth = await requireAdmin(base44);
+    if (auth.error) return auth.error;
 
     const now = new Date();
     const nowMs = now.getTime();

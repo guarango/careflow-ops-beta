@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
+import { getCaller, unauthorized, forbidden } from '../../shared/functionAuth.ts';
 
 /**
  * applyPendingUserConfig
@@ -15,10 +16,19 @@ export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
 
-    const body = await req.json();
-    const { user_id, email } = body;
-    if (!user_id || !email) {
-      return Response.json({ error: 'user_id and email are required' }, { status: 400 });
+    const caller = await getCaller(base44);
+    if (!caller) return unauthorized();
+
+    const body = await req.json().catch(() => ({}));
+    const { email } = body;
+    if (!email) {
+      return Response.json({ error: 'email is required' }, { status: 400 });
+    }
+
+    // Bind the request to the account it is for: a regular caller may only apply
+    // their own invite config; an admin (invite workflow) may apply for that email.
+    if (caller.role !== 'admin' && (caller.email || '').toLowerCase() !== email.toLowerCase()) {
+      return forbidden();
     }
 
     // Find an unapplied PendingUserConfig for this email
@@ -52,13 +62,21 @@ export default async function(req) {
     if (config.assigned_house_ids) updateData.assigned_house_ids = config.assigned_house_ids;
     if (config.team_staff_ids) updateData.team_staff_ids = config.team_staff_ids;
 
-    // Apply to the User record
-    await base44.asServiceRole.entities.User.update(user_id, updateData);
+    // Resolve the target account from the config's own email — never from a caller-supplied id
+    const userRes = await base44.asServiceRole.entities.User.filter({ email: config.email });
+    const matchedUsers = Array.isArray(userRes) ? userRes : (userRes?.items || []);
+    const targetUser = matchedUsers[0];
+    if (!targetUser) {
+      return Response.json({ applied: false, reason: 'user account not found' });
+    }
 
-    // Mark the config as applied
+    // Apply to the User record
+    await base44.asServiceRole.entities.User.update(targetUser.id, updateData);
+
+    // Mark the config as applied (prevents replay)
     await base44.asServiceRole.entities.PendingUserConfig.update(config.id, {
       applied: true,
-      applied_user_id: user_id,
+      applied_user_id: targetUser.id,
       applied_at: new Date().toISOString(),
     });
 
@@ -66,7 +84,7 @@ export default async function(req) {
       applied: true,
       email,
       role: config.role,
-      user_id,
+      user_id: targetUser.id,
       config_id: config.id,
     });
   } catch (error) {

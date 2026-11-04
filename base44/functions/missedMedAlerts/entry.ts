@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { requireAdmin } from '../../shared/functionAuth.ts';
 
 // Time window map: scheduled time label -> wall clock hour (24h) for comparison
 const TIME_WINDOW_HOURS = {
@@ -31,17 +32,9 @@ function isMissedWindow(timeLabel, nowHour) {
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
 
-  // Allow scheduled (no-auth) or admin invocation
-  let isScheduled = false;
-  try {
-    const user = await base44.auth.me();
-    if (user && user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-  } catch {
-    // Called from scheduler without user auth — allow via service role
-    isScheduled = true;
-  }
+  // Admin (or the platform scheduler, which invokes with an admin identity) only.
+  const auth = await requireAdmin(base44);
+  if (auth.error) return auth.error;
 
   const now = new Date();
   const today = now.toISOString().split('T')[0];

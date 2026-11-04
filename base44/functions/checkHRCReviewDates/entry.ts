@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { requireAdmin } from '../../shared/functionAuth.ts';
 
 // Called daily by scheduled workflow
 // Scans all BehaviorSupportPlan records for human_rights_restrictions with upcoming review dates
@@ -8,6 +9,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const auth = await requireAdmin(base44);
+    if (auth.error) return auth.error;
 
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];

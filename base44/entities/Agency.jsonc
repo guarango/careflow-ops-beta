@@ -232,7 +232,21 @@
     },
     "mrr": {
       "type": "number",
-      "default": 0
+      "default": 0,
+      "rls": {
+        "read": {
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
+        }
+      }
     },
     "onboarding_step": {
       "type": "number",
@@ -307,7 +321,21 @@
       "default": "23:59"
     },
     "notes": {
-      "type": "string"
+      "type": "string",
+      "rls": {
+        "read": {
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
+        }
+      }
     }
   },
   "required": [

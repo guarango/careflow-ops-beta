@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { getCaller, unauthorized, forbidden } from '../../shared/functionAuth.ts';
 
 // Central multi-channel notification dispatcher.
 // Creates an in-app notification (always) and dispatches to email, SMS, and push
@@ -11,10 +12,25 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // Called by other backend functions (checkMissedMeds, checkForgotClockOut, etc.)
 // and the frontend.
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const body = await req.json();
+
+    // Alerts may only be dispatched by managers/admins (or the scheduler), or by a
+    // staff member raising one for themselves — never as an anonymous mail relay.
+    const user = await getCaller(base44);
+    if (!user) return unauthorized();
+
+    const body = await req.json().catch(() => ({}));
 
     const {
       type,
@@ -35,6 +51,20 @@ Deno.serve(async (req) => {
       dedupeKey,
       channels,
     } = body;
+
+    const isSelf = !!recipientUserId && recipientUserId === user.id;
+    if (user.role !== 'admin' && user.role !== 'manager' && !isSelf) return forbidden();
+
+    // The mail channel may only address the signed-in staff member themselves
+    // unless the caller is a manager/admin — never a caller-chosen address.
+    const mailRecipient = (user.role === 'admin' || user.role === 'manager')
+      ? recipientEmail
+      : user.email;
+
+    // Only app-relative deep links are honoured, so a crafted value cannot send staff off-site.
+    const safeDeepLink = typeof deepLink === 'string' && /^\/(?!\/)[A-Za-z0-9\-._~!$&'()*+,;=:@/?%#]*$/.test(deepLink)
+      ? deepLink
+      : '';
 
     // ── Privacy: strip any client name from the message ──────────────────
     let safeMessage = message || '';
@@ -99,7 +129,7 @@ Deno.serve(async (req) => {
       related_record_id: relatedRecordId,
       related_record_type: relatedRecordType,
       message: safeMessage,
-      deep_link: deepLink || '',
+      deep_link: safeDeepLink,
       trigger_stage: triggerStage,
       reminder_rule: reminderRule || '',
       is_controlled_substance: !!isControlledSubstance,
@@ -111,14 +141,14 @@ Deno.serve(async (req) => {
     });
 
     // ── Send email ────────────────────────────────────────────────────────
-    if (activeChannels.includes('email') && recipientEmail) {
+    if (activeChannels.includes('email') && mailRecipient) {
       const isAdmin = recipientRole === 'admin';
       const subject = isAdmin
         ? `[Staff Alert] CareFlow Ops – Action Required`
         : `[Reminder] CareFlow Ops – Action Required`;
 
-      const link = deepLink
-        ? `https://careflow-ops-beta.base44.app${deepLink}`
+      const link = safeDeepLink
+        ? `https://careflow-ops-beta.base44.app${safeDeepLink}`
         : 'https://careflow-ops-beta.base44.app';
 
       const emailBody = `<div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 12px;">
@@ -127,14 +157,14 @@ Deno.serve(async (req) => {
   </div>
   <div style="background: #ffffff; padding: 24px; border-radius: 0 0 10px 10px; border: 1px solid #e1e5ea;">
     ${isControlledSubstance ? '<div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; color: #b91c1c;">Requires immediate attention and documentation.</div>' : ''}
-    <p style="font-size: 16px; color: #171d26; line-height: 1.6; margin-top: 0;">${safeMessage}</p>
+    <p style="font-size: 16px; color: #171d26; line-height: 1.6; margin-top: 0;">${escapeHtml(safeMessage)}</p>
     <a href="${link}" style="display: inline-block; margin-top: 16px; background: #0b81b7; color: #000000; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;">Open in CareFlow Ops →</a>
     <p style="font-size: 12px; color: #94a3b8; margin-top: 24px; margin-bottom: 0;">Automated reminder from CareFlow Ops. This message does not contain client-identifying information.</p>
   </div>
 </div>`;
 
       await base44.asServiceRole.integrations.Core.SendEmail({
-        to: recipientEmail,
+        to: mailRecipient,
         subject,
         body: emailBody,
       }).catch(() => {});
@@ -162,7 +192,7 @@ Deno.serve(async (req) => {
         title: 'CareFlow Ops Reminder',
         content: safeMessage,
         action_label: 'Open',
-        action_url: deepLink || '/',
+        action_url: safeDeepLink || '/',
       }).catch(() => {});
 
       await base44.asServiceRole.entities.AppNotification.update(notification.id, { push_sent: true });

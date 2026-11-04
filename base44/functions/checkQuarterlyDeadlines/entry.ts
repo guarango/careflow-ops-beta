@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { requireAdmin } from '../../shared/functionAuth.ts';
 
 // Called daily by a scheduled workflow.
 // Checks quarterly summaries for deadline compliance:
@@ -11,6 +12,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const auth = await requireAdmin(base44);
+    if (auth.error) return auth.error;
 
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
