@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { continueMfa, loginWithGoogle } from "@/lib/authMfa";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,15 @@ import GoogleIcon from "@/components/GoogleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
 
+const NOT_INVITED_MESSAGE =
+  "We couldn't find an invite for this email. Check with your agency administrator.";
+
 export default function Register() {
-  const [email, setEmail] = useState("");
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const invitedEmail = (searchParams.get("email") || location.state?.email || "").trim();
+  const [email, setEmail] = useState(invitedEmail);
+  const [notInvited, setNotInvited] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -34,10 +41,27 @@ export default function Register() {
       await base44.auth.register({ email, password });
       setShowOtp(true);
     } catch (err) {
-      setError(err.message || "Registration failed");
+      const message = err?.message || "Registration failed";
+      if (/invite|access request|not registered|forbidden|unauthori[sz]ed/i.test(message)) {
+        setNotInvited(true);
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  // The invite is what gives the account its role. If there is no invite behind
+  // the sign-up, the account exists but has no access to the app.
+  const resolveSignedInUser = async () => {
+    let me = null;
+    try { me = await base44.auth.me(); } catch { me = null; }
+    if (me && !me.role && !me.is_super_admin) {
+      try { await base44.functions.invoke("applyPendingUserConfig", { email }); } catch { /* no pending invite */ }
+      try { me = await base44.auth.me(); } catch { me = null; }
+    }
+    return me;
   };
 
   const handleVerify = async () => {
@@ -52,6 +76,11 @@ export default function Register() {
       }
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
+      }
+      const signedInUser = await resolveSignedInUser();
+      if (signedInUser && !signedInUser.role && !signedInUser.is_super_admin) {
+        setNotInvited(true);
+        return;
       }
       window.location.href = safeReturnTo();
     } catch (err) {
@@ -78,6 +107,25 @@ export default function Register() {
     try { await loginWithGoogle(safeReturnTo()); }
     catch (err) { setError(err.message || 'Unable to sign in with Google'); }
   };
+
+  if (notInvited) {
+    return (
+      <AuthLayout
+        icon={UserPlus}
+        title="Set up your CareFlow account"
+        subtitle={email ? `We checked ${email}` : undefined}
+        footer={
+          <Link to={loginPath} className="text-primary font-medium hover:underline">
+            Back to log in
+          </Link>
+        }
+      >
+        <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm text-center">
+          {NOT_INVITED_MESSAGE}
+        </div>
+      </AuthLayout>
+    );
+  }
 
   if (showOtp) {
     return (
@@ -136,7 +184,7 @@ export default function Register() {
   return (
     <AuthLayout
       icon={UserPlus}
-      title="Create your account"
+      title="Set up your CareFlow account"
       subtitle="Sign up to get started"
       footer={
         <>
@@ -156,7 +204,7 @@ export default function Register() {
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
+        Or continue with Google using your invited email
       </Button>
 
       <div className="relative mb-6">
@@ -191,6 +239,10 @@ export default function Register() {
               required
             />
           </div>
+          <p className="text-xs text-muted-foreground">
+            Use the email address your invite was sent to. We'll email you a 6-digit code to
+            confirm it.
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>

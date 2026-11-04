@@ -18,6 +18,15 @@ export default function Login() {
   // with returnTo so the grant flow can resume). Same-origin paths only.
   const returnTo = safeReturnTo();
 
+  const isInvalidCredentials = /invalid email or password/i.test(error);
+  const registerUrl = (() => {
+    const params = new URLSearchParams();
+    if (email.trim()) params.set("email", email.trim());
+    if (returnTo !== "/") params.set("returnTo", returnTo);
+    const query = params.toString();
+    return "/register" + (query ? `?${query}` : "");
+  })();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -78,7 +87,15 @@ export default function Login() {
 
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
+          <p>{error}</p>
+          {isInvalidCredentials && (
+            <p className="mt-2">
+              Haven't set up your account yet?{" "}
+              <Link to={registerUrl} className="font-medium underline">
+                Create your password
+              </Link>
+            </p>
+          )}
         </div>
       )}
 
@@ -132,6 +149,16 @@ export default function Login() {
           )}
         </Button>
       </form>
+
+      <div className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4">
+        <p className="text-sm text-foreground">
+          <span className="font-semibold">First time here?</span> If your agency invited you,
+          create your account using the same email your invite was sent to.
+        </p>
+        <Button asChild variant="outline" className="w-full h-11 mt-3 bg-card">
+          <Link to={registerUrl}>Create my account</Link>
+        </Button>
+      </div>
     </AuthLayout>
   );
 }
