@@ -7,8 +7,6 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { RolePreviewProvider } from '@/lib/RolePreviewContext';
 import { ImpersonationProvider } from '@/lib/ImpersonationContext';
 import { PermissionsProvider } from '@/lib/PermissionsContext';
-import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-
 import AppLayout from './components/layout/AppLayout';
 import RouteGuard from './components/shared/RouteGuard';
 import Dashboard from './pages/Dashboard';
@@ -48,9 +46,14 @@ import QuarterlySummaryDetail from './pages/QuarterlySummaryDetail';
 import Recognition from './pages/Recognition';
 import OAuthConsent from './pages/OAuthConsent';
 import StaffWelcome from './pages/StaffWelcome';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, isAuthenticated, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, isAuthenticated } = useAuth();
   const location = useLocation();
 
   // Public routes — render without auth check
@@ -66,7 +69,7 @@ const AuthenticatedApp = () => {
     );
   }
 
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  if (isLoadingPublicSettings) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -74,18 +77,17 @@ const AuthenticatedApp = () => {
     );
   }
 
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
-    }
-  }
-
   return (
     <Routes>
-      <Route element={<AppLayout />}>
+      {/* Auth pages */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Every app route requires a session */}
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/staff" element={<RouteGuard path="/staff"><Staff /></RouteGuard>} />
         <Route path="/clients" element={<RouteGuard path="/clients"><Clients /></RouteGuard>} />
@@ -118,14 +120,15 @@ const AuthenticatedApp = () => {
         <Route path="/summaries/quarterly/:id" element={<RouteGuard path="/summaries/quarterly"><QuarterlySummaryDetail /></RouteGuard>} />
         <Route path="/recognition" element={<RouteGuard path="/recognition"><Recognition /></RouteGuard>} />
         </Route>
-      {/* Standalone routes — no sidebar layout */}
-      <Route path="/super-admin" element={<SuperAdmin />} />
-      <Route path="/onboarding" element={<OnboardingWizard />} />
-      <Route path="/sign/:requestId" element={<SignDocument />} />
-      <Route path="/api/docs" element={<APIDocs />} />
-      <Route path="/oauth/consent" element={<OAuthConsent />} />
-      <Route path="*" element={<PageNotFound />} />
+        {/* Standalone routes — no sidebar layout */}
+        <Route path="/super-admin" element={<SuperAdmin />} />
+        <Route path="/onboarding" element={<OnboardingWizard />} />
+        <Route path="/sign/:requestId" element={<SignDocument />} />
+        <Route path="/api/docs" element={<APIDocs />} />
+        <Route path="/oauth/consent" element={<OAuthConsent />} />
+      </Route>
 
+      <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
 };
