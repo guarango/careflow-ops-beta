@@ -101,10 +101,10 @@ export default function UserManagement() {
     setShowEdit(true);
   };
 
-  const handleSaveUser = async ({ userId, role, hrBundle, billingBundle, isSuperAdmin }) => {
+  const handleSaveUser = async ({ userId, role, hrBundle, billingBundle }) => {
     setSavingUser(true);
     try {
-      const res = await base44.functions.invoke("manageUsers", { action: "update", userId, role, hrBundle, billingBundle, isSuperAdmin });
+      const res = await base44.functions.invoke("manageUsers", { action: "update", userId, role, hrBundle, billingBundle });
       if (res.data?.error) throw new Error(res.data.error);
       toast({ title: "User updated", description: "Role and bundles have been saved." });
       setShowEdit(false);

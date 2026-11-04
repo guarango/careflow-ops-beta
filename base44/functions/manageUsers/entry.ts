@@ -26,9 +26,8 @@ export default async function(req) {
         return Response.json({ error: 'Invalid role' }, { status: 400 });
       }
 
-      // Invite via platform (admin → admin, manager/dsp → user)
-      const platformRole = role === 'admin' ? 'admin' : 'user';
-      await base44.users.inviteUser(email, platformRole);
+      // Invites always use the platform role "user" — never platform "admin"
+      await base44.users.inviteUser(email, 'user');
 
       // Find the newly invited user (retry up to 5 times — the record may not be
       // immediately queryable after inviteUser returns)
@@ -41,7 +40,7 @@ export default async function(req) {
       }
 
       if (target) {
-        const updateData = { role, is_super_admin: false };
+        const updateData = { role };
         if (role === 'admin') {
           updateData.hr_bundle = !!hrBundle;
           updateData.billing_bundle = !!billingBundle;
@@ -104,32 +103,19 @@ export default async function(req) {
     }
 
     // ─── Update an existing user's role/bundles ──────────────────────
+    // Super Admin is never granted or removed from inside the app.
     if (action === 'update') {
-      const { userId, role, hrBundle, billingBundle, isSuperAdmin } = body;
-
-      // Only existing super_admins can grant super_admin
-      if (isSuperAdmin && !user.is_super_admin) {
-        return Response.json({ error: 'Only Super Admins can grant Super Admin access' }, { status: 403 });
+      const { userId, role, hrBundle, billingBundle } = body;
+      if (!userId) return Response.json({ error: 'User ID is required' }, { status: 400 });
+      if (!['dsp', 'manager', 'admin'].includes(role)) {
+        return Response.json({ error: 'Invalid role' }, { status: 400 });
       }
 
       const updateData = {
-        is_super_admin: !!isSuperAdmin,
+        role,
+        hr_bundle: role === 'admin' ? !!hrBundle : false,
+        billing_bundle: role === 'admin' ? !!billingBundle : false,
       };
-
-      if (isSuperAdmin) {
-        updateData.role = 'admin';
-        updateData.hr_bundle = false;
-        updateData.billing_bundle = false;
-      } else if (['dsp', 'manager', 'admin'].includes(role)) {
-        updateData.role = role;
-        if (role === 'admin') {
-          updateData.hr_bundle = !!hrBundle;
-          updateData.billing_bundle = !!billingBundle;
-        } else {
-          updateData.hr_bundle = false;
-          updateData.billing_bundle = false;
-        }
-      }
 
       await base44.asServiceRole.entities.User.update(userId, updateData);
       return Response.json({ success: true });

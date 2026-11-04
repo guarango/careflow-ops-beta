@@ -11,7 +11,8 @@ export function useRole() {
 
   // When impersonating, use the target user's role/bundles
   const effectiveUser = impersonation?.targetUser || user;
-  const realRole = effectiveUser?.is_super_admin ? "super_admin" : (effectiveUser?.role || "dsp");
+  // No default role: a User with no role (or a deactivated one) has no app access.
+  const realRole = effectiveUser?.is_super_admin ? "super_admin" : (effectiveUser?.role || null);
   const role = previewRole || realRole;
 
   const bundles = {

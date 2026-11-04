@@ -11,19 +11,17 @@ export default function EditUserDialog({ user, open, onOpenChange, onSave, loadi
   const [role, setRole] = useState(user?.role || "dsp");
   const [hrBundle, setHrBundle] = useState(false);
   const [billingBundle, setBillingBundle] = useState(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     if (user) {
       setRole(user.role || "dsp");
       setHrBundle(!!user.hr_bundle);
       setBillingBundle(!!user.billing_bundle);
-      setIsSuperAdmin(!!user.is_super_admin);
     }
   }, [user]);
 
   const handleSave = () => {
-    onSave({ userId: user.id, role, hrBundle, billingBundle, isSuperAdmin });
+    onSave({ userId: user.id, role, hrBundle, billingBundle });
   };
 
   if (!user) return null;
@@ -43,7 +41,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onSave, loadi
           </div>
           <div>
             <Label>Role</Label>
-            <Select value={role} onValueChange={(v) => { setRole(v); setHrBundle(false); setBillingBundle(false); }} disabled={isSuperAdmin}>
+            <Select value={role} onValueChange={(v) => { setRole(v); setHrBundle(false); setBillingBundle(false); }} disabled={!!user.is_super_admin}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="dsp">DSP — Assigned clients only</SelectItem>
@@ -53,7 +51,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onSave, loadi
             </Select>
             <p className="text-xs text-muted-foreground mt-1.5">{ROLE_DESCRIPTIONS[role]}</p>
           </div>
-          {role === "admin" && !isSuperAdmin && (
+          {role === "admin" && !user.is_super_admin && (
             <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Permission Bundles</p>
               <label className="flex items-center gap-2 cursor-pointer">
@@ -66,10 +64,6 @@ export default function EditUserDialog({ user, open, onOpenChange, onSave, loadi
               </label>
             </div>
           )}
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={isSuperAdmin} onCheckedChange={(v) => { setIsSuperAdmin(!!v); if (v) { setRole("admin"); } }} />
-            <span className="text-sm">Super Admin (full platform owner access)</span>
-          </label>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

@@ -21,7 +21,6 @@ import Compliance from './pages/Compliance';
 import Finance from './pages/Finance';
 import Goals from './pages/Goals.jsx';
 import Schedule from './pages/Schedule';
-import UserManagement from './pages/UserManagement';
 import AuditLogPage from './pages/AuditLogPage';
 import HRCompliance from './pages/HRCompliance';
 import SuperAdmin from './pages/SuperAdmin';
@@ -51,6 +50,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ProtectedRoute from './components/ProtectedRoute';
+import AccountAccessGuard from './components/shared/AccountAccessGuard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, isAuthenticated } = useAuth();
@@ -87,6 +87,7 @@ const AuthenticatedApp = () => {
 
       {/* Every app route requires a session */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route element={<AccountAccessGuard />}>
         <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/staff" element={<RouteGuard path="/staff"><Staff /></RouteGuard>} />
@@ -100,7 +101,6 @@ const AuthenticatedApp = () => {
         <Route path="/finance" element={<RouteGuard path="/finance"><Finance /></RouteGuard>} />
         <Route path="/goals" element={<RouteGuard path="/goals"><Goals /></RouteGuard>} />
         <Route path="/schedule" element={<RouteGuard path="/schedule"><Schedule /></RouteGuard>} />
-        <Route path="/users" element={<RouteGuard path="/users"><UserManagement /></RouteGuard>} />
         <Route path="/audit-log" element={<RouteGuard path="/audit-log"><AuditLogPage /></RouteGuard>} />
         <Route path="/hr" element={<RouteGuard path="/hr"><HRCompliance /></RouteGuard>} />
         <Route path="/agency-admin" element={<RouteGuard path="/agency-admin"><AgencyAdmin /></RouteGuard>} />
@@ -126,6 +126,8 @@ const AuthenticatedApp = () => {
         <Route path="/sign/:requestId" element={<SignDocument />} />
         <Route path="/api/docs" element={<APIDocs />} />
         <Route path="/oauth/consent" element={<OAuthConsent />} />
+        <Route path="/users" element={<Navigate to="/agency-admin?tab=users" replace />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
