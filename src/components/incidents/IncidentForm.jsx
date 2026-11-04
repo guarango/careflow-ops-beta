@@ -33,7 +33,7 @@ export default function IncidentForm({ open, onClose, onSave, editing, clients, 
     type: "", severity: "", description: "", location: "", location_detail: "", staff_involved: "", witnesses: "",
     injuries_occurred: false, injuries_description: "", medical_treatment_required: false, law_enforcement_involved: false,
     restrictive_intervention_used: false, restrictive_intervention_description: "", actions_taken: "", photos: [],
-    reported_by_name: user?.full_name || "", status: "Open",
+    reported_by: user?.id || "", reported_by_name: user?.full_name || "", status: "Open",
   });
   const [sigChecked, setSigChecked] = useState(!!editing?.signature_timestamp);
   const [uploading, setUploading] = useState(false);

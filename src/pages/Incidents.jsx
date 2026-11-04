@@ -73,7 +73,10 @@ export default function Incidents() {
   };
 
   const visibleClients = isDSPMode ? clients.filter(c => assignedClientIds.includes(c.id)) : clients;
-  const visibleIncidents = isDSPMode ? incidents.filter(i => assignedClientIds.includes(i.client_id)) : incidents;
+  // DSPs only ever see the reports they submitted themselves.
+  const visibleIncidents = isDSPMode
+    ? incidents.filter(i => i.created_by_id === user?.id || i.reported_by === user?.id)
+    : incidents;
   const filtered = visibleIncidents.filter(i =>
     `${i.client_name} ${i.type} ${i.severity} ${i.status}`.toLowerCase().includes(search.toLowerCase())
   );
