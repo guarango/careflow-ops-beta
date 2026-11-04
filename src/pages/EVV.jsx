@@ -193,8 +193,8 @@ export default function EVV() {
           <TabsContent value="export">
             <Card>
               <CardContent className="p-4">
-                <h3 className="text-sm font-semibold mb-1">Export EVV Records</h3>
-                <p className="text-xs text-muted-foreground mb-4">Export EVV-required service records as CSV for aggregator submission.</p>
+                <h3 className="text-sm font-semibold mb-1">Utah EVV Portal Export</h3>
+                <p className="text-xs text-muted-foreground mb-4">Validate visits and download the CSV for upload to the Utah EVV Portal.</p>
                 <EVVExportButton />
               </CardContent>
             </Card>

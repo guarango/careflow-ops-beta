@@ -19,6 +19,9 @@ const PROGRAM_TYPES = ["Residential", "Day Program", "Community Living", "Suppor
 const EMPTY_FORM = {
   name: "",
   address: "",
+  address_city: "",
+  address_state: "UT",
+  address_zip: "",
   program_type: "Residential",
   geofence_radius: 100,
   status: "Active",
@@ -66,6 +69,9 @@ export default function Houses() {
     setForm({
       name: house.name || "",
       address: house.address || "",
+      address_city: house.address_city || "",
+      address_state: house.address_state || "UT",
+      address_zip: house.address_zip || "",
       program_type: house.program_type || "Residential",
       geofence_radius: house.geofence_radius ?? 100,
       status: house.status || "Active",
@@ -206,8 +212,22 @@ export default function Houses() {
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Maple Street Home" />
             </div>
             <div>
-              <Label>Address</Label>
-              <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="123 Main St, City, ST" />
+              <Label>Street Address</Label>
+              <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="123 Main St" />
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              <div className="col-span-2">
+                <Label>City</Label>
+                <Input value={form.address_city} onChange={(e) => setForm({ ...form, address_city: e.target.value })} placeholder="City" />
+              </div>
+              <div>
+                <Label>State</Label>
+                <Input maxLength={2} value={form.address_state} onChange={(e) => setForm({ ...form, address_state: e.target.value.toUpperCase() })} />
+              </div>
+              <div>
+                <Label>Zip</Label>
+                <Input value={form.address_zip} onChange={(e) => setForm({ ...form, address_zip: e.target.value })} />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

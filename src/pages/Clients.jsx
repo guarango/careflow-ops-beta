@@ -31,9 +31,10 @@ const genders = ["Male", "Female", "Non-binary", "Other"];
 const clientStatuses = ["Active", "Inactive", "Discharged"];
 
 const emptyClient = {
-  first_name: "", last_name: "", date_of_birth: "", gender: "",
+  first_name: "", middle_initial: "", last_name: "", date_of_birth: "", gender: "",
   diagnosis: "", guardian_name: "", guardian_phone: "", address: "",
-  insurance_id: "", insurance_provider: "",
+  address_city: "", address_state: "UT", address_zip: "",
+  medicaid_id: "", insurance_id: "", insurance_provider: "",
   house_id: "",
   service_enrollments: [],
   status: "Active", notes: ""
@@ -240,6 +241,7 @@ export default function Clients() {
             <div className="grid grid-cols-2 gap-4">
               <div><Label>First Name *</Label><Input value={form.first_name} onChange={(e) => setForm({...form, first_name: e.target.value})} disabled={!canEditClients} /></div>
               <div><Label>Last Name *</Label><Input value={form.last_name} onChange={(e) => setForm({...form, last_name: e.target.value})} disabled={!canEditClients} /></div>
+              <div><Label>Middle Initial</Label><Input maxLength={1} value={form.middle_initial || ""} onChange={(e) => setForm({...form, middle_initial: e.target.value})} disabled={!canEditClients} /></div>
               <div><Label>Date of Birth</Label><Input type="date" value={form.date_of_birth} onChange={(e) => setForm({...form, date_of_birth: e.target.value})} disabled={!canEditClients} /></div>
               <div>
                 <Label>Gender</Label>
@@ -251,7 +253,12 @@ export default function Clients() {
               <div className="col-span-2"><Label>Diagnosis</Label><Input value={form.diagnosis} onChange={(e) => setForm({...form, diagnosis: e.target.value})} disabled={!canEditClients} /></div>
               <div><Label>Guardian Name</Label><Input value={form.guardian_name} onChange={(e) => setForm({...form, guardian_name: e.target.value})} disabled={!canEditClients} /></div>
               <div><Label>Guardian Phone</Label><Input value={form.guardian_phone} onChange={(e) => setForm({...form, guardian_phone: e.target.value})} disabled={!canEditClients} /></div>
-              <div className="col-span-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({...form, address: e.target.value})} disabled={!canEditClients} /></div>
+              <div className="col-span-2"><Label>Street Address</Label><Input value={form.address} onChange={(e) => setForm({...form, address: e.target.value})} disabled={!canEditClients} /></div>
+              <div><Label>City</Label><Input value={form.address_city || ""} onChange={(e) => setForm({...form, address_city: e.target.value})} disabled={!canEditClients} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>State</Label><Input maxLength={2} value={form.address_state || ""} onChange={(e) => setForm({...form, address_state: e.target.value.toUpperCase()})} disabled={!canEditClients} /></div>
+                <div><Label>Zip</Label><Input value={form.address_zip || ""} onChange={(e) => setForm({...form, address_zip: e.target.value})} disabled={!canEditClients} /></div>
+              </div>
               <div>
                 <Label>House / Location</Label>
                 <Select value={form.house_id || ""} onValueChange={(v) => setForm({...form, house_id: v})} disabled={!canEditClients}>
@@ -263,6 +270,16 @@ export default function Clients() {
               </div>
               <div><Label>Insurance Provider</Label><Input value={form.insurance_provider} onChange={(e) => setForm({...form, insurance_provider: e.target.value})} disabled={!canEditClients} /></div>
               <div><Label>Insurance ID</Label><Input value={form.insurance_id} onChange={(e) => setForm({...form, insurance_id: e.target.value})} disabled={!canEditClients} /></div>
+              <div>
+                <Label>Medicaid Member ID</Label>
+                <Input
+                  value={form.medicaid_id || ""}
+                  onChange={(e) => setForm({...form, medicaid_id: e.target.value})}
+                  placeholder="e.g. 000123456"
+                  disabled={!canEditClients}
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">Required for Utah EVV and Medicaid billing. Keep leading zeros.</p>
+              </div>
               <div>
                 <Label>Status</Label>
                 <Select value={form.status} onValueChange={(v) => setForm({...form, status: v})} disabled={!canEditClients}>
