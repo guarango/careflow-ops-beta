@@ -20,6 +20,7 @@ import SupervisorReviewPanel from "@/components/sessionnotes/SupervisorReviewPan
 import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
 import { buildNoteVersionEntry, initialNoteVersion, isNoteLocked } from "@/lib/noteVersioning";
+import { todayISO } from "@/lib/dateUtils";
 
 // ── Late note check ──
 function checkIsLate(note) {
@@ -325,7 +326,7 @@ export default function SessionNotes() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {activeClients.map(client => {
                 const clientGoals = goals.filter(g => g.client_id === client.id && g.status === "Active");
-                const todayNote = visibleNotes.find(n => n.client_id === client.id && n.date === new Date().toISOString().split("T")[0]);
+                const todayNote = visibleNotes.find(n => n.client_id === client.id && n.date === todayISO());
                 return (
                   <button
                     key={client.id}

@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { todayISO } from "@/lib/dateUtils";
 
 const AVATAR_COLORS = [
   "bg-blue-100 text-blue-700",
@@ -25,7 +26,7 @@ function getProgramType(client) {
 }
 
 function getTodayDots(medications, logs) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayISO();
   const activeMeds = medications.filter(m => m.status === "Active");
   return activeMeds.map(med => {
     const todayLogs = logs.filter(l => l.medication_id === med.id && l.date === today);

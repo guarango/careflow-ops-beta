@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
+import { localDateISO } from "@/lib/dateUtils";
 
 const LOG_STATUSES = ["Administered", "Refused", "Held", "Not Available", "Missed"];
 
@@ -33,7 +34,7 @@ function MedRow({ med, log, onLogChange, isControlled, isPRN, isMissed, schedule
       const initials = fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
       const now = new Date();
       const recordedTime = now.toTimeString().slice(0, 5);
-      const recordedDate = now.toISOString().split("T")[0];
+      const recordedDate = localDateISO(now);
 
       // Check if late (30+ min after scheduled time)
       let isLate = false;

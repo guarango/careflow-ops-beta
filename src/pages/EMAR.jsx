@@ -27,6 +27,7 @@ import MARDetailView from "@/components/emar/MARDetailView";
 import MARAdminSummary from "@/components/emar/MARAdminSummary";
 import MedErrorReviewQueue from "@/components/emar/MedErrorReviewQueue";
 import { cn } from "@/lib/utils";
+import { todayISO } from "@/lib/dateUtils";
 
 const routes = ["Oral", "Topical", "Injection", "Inhaled", "Sublingual", "Other"];
 const medStatuses = ["Active", "Discontinued", "On Hold"];
@@ -106,7 +107,7 @@ export default function EMAR() {
 
   const openLogForMed = (med) => {
     // Per spec: do NOT pre-fill either field
-    setLogForm({ ...emptyLog, date: new Date().toISOString().split("T")[0] });
+    setLogForm({ ...emptyLog, date: todayISO() });
     setLogClientId("");
     setLogSigChecked(false);
     setLogSigTimestamp("");
@@ -114,7 +115,7 @@ export default function EMAR() {
   };
 
   const openLogDialog = () => {
-    setLogForm({ ...emptyLog, date: new Date().toISOString().split("T")[0] });
+    setLogForm({ ...emptyLog, date: todayISO() });
     setLogClientId("");
     setLogSigChecked(false);
     setLogSigTimestamp("");
@@ -149,7 +150,7 @@ export default function EMAR() {
   if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;
 
   const currentClient = selectedClient ? clients.find(c => c.id === selectedClient.id) || selectedClient : null;
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayISO();
 
   return (
     <div>

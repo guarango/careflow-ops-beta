@@ -13,6 +13,7 @@ import CleanUpButton from "@/components/shared/CleanUpButton";
 import { cn } from "@/lib/utils";
 import { isNoteLocked } from "@/lib/noteVersioning";
 import { useOffline } from "@/hooks/useOffline";
+import { todayISO } from "@/lib/dateUtils";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 
@@ -24,7 +25,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
   const [sigTimestamp, setSigTimestamp] = useState("");
   const [showAddendum, setShowAddendum] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayISO();
   const now = new Date().toTimeString().slice(0, 5);
   const autosaveTimer = useRef(null);
 

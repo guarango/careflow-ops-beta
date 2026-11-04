@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ComplianceGrid from "./ComplianceGrid";
 import { rowPct } from "./complianceStatus";
+import { todayISO, subtractDaysISO } from "@/lib/dateUtils";
 
 const COLUMNS = [
   { key: "notes_completed", label: "Notes Done" },
@@ -87,10 +88,9 @@ export function computeRow(id, name, sub, notes, medLogs, goals, evvLogs, incide
 }
 
 export default function ChartingDashboard({ user, onSelectCell }) {
-  const today = new Date().toISOString().split("T")[0];
-  const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30);
+  const today = todayISO();
   const [viewBy, setViewBy] = useState("client");
-  const [startDate, setStartDate] = useState(monthAgo.toISOString().split("T")[0]);
+  const [startDate, setStartDate] = useState(subtractDaysISO(30));
   const [endDate, setEndDate] = useState(today);
 
   const { data: notes = [] } = useQuery({ queryKey: ["notes-charting"], queryFn: () => base44.entities.SessionNote.list() });

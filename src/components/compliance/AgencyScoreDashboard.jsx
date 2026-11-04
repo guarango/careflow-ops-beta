@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { TrendingUp, Settings as SettingsIcon, ChevronDown, ChevronRight } from "lucide-react";
 import { pctBg } from "./StatusCell";
+import { todayISO } from "@/lib/dateUtils";
 
 const DEFAULT_WEIGHTS = { staff: 40, client: 35, charting: 25 };
 const STORAGE_KEY = "careflow_compliance_weights";
@@ -31,7 +32,7 @@ export function getScoreTrend() {
 
 export function recordScore(score) {
   const trend = getScoreTrend();
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayISO();
   const existing = trend.find(t => t.date === today);
   if (existing) existing.score = score;
   else trend.push({ date: today, score });

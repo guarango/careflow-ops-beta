@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { todayISO } from "@/lib/dateUtils";
 
 const PROMPT_LEVELS = ["Full Physical Assist", "Hand-Over-Hand", "Physical Prompt", "Gestural Prompt", "Verbal Prompt", "Indirect Verbal Cue", "Independent"];
 
 export default function ProgressLogDialog({ goal, onClose, onSave }) {
   const [entry, setEntry] = useState({
-    date: new Date().toISOString().split("T")[0],
+    date: todayISO(),
     score: "",
     prompt_level: goal?.prompt_level_baseline || "",
     trials_correct: "",

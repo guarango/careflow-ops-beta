@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Plus, Upload } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils";
+import { todayISO } from "@/lib/dateUtils";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -40,7 +41,7 @@ export default function ClientMedDetail({ client, medications, logs, canEdit, on
     },
   });
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayISO();
 
   return (
     <div>
