@@ -13,7 +13,8 @@
       "description": "Denormalized house/location name for trend grouping"
     },
     "reported_by": {
-      "type": "string"
+      "type": "string",
+      "description": "User ID of the staff member who submitted the report"
     },
     "reported_by_name": {
       "type": "string"
@@ -213,13 +214,19 @@
     "read": {
       "$or": [
         {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
-          }
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.reported_by": "{{user.id}}"
         },
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
           }
         }
       ]
@@ -235,19 +242,30 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
         }
       ]
     },
     "update": {
       "$or": [
         {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
-          }
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.reported_by": "{{user.id}}"
         },
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
           }
         }
       ]
