@@ -86,6 +86,10 @@ export const CAN = {
   changeIncidentStatus:   ["manager", "admin", "super_admin"],
   viewAllIncidents:       ["manager", "admin", "super_admin"],
   editClients:            ["manager", "admin", "super_admin"],
+  createClient:           ["admin", "super_admin"],
+  deleteClient:           ["admin", "super_admin"],
+  createStaff:            ["admin", "super_admin"],
+  deleteStaff:            ["admin", "super_admin"],
   accessBilling:          ["admin", "super_admin"],
   editServiceCodes:       ["admin", "super_admin"],
   manageUsers:            ["admin", "super_admin"],
@@ -123,6 +127,8 @@ export const CAN = {
 // Permissions that require a bundle (Admin only; super_admin bypasses)
 export const BUNDLE_REQUIRED = {
   editStaff:            "hr",
+  createStaff:          "hr",
+  deleteStaff:          "hr",
   accessBilling:        "billing",
   editServiceCodes:     "billing",
   exportPayroll:        "billing",

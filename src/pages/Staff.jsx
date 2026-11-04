@@ -14,6 +14,7 @@ import { Users, Plus, Search, Phone, Mail, AlertTriangle, Link2 } from "lucide-r
 import { useRole } from "@/hooks/useRole";
 import { useViewMode } from "@/hooks/useViewMode";
 import EntityCard from "@/components/shared/EntityCard";
+import Can from "@/components/shared/Can";
 import ViewToggle from "@/components/shared/ViewToggle";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -33,7 +34,9 @@ function complianceAlerts(s) {
 }
 
 export default function Staff() {
-  const { isAdmin } = useRole();
+  const { isAdmin, can } = useRole();
+  const canCreateStaff = can("createStaff");
+  const canEditStaff = can("editStaff");
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
@@ -78,8 +81,13 @@ export default function Staff() {
   const openEdit = (s) => { setEditingStaff(s); setShowDialog(true); };
 
   const handleSave = (formData) => {
-    if (formData.id) updateMutation.mutate({ id: formData.id, data: formData });
-    else createMutation.mutate(formData);
+    if (formData.id) {
+      if (!canEditStaff) return;
+      updateMutation.mutate({ id: formData.id, data: formData });
+    } else {
+      if (!canCreateStaff) return;
+      createMutation.mutate(formData);
+    }
   };
 
   const filtered = staff.filter(s =>
@@ -98,7 +106,9 @@ export default function Staff() {
                 <Link2 className="w-4 h-4 mr-2" />{linking ? "Linking..." : "Link Users & Sync"}
               </Button>
             )}
-            <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Staff</Button>
+            <Can do="createStaff">
+              <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Staff</Button>
+            </Can>
           </div>
         }
       />
@@ -121,7 +131,7 @@ export default function Staff() {
       </Card>
 
       {filtered.length === 0 && !isLoading ? (
-        <EmptyState icon={Users} title="No staff members" description="Add your first staff member to get started." action={<Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Staff</Button>} />
+        <EmptyState icon={Users} title="No staff members" description="Add your first staff member to get started." action={canCreateStaff && <Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Staff</Button>} />
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {filtered.map((s) => {
@@ -215,6 +225,7 @@ export default function Staff() {
           onSave={handleSave}
           onClose={() => { setShowDialog(false); setEditingStaff(null); }}
           isAdmin={isAdmin}
+          readOnly={!canEditStaff}
         />
       )}
     </div>

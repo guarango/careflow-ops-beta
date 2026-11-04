@@ -16,7 +16,7 @@ import SensitiveValue from "@/components/shared/SensitiveValue";
 const CONTRACT_AREAS = ["DSPD", "DCFS", "Private Pay", "Licensed Program", "Foster Care"];
 const CERT_NAMES = ["CPR/First Aid", "Medication Administration", "CPI / Crisis Prevention", "HIPAA", "Mandated Reporter", "Abuse & Neglect", "Driver's License", "Other"];
 
-export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = false }) {
+export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = false, readOnly = false }) {
   const [form, setForm] = useState(staff);
   const [tab, setTab] = useState("personal");
 
@@ -77,6 +77,12 @@ export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = f
             )}
           </DialogTitle>
         </DialogHeader>
+
+        {readOnly && (
+          <p className="text-xs text-muted-foreground bg-muted rounded-md px-3 py-2">
+            Read-only view — your role can view staff records but not edit them.
+          </p>
+        )}
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 overflow-hidden flex flex-col">
           <TabsList className={`grid flex-shrink-0 ${isAdmin ? "grid-cols-5" : "grid-cols-4"}`}>
@@ -392,8 +398,10 @@ export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = f
         </Tabs>
 
         <DialogFooter className="flex-shrink-0 border-t pt-4 mt-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSave(form)} disabled={!form.first_name || !form.last_name}>Save Profile</Button>
+          <Button variant="outline" onClick={onClose}>{readOnly ? "Close" : "Cancel"}</Button>
+          {!readOnly && (
+            <Button onClick={() => onSave(form)} disabled={!form.first_name || !form.last_name}>Save Profile</Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

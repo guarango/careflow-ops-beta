@@ -14,7 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Plus, Search } from "lucide-react";
+import { Heart, Plus, Search, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import { useRole } from "@/hooks/useRole";
 import { useViewMode } from "@/hooks/useViewMode";
@@ -39,6 +43,9 @@ export default function Clients() {
   const { isAdmin, can } = useRole();
   const { isDSPMode, assignedClientIds } = useAssignedClients();
   const canEditClients = can("editClients");
+  const canCreateClient = can("createClient");
+  const canDeleteClient = can("deleteClient");
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyClient);
@@ -82,6 +89,15 @@ export default function Clients() {
       if (editing?.house_id && editing.house_id !== client.house_id) {
         syncHouse(editing.house_id);
       }
+      closeDialog();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Client.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      setConfirmDelete(null);
       closeDialog();
     },
   });
@@ -139,7 +155,7 @@ export default function Clients() {
 
   return (
     <div>
-      <PageHeader title="Client Records" subtitle={`${visibleClients.length} clients`} action={canEditClients && <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Client</Button>} />
+      <PageHeader title="Client Records" subtitle={`${visibleClients.length} clients`} action={canCreateClient && <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Client</Button>} />
 
       <Card className="mb-6">
         <CardContent className="py-3">
@@ -154,7 +170,7 @@ export default function Clients() {
       </Card>
 
       {filtered.length === 0 && !isLoading ? (
-        <EmptyState icon={Heart} title="No clients" description={isDSPMode ? "No assigned clients match your search." : "Add your first client to get started."} action={canEditClients && <Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Client</Button>} />
+        <EmptyState icon={Heart} title="No clients" description={isDSPMode ? "No assigned clients match your search." : "Add your first client to get started."} action={canCreateClient && <Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Client</Button>} />
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {filtered.map((c) => {
@@ -275,11 +291,40 @@ export default function Clients() {
             )}
           </div>
           <DialogFooter>
+            {editing && canDeleteClient && (
+              <Button
+                variant="ghost"
+                className="text-destructive hover:text-destructive sm:mr-auto"
+                onClick={() => setConfirmDelete(editing)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />Delete Client
+              </Button>
+            )}
             <Button variant="outline" onClick={closeDialog}>{canEditClients ? "Cancel" : "Close"}</Button>
             {canEditClients && <Button onClick={handleSave} disabled={!form.first_name || !form.last_name}>{editing ? "Update" : "Create"}</Button>}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this client record?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete?.first_name} {confirmDelete?.last_name} will be permanently removed. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteMutation.mutate(confirmDelete.id)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
