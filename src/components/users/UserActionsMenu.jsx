@@ -19,12 +19,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, KeyRound, Pencil, Ban, Trash2, Power } from "lucide-react";
 
-export default function UserActionsMenu({ user, onEdit, onResetPassword, onToggleDeactivated, onDelete, isSuperAdmin }) {
+export default function UserActionsMenu({ user, onEdit, onResetPassword, onToggleDeactivated, onDelete, isSuperAdmin, canEdit = true, canDelete = true }) {
   const [showDelete, setShowDelete] = useState(false);
   const [showDeactivate, setShowDeactivate] = useState(false);
   const isSelf = user._is_self;
   const isSuperAdminUser = !!user.is_super_admin;
   const isDeactivated = !!user.is_deactivated;
+
+  if (!canEdit && !canDelete) return null;
 
   return (
     <>
@@ -35,33 +37,39 @@ export default function UserActionsMenu({ user, onEdit, onResetPassword, onToggl
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={() => onEdit(user)}>
-            <Pencil className="w-3.5 h-3.5 mr-2" />
-            Edit Role
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onResetPassword(user)} disabled={isSelf}>
-            <KeyRound className="w-3.5 h-3.5 mr-2" />
-            Reset Password
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => setShowDeactivate(true)}
-            disabled={isSelf || isSuperAdminUser}
-          >
-            {isDeactivated ? (
-              <><Power className="w-3.5 h-3.5 mr-2" />Reactivate</>
-            ) : (
-              <><Ban className="w-3.5 h-3.5 mr-2" />Deactivate</>
-            )}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => setShowDelete(true)}
-            disabled={isSelf || isSuperAdminUser}
-            className="text-destructive focus:text-destructive"
-          >
-            <Trash2 className="w-3.5 h-3.5 mr-2" />
-            Delete User
-          </DropdownMenuItem>
+          {canEdit && (
+            <>
+              <DropdownMenuItem onClick={() => onEdit(user)}>
+                <Pencil className="w-3.5 h-3.5 mr-2" />
+                Edit Role
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onResetPassword(user)} disabled={isSelf}>
+                <KeyRound className="w-3.5 h-3.5 mr-2" />
+                Reset Password
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setShowDeactivate(true)}
+                disabled={isSelf || isSuperAdminUser}
+              >
+                {isDeactivated ? (
+                  <><Power className="w-3.5 h-3.5 mr-2" />Reactivate</>
+                ) : (
+                  <><Ban className="w-3.5 h-3.5 mr-2" />Deactivate</>
+                )}
+              </DropdownMenuItem>
+            </>
+          )}
+          {canEdit && canDelete && <DropdownMenuSeparator />}
+          {canDelete && (
+            <DropdownMenuItem
+              onClick={() => setShowDelete(true)}
+              disabled={isSelf || isSuperAdminUser}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-2" />
+              Delete User
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

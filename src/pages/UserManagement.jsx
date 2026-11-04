@@ -41,8 +41,12 @@ export default function UserManagement() {
   const [savingUser, setSavingUser] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isSuperAdmin } = useRole();
+  const { isSuperAdmin, can } = useRole();
   const { loginAs } = useImpersonation();
+  const canCreateUser = can("createUser");
+  const canEditUser = can("editUser");
+  const canDeleteUser = can("deleteUser");
+  const showActions = isSuperAdmin || canEditUser || canDeleteUser;
 
   const { data: usersData, refetch } = useQuery({
     queryKey: ["users"],
@@ -152,7 +156,7 @@ export default function UserManagement() {
       <PageHeader
         title="User Management"
         subtitle="Manage platform access for DSP, Manager, Admin, and Super Admin users"
-        action={isSuperAdmin && (
+        action={canCreateUser && (
           <Button onClick={() => setShowInvite(true)}>
             <Plus className="w-4 h-4 mr-2" />Invite User
           </Button>
@@ -200,7 +204,7 @@ export default function UserManagement() {
                 <TableHead>Bundles</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Joined</TableHead>
-                {isSuperAdmin && <TableHead className="text-right">Actions</TableHead>}
+                {showActions && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -236,10 +240,10 @@ export default function UserManagement() {
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{u.created_date ? new Date(u.created_date).toLocaleDateString() : "—"}</TableCell>
-                    {isSuperAdmin && (
+                    {showActions && (
                       <TableCell className="text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          {role !== "super_admin" && (
+                          {isSuperAdmin && role !== "super_admin" && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -254,6 +258,8 @@ export default function UserManagement() {
                           <UserActionsMenu
                             user={u}
                             isSuperAdmin={isSuperAdmin}
+                            canEdit={canEditUser}
+                            canDelete={canDeleteUser}
                             onEdit={handleEditUser}
                             onResetPassword={handleResetPassword}
                             onToggleDeactivated={handleToggleDeactivated}
@@ -267,7 +273,7 @@ export default function UserManagement() {
               })}
               {users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={isSuperAdmin ? 7 : 6} className="text-center text-muted-foreground py-8 text-sm">No users found.</TableCell>
+                  <TableCell colSpan={showActions ? 7 : 6} className="text-center text-muted-foreground py-8 text-sm">No users found.</TableCell>
                 </TableRow>
               )}
             </TableBody>
