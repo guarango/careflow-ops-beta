@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import PageHeader from "@/components/shared/PageHeader";
 import {
   Card,
   CardContent,
@@ -87,10 +86,10 @@ export default function AuditLogPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Audit Log"
-        subtitle={`${items.length} impersonation events logged`}
-      />
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-foreground">Audit Log</h2>
+        <p className="text-sm text-muted-foreground">{items.length} impersonation events logged</p>
+      </div>
 
       <Card className="mb-6">
         <CardContent className="py-4">

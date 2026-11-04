@@ -9,11 +9,14 @@ import AgencyAPISettings from "@/components/agencyadmin/AgencyAPISettings";
 import EVVLocationSettings from "@/components/agencyadmin/EVVLocationSettings";
 import AgencySubscription from "@/components/agencyadmin/AgencySubscription";
 import RolePermissionsPanel from "@/components/agencyadmin/RolePermissionsPanel";
+import UserManagement from "@/pages/UserManagement";
+import NotificationCenter from "@/pages/NotificationCenter";
+import AuditLogPage from "@/pages/AuditLogPage";
 
 import AIFeatureManager from "@/components/ai/AIFeatureManager";
 import AgencyIntegrationHub from "@/components/integrations/AgencyIntegrationHub";
 import IntegrationHealthDashboard from "@/components/integrations/IntegrationHealthDashboard";
-import { Settings, Palette, Bell, Code, CreditCard, Sparkles, Plug, Activity, MapPin, ShieldCheck } from "lucide-react";
+import { Settings, Palette, Bell, Code, CreditCard, Sparkles, Plug, Activity, MapPin, ShieldCheck, UsersRound, ScrollText } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AgencyAdmin() {
@@ -57,6 +60,9 @@ export default function AgencyAdmin() {
           <TabsTrigger value="integrations" className="gap-2"><Plug className="w-4 h-4" /> Integrations</TabsTrigger>
           <TabsTrigger value="int-health" className="gap-2"><Activity className="w-4 h-4" /> Integration Health</TabsTrigger>
           <TabsTrigger value="permissions" className="gap-2"><ShieldCheck className="w-4 h-4" /> Roles & Permissions</TabsTrigger>
+          <TabsTrigger value="users" className="gap-2"><UsersRound className="w-4 h-4" /> Users</TabsTrigger>
+          <TabsTrigger value="notification-center" className="gap-2"><Bell className="w-4 h-4" /> Notification Center</TabsTrigger>
+          <TabsTrigger value="audit-log" className="gap-2"><ScrollText className="w-4 h-4" /> Audit Log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -88,6 +94,15 @@ export default function AgencyAdmin() {
         </TabsContent>
         <TabsContent value="permissions">
           <RolePermissionsPanel />
+        </TabsContent>
+        <TabsContent value="users">
+          <UserManagement />
+        </TabsContent>
+        <TabsContent value="notification-center">
+          <NotificationCenter />
+        </TabsContent>
+        <TabsContent value="audit-log">
+          <AuditLogPage />
         </TabsContent>
       </Tabs>
     </div>

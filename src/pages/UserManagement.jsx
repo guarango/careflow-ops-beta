@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import PageHeader from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -153,15 +152,17 @@ export default function UserManagement() {
 
   return (
     <div>
-      <PageHeader
-        title="User Management"
-        subtitle="Manage platform access for DSP, Manager, Admin, and Super Admin users"
-        action={canCreateUser && (
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Users</h2>
+          <p className="text-sm text-muted-foreground">Manage platform access for DSP, Manager, Admin, and Super Admin users</p>
+        </div>
+        {canCreateUser && (
           <Button onClick={() => setShowInvite(true)}>
             <Plus className="w-4 h-4 mr-2" />Invite User
           </Button>
         )}
-      />
+      </div>
 
       {/* Role Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

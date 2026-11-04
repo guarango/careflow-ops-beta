@@ -68,10 +68,7 @@ const ALL_NAV = [
   {
     section: "Agency",
     items: [
-      { path: "/users", label: "Users", icon: UsersRound },
-      { path: "/notifications", label: "Notification Center", icon: Bell },
       { path: "/agency-admin", label: "Settings & Admin", icon: Settings },
-      { path: "/audit-log", label: "Audit Log", icon: ScrollText },
     ],
   },
 ];
