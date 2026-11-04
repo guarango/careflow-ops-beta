@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import PageHeader from "@/components/shared/PageHeader";
 import StatusBadge from "@/components/shared/StatusBadge";
 import EmptyState from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -498,10 +497,10 @@ export default function ESignatures() {
 
   return (
     <div>
-      <PageHeader
-        title="E-Signatures"
-        subtitle="Paperless document signing for HR & Compliance"
-      />
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-foreground">E-Signatures</h2>
+        <p className="text-sm text-muted-foreground">Paperless document signing for HR &amp; Compliance</p>
+      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">

@@ -45,7 +45,6 @@ const ALL_NAV = [
       { path: "/timecards", label: "Timecards", icon: Clock },
       { path: "/recognition", label: "Recognition", icon: Trophy },
       { path: "/hr", label: "HR & Compliance", icon: Briefcase },
-      { path: "/hr/signatures", label: "E-Signatures", icon: FileSignature },
       { path: "/compliance", label: "Compliance", icon: ShieldCheck },
     ],
   },

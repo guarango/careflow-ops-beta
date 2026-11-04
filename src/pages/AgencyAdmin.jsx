@@ -12,11 +12,12 @@ import RolePermissionsPanel from "@/components/agencyadmin/RolePermissionsPanel"
 import UserManagement from "@/pages/UserManagement";
 import NotificationCenter from "@/pages/NotificationCenter";
 import AuditLogPage from "@/pages/AuditLogPage";
+import ESignatures from "@/pages/ESignatures";
 
 import AIFeatureManager from "@/components/ai/AIFeatureManager";
 import AgencyIntegrationHub from "@/components/integrations/AgencyIntegrationHub";
 import IntegrationHealthDashboard from "@/components/integrations/IntegrationHealthDashboard";
-import { Settings, Palette, Bell, Code, CreditCard, Sparkles, Plug, Activity, MapPin, ShieldCheck, UsersRound, ScrollText } from "lucide-react";
+import { Settings, Palette, Bell, Code, CreditCard, Sparkles, Plug, Activity, MapPin, ShieldCheck, UsersRound, ScrollText, FileSignature } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AgencyAdmin() {
@@ -63,6 +64,7 @@ export default function AgencyAdmin() {
           <TabsTrigger value="users" className="gap-2"><UsersRound className="w-4 h-4" /> Users</TabsTrigger>
           <TabsTrigger value="notification-center" className="gap-2"><Bell className="w-4 h-4" /> Notification Center</TabsTrigger>
           <TabsTrigger value="audit-log" className="gap-2"><ScrollText className="w-4 h-4" /> Audit Log</TabsTrigger>
+          <TabsTrigger value="e-signatures" className="gap-2"><FileSignature className="w-4 h-4" /> E-Signatures</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -103,6 +105,9 @@ export default function AgencyAdmin() {
         </TabsContent>
         <TabsContent value="audit-log">
           <AuditLogPage />
+        </TabsContent>
+        <TabsContent value="e-signatures">
+          <ESignatures />
         </TabsContent>
       </Tabs>
     </div>
