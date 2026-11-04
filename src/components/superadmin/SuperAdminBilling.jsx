@@ -22,7 +22,11 @@ export default function SuperAdminBilling({ agencies }) {
   const churnedCount = agencies.filter(a => a.status === "churned").length;
 
   const sendReminder = (agency) => {
-    toast({ title: "Payment reminder sent", description: `Email sent to ${agency.billing_contact_email || agency.primary_contact_email}` });
+    const contact = agency.billing_contact_email || agency.primary_contact_email;
+    toast({
+      title: "Payment reminder sent",
+      description: contact ? `Email sent to ${contact}` : "Email sent to the billing contact on file",
+    });
   };
 
   return (

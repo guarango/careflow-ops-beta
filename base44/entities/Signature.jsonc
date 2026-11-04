@@ -28,7 +28,21 @@
       "type": "string"
     },
     "signer_email": {
-      "type": "string"
+      "type": "string",
+      "rls": {
+        "read": {
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
+        }
+      }
     },
     "signature_type": {
       "type": "string",
@@ -46,7 +60,21 @@
       "type": "string"
     },
     "ip_address": {
-      "type": "string"
+      "type": "string",
+      "rls": {
+        "read": {
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
+        }
+      }
     },
     "device_type": {
       "type": "string"
@@ -57,7 +85,21 @@
     },
     "guardian_token": {
       "type": "string",
-      "description": "Token for external guardian signing link"
+      "description": "Token for external guardian signing link",
+      "rls": {
+        "read": {
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
+        }
+      }
     },
     "notes": {
       "type": "string"
