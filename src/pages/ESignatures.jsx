@@ -477,7 +477,7 @@ function TrackingTab({ staff }) {
 }
 
 // ─── MAIN PAGE ──────────────────────────────────────────────────────────────
-export default function ESignatures() {
+export default function ESignatures({ embedded = false }) {
   const { role, can } = useRole();
   const [activeTab, setActiveTab] = useState("templates");
 
@@ -491,7 +491,9 @@ export default function ESignatures() {
     queryFn: () => base44.entities.SignatureTemplate.list(),
   });
 
-  if (!can("manageSignatures")) {
+  // Inside Settings & Admin the page is already limited to admins by the route,
+  // so the HR bundle requirement does not apply there.
+  if (!embedded && !can("manageSignatures")) {
     return <AccessDenied />;
   }
 

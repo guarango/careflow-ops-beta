@@ -107,7 +107,7 @@ export default function AgencyAdmin() {
           <AuditLogPage />
         </TabsContent>
         <TabsContent value="e-signatures">
-          <ESignatures />
+          <ESignatures embedded />
         </TabsContent>
       </Tabs>
     </div>
