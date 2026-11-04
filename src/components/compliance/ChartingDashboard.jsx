@@ -24,7 +24,7 @@ function inRange(dateStr, start, end) {
   return d >= start && d <= end;
 }
 
-function computeRow(id, name, sub, notes, medLogs, goals, evvLogs, incidents, start, end) {
+export function computeRow(id, name, sub, notes, medLogs, goals, evvLogs, incidents, start, end) {
   const cells = {};
   const totalNotes = notes.length;
   cells.notes_completed = totalNotes > 0
@@ -162,4 +162,30 @@ export default function ChartingDashboard({ user, onSelectCell }) {
       <ComplianceGrid columns={COLUMNS} rows={rows} onSelectCell={onSelectCell} emptyMessage="No data for selected range" />
     </div>
   );
+}
+
+/**
+ * Charting average for the Agency Score — the same per-row calculation and the
+ * same default range (last 30 days, by client) the Charting tab renders.
+ */
+export function computeChartingAvg({ notes = [], medLogs = [], goals = [], evvLogs = [], incidents = [], clients = [], start, end }) {
+  const within = (d) => { if (!d) return false; const dt = new Date(d); return dt >= start && dt <= end; };
+  const inRangeNotes = notes.filter(n => within(n.date));
+  const inRangeMeds = medLogs.filter(m => within(m.date));
+  const inRangeIncidents = incidents.filter(i => within(i.date));
+  const active = clients.filter(c => c.status === "Active" || !c.status);
+  const rows = active.map(c => computeRow(
+    c.id,
+    `${c.first_name} ${c.last_name}`,
+    c.diagnosis,
+    inRangeNotes.filter(n => n.client_id === c.id),
+    inRangeMeds.filter(m => m.client_id === c.id),
+    goals.filter(g => g.client_id === c.id),
+    evvLogs.filter(e => e.client_id === c.id),
+    inRangeIncidents.filter(i => i.client_id === c.id),
+    start,
+    end,
+  ));
+  if (!rows.length) return 0;
+  return Math.round(rows.reduce((a, r) => a + r.pct, 0) / rows.length);
 }

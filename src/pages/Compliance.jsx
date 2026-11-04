@@ -6,9 +6,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Settings, Shield } from "lucide-react";
-import StaffFilesDashboard from "@/components/compliance/StaffFilesDashboard";
-import ClientFilesDashboard from "@/components/compliance/ClientFilesDashboard";
-import ChartingDashboard from "@/components/compliance/ChartingDashboard";
+import StaffFilesDashboard, { computeStaffAvg } from "@/components/compliance/StaffFilesDashboard";
+import ClientFilesDashboard, { computeClientAvg } from "@/components/compliance/ClientFilesDashboard";
+import ChartingDashboard, { computeChartingAvg } from "@/components/compliance/ChartingDashboard";
 import AgencyScoreDashboard from "@/components/compliance/AgencyScoreDashboard";
 import AgencyFileSettings from "@/components/compliance/AgencyFileSettings";
 import AuditReportDialog from "@/components/compliance/AuditReportDialog";
@@ -87,39 +87,48 @@ function AgencyScoreDashboardProvider() {
   );
 }
 
+/**
+ * Agency Score feeds off the SAME per-row calculations the three tabs render,
+ * so the score can never contradict what a tab shows.
+ */
 function ScoreExtractor({ onStaffScore, onClientScore, onChartingScore }) {
-  const { data: staff = [] } = useQuery({ queryKey: ["staff-score"], queryFn: () => base44.entities.StaffMember.list() });
-  const { data: compDocs = [] } = useQuery({ queryKey: ["compdocs-score"], queryFn: () => base44.entities.StaffComplianceDocument.list() });
-  const { data: clients = [] } = useQuery({ queryKey: ["clients-score"], queryFn: () => base44.entities.Client.list() });
-  const { data: notes = [] } = useQuery({ queryKey: ["notes-score"], queryFn: () => base44.entities.SessionNote.list() });
+  const { user } = useAuth();
+  const isAdminView = user?.role === "admin" || user?.role === "super_admin" || !!user?.is_super_admin;
+
+  const { data: staff = [] } = useQuery({ queryKey: ["staff-comp-grid"], queryFn: () => base44.entities.StaffMember.list() });
+  const { data: compDocs = [] } = useQuery({ queryKey: ["staff-comp-docs-grid"], queryFn: () => base44.entities.StaffComplianceDocument.list() });
+  const { data: onboardingDocs = [] } = useQuery({ queryKey: ["onboarding-docs-grid"], queryFn: () => base44.entities.OnboardingDocument.list() });
+  const { data: trainings = [] } = useQuery({ queryKey: ["training-assignments-grid"], queryFn: () => base44.entities.TrainingAssignment.list() });
+
+  const { data: clients = [] } = useQuery({ queryKey: ["clients-comp-grid"], queryFn: () => base44.entities.Client.list() });
+  const { data: isps = [] } = useQuery({ queryKey: ["isps-comp-grid"], queryFn: () => base44.entities.ISPlan.list() });
+  const { data: bsps = [] } = useQuery({ queryKey: ["bsps-comp-grid"], queryFn: () => base44.entities.BehaviorSupportPlan.list() });
+  const { data: meds = [] } = useQuery({ queryKey: ["meds-comp-grid"], queryFn: () => base44.entities.Medication.list() });
+  const { data: consents = [] } = useQuery({ queryKey: ["consents-comp-grid"], queryFn: () => base44.entities.PortalConsent.list() });
+  const { data: grievances = [] } = useQuery({ queryKey: ["grievances-comp-grid"], queryFn: () => base44.entities.PortalGrievance.list() });
+  const { data: auths = [] } = useQuery({ queryKey: ["auths-comp-grid"], queryFn: () => base44.entities.Authorization.list() });
+
+  const { data: notes = [] } = useQuery({ queryKey: ["notes-charting"], queryFn: () => base44.entities.SessionNote.list() });
+  const { data: medLogs = [] } = useQuery({ queryKey: ["medlogs-charting"], queryFn: () => base44.entities.MedicationLog.list() });
+  const { data: goals = [] } = useQuery({ queryKey: ["goals-charting"], queryFn: () => base44.entities.ClientGoal.list() });
+  const { data: evvLogs = [] } = useQuery({ queryKey: ["evv-charting"], queryFn: () => base44.entities.EVVLog.list() });
+  const { data: incidents = [] } = useQuery({ queryKey: ["incidents-charting"], queryFn: () => base44.entities.IncidentReport.list() });
 
   React.useEffect(() => {
-    if (staff.length && compDocs.length >= 0) {
-      const active = staff.filter(s => s.status === "Active" || !s.status);
-      const scores = active.map(s => {
-        const myDocs = compDocs.filter(d => d.staff_id === s.id);
-        const current = myDocs.filter(d => d.status === "Active").length;
-        return myDocs.length > 0 ? Math.round((current / myDocs.length) * 100) : 100;
-      });
-      onStaffScore(scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 100);
-    }
-  }, [staff, compDocs]);
+    onStaffScore(computeStaffAvg(staff, compDocs, onboardingDocs, trainings, isAdminView));
+  }, [staff, compDocs, onboardingDocs, trainings, isAdminView]);
 
   React.useEffect(() => {
-    if (clients.length) {
-      const active = clients.filter(c => c.status === "Active" || !c.status);
-      onClientScore(active.length ? 85 : 0);
-    }
-  }, [clients]);
+    onClientScore(computeClientAvg(clients, isps, bsps, meds, consents, grievances, auths, notes));
+  }, [clients, isps, bsps, meds, consents, grievances, auths, notes]);
 
   React.useEffect(() => {
-    if (notes.length) {
-      const approved = notes.filter(n => n.status === "Approved").length;
-      onChartingScore(Math.round((approved / notes.length) * 100));
-    } else {
-      onChartingScore(100);
-    }
-  }, [notes]);
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+    start.setHours(0, 0, 0, 0);
+    onChartingScore(computeChartingAvg({ notes, medLogs, goals, evvLogs, incidents, clients, start, end }));
+  }, [notes, medLogs, goals, evvLogs, incidents, clients]);
 
   return null;
 }

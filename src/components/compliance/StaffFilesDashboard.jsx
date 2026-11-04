@@ -28,7 +28,7 @@ const MANAGER_COLUMNS = [
   { key: "expiring", label: "Expiring" },
 ];
 
-function computeStaffRow(staff, compDocs, onboardingDocs, trainings, isAdmin) {
+export function computeStaffRow(staff, compDocs, onboardingDocs, trainings, isAdmin) {
   const name = `${staff.first_name} ${staff.last_name}`;
   const myComp = compDocs.filter(d => d.staff_id === staff.id);
   const myOnboard = onboardingDocs.filter(d => d.staff_id === staff.id);
@@ -101,6 +101,17 @@ function computeStaffRow(staff, compDocs, onboardingDocs, trainings, isAdmin) {
     : { status: "green", label: "Expiring Items", detail: "Nothing expiring soon" };
 
   return { id: staff.id, name, sub: staff.role, cells, pct: rowPct(cells) };
+}
+
+/**
+ * Staff Files average — the exact same per-row calculation the Staff Files
+ * tab renders, so the Agency Score can never disagree with the tab.
+ */
+export function computeStaffAvg(staff, compDocs, onboardingDocs, trainings, isAdmin) {
+  const active = staff.filter(s => s.status === "Active" || !s.status);
+  const rows = active.map(s => computeStaffRow(s, compDocs, onboardingDocs, trainings, isAdmin));
+  if (!rows.length) return 0;
+  return Math.round(rows.reduce((a, r) => a + r.pct, 0) / rows.length);
 }
 
 export default function StaffFilesDashboard({ user, onSelectCell }) {

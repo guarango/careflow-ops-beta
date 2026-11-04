@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import PageHeader from "@/components/shared/PageHeader";
@@ -41,6 +42,8 @@ const emptyClient = {
 };
 
 export default function Clients() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin, can } = useRole();
   const { isDSPMode, assignedClientIds } = useAssignedClients();
   const canEditClients = can("editClients");
@@ -143,6 +146,16 @@ export default function Clients() {
     `${c.first_name} ${c.last_name} ${c.diagnosis}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Edit is reached from the client profile: /clients?edit=<id>
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || clients.length === 0) return;
+    const target = clients.find((c) => c.id === editId);
+    if (target) openEdit(target);
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, clients]);
+
   const getServiceSummary = (c) => {
     const enrollments = c.service_enrollments || [];
     // also handle legacy flat field
@@ -182,7 +195,7 @@ export default function Clients() {
             return (
               <EntityCard
                 key={c.id}
-                onClick={() => openEdit(c)}
+                onClick={() => navigate(`/clients/${c.id}`)}
                 initials={initials}
                 photoUrl={c.photo_url}
                 colorClass={color}
@@ -211,7 +224,7 @@ export default function Clients() {
               </TableHeader>
               <TableBody>
                 {filtered.map((c) => (
-                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(c)}>
+                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/clients/${c.id}`)}>
                     <TableCell className="font-medium">{c.first_name} {c.last_name}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">

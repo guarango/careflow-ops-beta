@@ -21,7 +21,7 @@ const COLUMNS = [
   { key: "quarterly", label: "Quarterly" },
 ];
 
-function computeClientRow(client, isps, bsps, meds, consents, grievances, auths, notes) {
+export function computeClientRow(client, isps, bsps, meds, consents, grievances, auths, notes) {
   const name = `${client.first_name} ${client.last_name}`;
   const myIsp = isps.find(p => p.client_id === client.id);
   const myBsp = bsps.find(p => p.client_id === client.id);
@@ -85,6 +85,14 @@ function computeClientRow(client, isps, bsps, meds, consents, grievances, auths,
     : { status: "red", label: "Quarterly Summary", detail: "No recent notes" };
 
   return { id: client.id, name, sub: client.diagnosis, cells, pct: rowPct(cells) };
+}
+
+/** Client Files average — same per-row calculation the Client Files tab uses. */
+export function computeClientAvg(clients, isps, bsps, meds, consents, grievances, auths, notes) {
+  const active = clients.filter(c => c.status === "Active" || !c.status);
+  const rows = active.map(c => computeClientRow(c, isps, bsps, meds, consents, grievances, auths, notes));
+  if (!rows.length) return 0;
+  return Math.round(rows.reduce((a, r) => a + r.pct, 0) / rows.length);
 }
 
 export default function ClientFilesDashboard({ user, onSelectCell }) {

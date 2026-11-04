@@ -14,6 +14,7 @@ import RouteGuard from './components/shared/RouteGuard';
 import Dashboard from './pages/Dashboard';
 import Staff from './pages/Staff';
 import Clients from './pages/Clients';
+import ClientProfile from './pages/ClientProfile';
 import SessionNotes from './pages/SessionNotes.jsx';
 import Incidents from './pages/Incidents';
 import EMAR from './pages/EMAR';
@@ -88,6 +89,7 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/staff" element={<RouteGuard path="/staff"><Staff /></RouteGuard>} />
         <Route path="/clients" element={<RouteGuard path="/clients"><Clients /></RouteGuard>} />
+        <Route path="/clients/:id" element={<RouteGuard path="/clients"><ClientProfile /></RouteGuard>} />
         <Route path="/session-notes" element={<RouteGuard path="/session-notes"><SessionNotes /></RouteGuard>} />
         <Route path="/incidents" element={<RouteGuard path="/incidents"><Incidents /></RouteGuard>} />
         <Route path="/emar" element={<RouteGuard path="/emar"><EMAR /></RouteGuard>} />

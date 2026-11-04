@@ -6,9 +6,12 @@ import HRDashboard from "@/components/dashboard/HRDashboard";
 import DSPDashboard from "@/components/dashboard/DSPDashboard";
 
 export default function Dashboard() {
-  const { role } = useRole();
+  const { role, effectiveUser } = useRole();
   const { user } = useAuth();
+  // While viewing as another user, every panel must resolve against that user
+  // (a DSP being previewed must never see the admin's data).
+  const viewer = effectiveUser || user;
 
-  if (role === "dsp") return <DSPDashboard user={user} />;
-  return <AdminDashboard user={user} />;
+  if (role === "dsp") return <DSPDashboard user={viewer} />;
+  return <AdminDashboard user={viewer} />;
 }

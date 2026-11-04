@@ -12,7 +12,10 @@ export default function ImpersonationBanner() {
   const role = impersonation.targetUser?.role || "dsp";
 
   return (
-    <div className="fixed top-14 left-0 right-0 z-20 h-10 bg-orange-500 text-white flex items-center justify-between px-4 md:ml-[64px] lg:ml-[240px]">
+    <div
+      role="status"
+      className="fixed top-14 left-0 right-0 z-40 h-10 bg-orange-500 text-white flex items-center justify-between gap-3 px-4 md:ml-[64px] lg:ml-[240px] pointer-events-auto"
+    >
       <div className="flex items-center gap-2 min-w-0">
         <Lock className="w-3.5 h-3.5 shrink-0" />
         <span className="text-xs font-medium truncate">
@@ -20,10 +23,11 @@ export default function ImpersonationBanner() {
         </span>
       </div>
       <Button
+        type="button"
         size="sm"
         variant="secondary"
-        className="h-7 text-xs shrink-0"
-        onClick={() => returnToSelf()}
+        className="h-7 text-xs shrink-0 bg-white text-orange-700 hover:bg-white/90"
+        onClick={returnToSelf}
       >
         <LogOut className="w-3 h-3 mr-1" />
         Return to my account

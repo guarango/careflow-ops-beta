@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { useRole } from "@/hooks/useRole";
+import { scopeNotificationsToViewer, viewerScope } from "@/lib/notificationScope";
 
 const TYPE_CONFIG = {
   emar_reminder: { icon: Pill, color: "text-blue-500", bg: "bg-blue-50" },
@@ -28,13 +30,19 @@ export default function NotificationBell({ currentUser, dark = true }) {
   const [ackNote, setAckNote] = useState("");
   const panelRef = useRef(null);
   const navigate = useNavigate();
+  const { effectiveUser } = useRole();
+  // While viewing as another user, the feed belongs to that user, and it is
+  // limited to the clients in their caseload.
+  const viewer = effectiveUser || currentUser;
+  const scope = viewerScope(viewer);
 
   const fetchNotifications = async () => {
-    if (!currentUser?.id) return;
+    if (!viewer?.id) return;
     try {
-      const all = await base44.entities.AppNotification.filter({ recipient_user_id: currentUser.id });
-      all.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-      setNotifications(all);
+      const all = await base44.entities.AppNotification.filter({ recipient_user_id: viewer.id });
+      const scoped = scopeNotificationsToViewer(all, scope);
+      scoped.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      setNotifications(scoped);
     } catch (err) {
       // Swallow network errors so the bell keeps polling without breaking the UI
       console.warn("NotificationBell fetch failed:", err?.message);
@@ -42,20 +50,23 @@ export default function NotificationBell({ currentUser, dark = true }) {
   };
 
   useEffect(() => {
+    setNotifications([]);
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
     return () => clearInterval(interval);
-  }, [currentUser?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewer?.id]);
 
   // Subscribe to real-time updates
   useEffect(() => {
     const unsub = base44.entities.AppNotification.subscribe((event) => {
-      if (event.data?.recipient_user_id === currentUser?.id) {
+      if (event.data?.recipient_user_id === viewer?.id) {
         fetchNotifications();
       }
     });
     return unsub;
-  }, [currentUser?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewer?.id]);
 
   // Close panel on outside click
   useEffect(() => {

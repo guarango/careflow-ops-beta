@@ -11,6 +11,7 @@ import {
   FileSignature
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { scopeNotificationsToViewer } from "@/lib/notificationScope";
 
 
 function StatusPill({ color, label }) {
@@ -128,8 +129,13 @@ export default function DSPDashboard({ user }) {
     assignedClientIds.includes(c.id) && c.status === "Active"
   );
 
-  // Unread notifications
-  const unreadNotifs = allNotifs
+  // Unread notifications — never show a notification about a client
+  // that is not in this viewer's caseload.
+  const scopedNotifs = scopeNotificationsToViewer(allNotifs, {
+    isCaseloadMode: true,
+    assignedClientIds,
+  });
+  const unreadNotifs = scopedNotifs
     .filter(n => n.status === "unread" || n.status === "read")
     .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
     .slice(0, 5);

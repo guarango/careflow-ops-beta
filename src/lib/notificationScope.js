@@ -7,6 +7,14 @@
  * them by mistake. If a notification references a client we cannot match to
  * the viewer's assignments, it is hidden.
  */
+export function viewerScope(viewer) {
+  const role = viewer?.is_super_admin ? "super_admin" : viewer?.role;
+  return {
+    isCaseloadMode: role === "dsp" || role === "manager",
+    assignedClientIds: viewer?.assigned_client_ids || [],
+  };
+}
+
 export function scopeNotificationsToViewer(notifications, { isCaseloadMode, assignedClientIds } = {}) {
   if (!Array.isArray(notifications)) return [];
   if (!isCaseloadMode) return notifications;

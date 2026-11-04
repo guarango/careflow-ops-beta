@@ -13,6 +13,8 @@ import { Bell, Check, X, Mail, MessageSquare, Smartphone, Monitor, Settings, Fil
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { useRole } from "@/hooks/useRole";
+import { scopeNotificationsToViewer, viewerScope } from "@/lib/notificationScope";
 
 const TYPE_LABELS = {
   emar_reminder: { label: "Med Reminder", color: "bg-blue-100 text-blue-700" },
@@ -46,18 +48,25 @@ const CHANNEL_ICONS = {
 
 export default function NotificationCenter() {
   const { user } = useAuth();
+  const { effectiveUser } = useRole();
+  const viewer = effectiveUser || user;
+  const viewerIsAdmin = viewer?.is_super_admin || viewer?.role === "admin" || viewer?.role === "super_admin";
+  const scope = viewerScope(viewer);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+  const isAdmin = viewerIsAdmin;
   const [activeTab, setActiveTab] = useState("mine");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const { data: myNotifications = [] } = useQuery({
-    queryKey: ["my-notifications"],
-    queryFn: () => base44.entities.AppNotification.filter({ recipient_user_id: user?.id }),
-    enabled: !!user?.id,
+  const { data: myNotificationsRaw = [] } = useQuery({
+    queryKey: ["my-notifications", viewer?.id],
+    queryFn: () => base44.entities.AppNotification.filter({ recipient_user_id: viewer?.id }),
+    enabled: !!viewer?.id,
   });
+
+  // HIPAA: a caseload viewer only ever sees items about their own clients.
+  const myNotifications = scopeNotificationsToViewer(myNotificationsRaw, scope);
 
   const { data: allNotifications = [] } = useQuery({
     queryKey: ["all-notifications"],
