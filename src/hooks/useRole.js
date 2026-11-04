@@ -22,6 +22,7 @@ export function useRole() {
   return {
     role,
     realRole,
+    effectiveUser,
     bundles,
     isReadOnly,
     // Role flags

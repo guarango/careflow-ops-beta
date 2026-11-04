@@ -36,12 +36,15 @@ export function ImpersonationProvider({ children }) {
     }
   }, []);
 
-  const returnToSelf = useCallback(async () => {
+  // Safety control: exit the impersonated session immediately.
+  // The UI must never wait on (or be blocked by) the audit-log round trip,
+  // so local state is cleared first and the audit entry is sent afterwards.
+  const returnToSelf = useCallback(() => {
     clearTimeout();
-    if (impersonation) {
-      const { sessionId, targetUser } = impersonation;
-      await endSession(sessionId, targetUser?.id, false);
-      setImpersonation(null);
+    const current = impersonation;
+    setImpersonation(null);
+    if (current) {
+      endSession(current.sessionId, current.targetUser?.id, false);
     }
   }, [impersonation, clearTimeout, endSession]);
 
