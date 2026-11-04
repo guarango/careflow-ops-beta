@@ -52,18 +52,6 @@ export default function Register() {
     }
   };
 
-  // The invite is what gives the account its role. If there is no invite behind
-  // the sign-up, the account exists but has no access to the app.
-  const resolveSignedInUser = async () => {
-    let me = null;
-    try { me = await base44.auth.me(); } catch { me = null; }
-    if (me && !me.role && !me.is_super_admin) {
-      try { await base44.functions.invoke("applyPendingUserConfig", { email }); } catch { /* no pending invite */ }
-      try { me = await base44.auth.me(); } catch { me = null; }
-    }
-    return me;
-  };
-
   const handleVerify = async () => {
     setError("");
     setLoading(true);
@@ -76,11 +64,6 @@ export default function Register() {
       }
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
-      }
-      const signedInUser = await resolveSignedInUser();
-      if (signedInUser && !signedInUser.role && !signedInUser.is_super_admin) {
-        setNotInvited(true);
-        return;
       }
       window.location.href = safeReturnTo();
     } catch (err) {
@@ -113,7 +96,6 @@ export default function Register() {
       <AuthLayout
         icon={UserPlus}
         title="Set up your CareFlow account"
-        subtitle={email ? `We checked ${email}` : undefined}
         footer={
           <Link to={loginPath} className="text-primary font-medium hover:underline">
             Back to log in
