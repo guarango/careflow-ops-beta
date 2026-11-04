@@ -5,6 +5,10 @@
     "first_name": {
       "type": "string"
     },
+    "middle_initial": {
+      "type": "string",
+      "description": "Middle initial, optional (Utah EVV recipient data element)"
+    },
     "last_name": {
       "type": "string"
     },
@@ -24,6 +28,10 @@
     "diagnosis": {
       "type": "string"
     },
+    "medicaid_id": {
+      "type": "string",
+      "description": "Utah Medicaid member ID (EVV Member ID / billing recipient ID). Numeric, up to 10 digits \u2014 leading zeros are significant."
+    },
     "house_id": {
       "type": "string",
       "description": "House/Location ID this client belongs to"
@@ -35,6 +43,17 @@
       "type": "string"
     },
     "address": {
+      "type": "string",
+      "description": "Street address line"
+    },
+    "address_city": {
+      "type": "string"
+    },
+    "address_state": {
+      "type": "string",
+      "default": "UT"
+    },
+    "address_zip": {
       "type": "string"
     },
     "insurance_id": {

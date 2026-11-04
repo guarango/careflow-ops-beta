@@ -21,6 +21,10 @@
     "client_name": {
       "type": "string"
     },
+    "member_id": {
+      "type": "string",
+      "description": "Recipient Medicaid member ID captured at submission time (Utah Member ID)"
+    },
     "house_id": {
       "type": "string"
     },
@@ -31,6 +35,9 @@
       "type": "string"
     },
     "service_code": {
+      "type": "string"
+    },
+    "service_description": {
       "type": "string"
     },
     "is_evv_required": {
@@ -47,6 +54,10 @@
     "clock_out": {
       "type": "string"
     },
+    "units": {
+      "type": "number",
+      "description": "Billable units for the visit (15-minute units)"
+    },
     "location_in_lat": {
       "type": "number"
     },
@@ -56,6 +67,15 @@
     "location_in_address": {
       "type": "string"
     },
+    "location_in_city": {
+      "type": "string"
+    },
+    "location_in_state": {
+      "type": "string"
+    },
+    "location_in_zip": {
+      "type": "string"
+    },
     "location_out_lat": {
       "type": "number"
     },
@@ -63,6 +83,15 @@
       "type": "number"
     },
     "location_out_address": {
+      "type": "string"
+    },
+    "location_out_city": {
+      "type": "string"
+    },
+    "location_out_state": {
+      "type": "string"
+    },
+    "location_out_zip": {
       "type": "string"
     },
     "geofence_distance_in": {
@@ -116,9 +145,52 @@
         "Pending",
         "Submitted",
         "Accepted",
-        "Rejected"
+        "Rejected",
+        "Corrected"
       ],
       "default": "Pending"
+    },
+    "provider_npi": {
+      "type": "string",
+      "description": "Provider NPI used for the submission"
+    },
+    "provider_prism_id": {
+      "type": "string",
+      "description": "Provider PRISM / Medicaid provider ID used for the submission"
+    },
+    "vendor_name": {
+      "type": "string",
+      "description": "EVV solution vendor name (Utah required field)"
+    },
+    "export_batch_id": {
+      "type": "string",
+      "description": "Provider-assigned Batch ID of the export this record was included in (numeric)"
+    },
+    "record_id": {
+      "type": "string",
+      "description": "Provider-assigned Record ID within the batch (numeric)"
+    },
+    "exported_at": {
+      "type": "string"
+    },
+    "receipt_id": {
+      "type": "string",
+      "description": "State-issued receipt ID from the Utah EVV acknowledgement"
+    },
+    "orig_receipt_id": {
+      "type": "string",
+      "description": "Original receipt ID when submitting a correction"
+    },
+    "is_correction": {
+      "type": "boolean",
+      "default": false
+    },
+    "correction_reason": {
+      "type": "string"
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "Reason returned by Utah EVV when a record is rejected"
     },
     "aggregator_response": {
       "type": "string"

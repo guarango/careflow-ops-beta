@@ -7,6 +7,17 @@
       "description": "House or program name"
     },
     "address": {
+      "type": "string",
+      "description": "Street address line"
+    },
+    "address_city": {
+      "type": "string"
+    },
+    "address_state": {
+      "type": "string",
+      "default": "UT"
+    },
+    "address_zip": {
       "type": "string"
     },
     "geofence_radius": {
