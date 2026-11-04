@@ -100,7 +100,7 @@ export default function Incidents() {
       {isDSP && (
         <div className="flex items-center gap-2 mb-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm text-amber-700">
           <Lock className="w-4 h-4 flex-shrink-0" />
-          <span>Incidents you submit are sent to your supervisor for review. You cannot change the status of a submitted report.</span>
+          <span>Incidents you submit are sent to your supervisor for review. A submitted report is locked — you can view it and its status, but only your supervisor can edit it.</span>
         </div>
       )}
 

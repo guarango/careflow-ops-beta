@@ -27,7 +27,9 @@ export default function IncidentDetailDialog({ open, incident, onClose, onEdit, 
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between pr-8">
             <span>Incident — {incident.client_name}</span>
-            <Button size="sm" variant="outline" onClick={onEdit}><Pencil className="w-3.5 h-3.5 mr-1" /> Edit</Button>
+            {canReview && (
+              <Button size="sm" variant="outline" onClick={onEdit}><Pencil className="w-3.5 h-3.5 mr-1" /> Edit</Button>
+            )}
           </DialogTitle>
         </DialogHeader>
 

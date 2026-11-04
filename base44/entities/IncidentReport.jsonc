@@ -253,12 +253,6 @@
     "update": {
       "$or": [
         {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.reported_by": "{{user.id}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
