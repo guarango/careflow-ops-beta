@@ -153,15 +153,10 @@
     "status"
   ],
   "rls": {
-    "read": {
+    "create": {
       "$or": [
         {
           "data.staff_id": "{{user.data.staff_member_id}}"
-        },
-        {
-          "data.staff_id": {
-            "$in": "{{user.data.team_staff_ids}}"
-          }
         },
         {
           "user_condition": {
@@ -175,7 +170,7 @@
         }
       ]
     },
-    "create": {
+    "read": {
       "$or": [
         {
           "data.staff_id": "{{user.data.staff_member_id}}"
@@ -201,11 +196,6 @@
       "$or": [
         {
           "data.staff_id": "{{user.data.staff_member_id}}"
-        },
-        {
-          "data.staff_id": {
-            "$in": "{{user.data.team_staff_ids}}"
-          }
         },
         {
           "user_condition": {

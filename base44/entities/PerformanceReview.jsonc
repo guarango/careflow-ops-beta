@@ -97,15 +97,10 @@
     "review_type"
   ],
   "rls": {
-    "read": {
+    "create": {
       "$or": [
         {
           "data.staff_id": "{{user.data.staff_member_id}}"
-        },
-        {
-          "data.staff_id": {
-            "$in": "{{user.data.team_staff_ids}}"
-          }
         },
         {
           "user_condition": {
@@ -114,15 +109,16 @@
         }
       ]
     },
-    "create": {
+    "read": {
       "$or": [
         {
           "data.staff_id": "{{user.data.staff_member_id}}"
         },
         {
-          "data.staff_id": {
-            "$in": "{{user.data.team_staff_ids}}"
-          }
+          "data.reviewer_id": "{{user.id}}"
+        },
+        {
+          "created_by_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -132,21 +128,9 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "data.staff_id": "{{user.data.staff_member_id}}"
-        },
-        {
-          "data.staff_id": {
-            "$in": "{{user.data.team_staff_ids}}"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
       "user_condition": {
