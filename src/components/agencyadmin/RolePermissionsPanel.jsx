@@ -2,11 +2,10 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import PageHeader from "@/components/shared/PageHeader";
 import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, Target, CalendarDays, UserCog,
-  Check, X, Briefcase, Info, RotateCcw, Lock,
+  Check, X, Briefcase, Info, RotateCcw,
 } from "lucide-react";
 import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
 import { useRole } from "@/hooks/useRole";
@@ -93,7 +92,11 @@ const FEATURE_CATEGORIES = [
 
 const ROLES = ["dsp", "manager", "admin", "super_admin"];
 
-export default function RolePreview() {
+/**
+ * Role permissions matrix, hosted inside Settings & Admin.
+ * Editable only by Super Admin; other admins get a read-only view.
+ */
+export default function RolePermissionsPanel() {
   const { isSuperAdmin } = useRole();
   const { matrix, togglePermission, resetToDefaults, saving } = usePermissions();
 
@@ -101,27 +104,21 @@ export default function RolePreview() {
   const canMap = matrix.can;
 
   return (
-    <div>
-      <PageHeader
-        title="Role Permissions"
-        subtitle="Permission model for DSP, Manager, Admin, and Super Admin"
-        action={
-          isSuperAdmin && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => resetToDefaults()}
-              disabled={saving}
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset to Defaults
-            </Button>
-          )
-        }
-      />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Role Permissions</h2>
+          <p className="text-sm text-muted-foreground">Permission model for DSP, Manager, Admin, and Super Admin</p>
+        </div>
+        {isSuperAdmin && (
+          <Button variant="outline" size="sm" onClick={() => resetToDefaults()} disabled={saving}>
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Reset to Defaults
+          </Button>
+        )}
+      </div>
 
-      {/* Bundle note */}
-      <div className="mb-6 p-4 bg-muted rounded-lg flex items-start gap-2">
+      <div className="p-4 bg-muted rounded-lg flex items-start gap-2">
         <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
         <p className="text-xs text-muted-foreground">
           <strong>Bundles:</strong> Admin access to HR and Billing areas requires the matching bundle. An Admin without the HR or Billing bundle cannot open those areas.
@@ -129,7 +126,6 @@ export default function RolePreview() {
         </p>
       </div>
 
-      {/* Full permissions matrix */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Full Permissions Matrix</CardTitle>
@@ -160,7 +156,7 @@ export default function RolePreview() {
                   </td>
                   {ROLES.map(role => {
                     const allowed = navAccess[item.path];
-                    let hasAccess = allowed ? allowed.includes(role) : (role === "admin" || role === "super_admin");
+                    const hasAccess = allowed ? allowed.includes(role) : (role === "admin" || role === "super_admin");
                     return (
                       <td key={role} className="px-4 py-2 text-center">
                         <PermissionToggle
@@ -216,9 +212,6 @@ export default function RolePreview() {
   );
 }
 
-/**
- * Clickable checkmark / X toggle. Only interactive when `editable` is true (Super Admin).
- */
 function PermissionToggle({ hasAccess, editable, onClick }) {
   if (!editable) {
     return hasAccess
@@ -230,15 +223,10 @@ function PermissionToggle({ hasAccess, editable, onClick }) {
       onClick={onClick}
       title={hasAccess ? "Click to revoke" : "Click to grant"}
       className={`mx-auto p-1 rounded-md transition-colors hover:scale-110 ${
-        hasAccess
-          ? "text-green-600 hover:bg-green-100"
-          : "text-red-400 hover:bg-red-100"
+        hasAccess ? "text-green-600 hover:bg-green-100" : "text-red-400 hover:bg-red-100"
       }`}
     >
-      {hasAccess
-        ? <Check className="w-4 h-4" />
-        : <X className="w-4 h-4" />
-      }
+      {hasAccess ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
     </button>
   );
 }

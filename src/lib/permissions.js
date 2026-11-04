@@ -38,7 +38,6 @@ export const NAV_ACCESS = {
   "/reports":      ["manager", "admin", "super_admin"],
   "/users":        ["admin", "super_admin"],
   "/agency-admin": ["admin", "super_admin"],
-  "/role-preview": ["admin", "super_admin"],
   "/audit-log":   ["admin", "super_admin"],
   "/super-admin":  ["super_admin"],
   "/notifications":["dsp", "manager", "admin", "super_admin"],

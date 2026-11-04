@@ -72,7 +72,6 @@ const ALL_NAV = [
       { path: "/notifications", label: "Notification Center", icon: Bell },
       { path: "/agency-admin", label: "Settings & Admin", icon: Settings },
       { path: "/audit-log", label: "Audit Log", icon: ScrollText },
-      { path: "/role-preview", label: "Role Permissions", icon: Eye },
     ],
   },
 ];

@@ -8,11 +8,12 @@ import AgencyNotifications from "@/components/agencyadmin/AgencyNotifications";
 import AgencyAPISettings from "@/components/agencyadmin/AgencyAPISettings";
 import EVVLocationSettings from "@/components/agencyadmin/EVVLocationSettings";
 import AgencySubscription from "@/components/agencyadmin/AgencySubscription";
+import RolePermissionsPanel from "@/components/agencyadmin/RolePermissionsPanel";
 
 import AIFeatureManager from "@/components/ai/AIFeatureManager";
 import AgencyIntegrationHub from "@/components/integrations/AgencyIntegrationHub";
 import IntegrationHealthDashboard from "@/components/integrations/IntegrationHealthDashboard";
-import { Settings, Palette, Bell, Code, CreditCard, Sparkles, Plug, Activity, MapPin } from "lucide-react";
+import { Settings, Palette, Bell, Code, CreditCard, Sparkles, Plug, Activity, MapPin, ShieldCheck } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AgencyAdmin() {
@@ -55,6 +56,7 @@ export default function AgencyAdmin() {
           <TabsTrigger value="ai-settings" className="gap-2"><Sparkles className="w-4 h-4" /> AI Features</TabsTrigger>
           <TabsTrigger value="integrations" className="gap-2"><Plug className="w-4 h-4" /> Integrations</TabsTrigger>
           <TabsTrigger value="int-health" className="gap-2"><Activity className="w-4 h-4" /> Integration Health</TabsTrigger>
+          <TabsTrigger value="permissions" className="gap-2"><ShieldCheck className="w-4 h-4" /> Roles & Permissions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -83,6 +85,9 @@ export default function AgencyAdmin() {
         </TabsContent>
         <TabsContent value="int-health">
           <IntegrationHealthDashboard agencyId={agency?.id || "demo-agency"} />
+        </TabsContent>
+        <TabsContent value="permissions">
+          <RolePermissionsPanel />
         </TabsContent>
       </Tabs>
     </div>
