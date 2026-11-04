@@ -28,33 +28,68 @@ const ALL_NAV = [
   { label: "User Management", icon: UserCog, path: "/users" },
 ];
 
-const FEATURE_LABELS = {
-  approveTimecards:     "Approve Timecards",
-  viewAllTimecards:     "View All Timecards",
-  approveSessionNotes:  "Approve Session Notes",
-  editStaff:            "Edit Staff Records (HR bundle)",
-  changeIncidentStatus: "Change Incident Status",
-  viewAllIncidents:     "View All Incidents",
-  editClients:          "Edit Client Records",
-  createClient:         "Add Client Records",
-  deleteClient:         "Delete Client Records",
-  createStaff:          "Add Staff Records (HR bundle)",
-  deleteStaff:          "Delete Staff Records (HR bundle)",
-  accessBilling:        "Access Billing (Billing bundle)",
-  editServiceCodes:     "Edit Service Codes (Billing bundle)",
-  createUser:           "Invite / Add Users",
-  editUser:             "Edit Users & Roles",
-  deleteUser:           "Delete Users",
-  editGoals:            "Edit Goals",
-  viewIncidentBadge:    "View Incident Badge",
-  manageTraining:       "Manage Training",
-  viewAllStaff:         "View All Staff",
-  accessSettings:       "Access Settings",
-  exportPayroll:        "Export Payroll (Billing bundle)",
-  lockPayPeriod:        "Lock Pay Period",
-  unlockTimecard:       "Unlock Timecard",
-  loginAs:              "Login As (Super Admin only)",
-};
+const FEATURE_CATEGORIES = [
+  {
+    title: "People & Records",
+    icon: Users,
+    description: "Staff and client records",
+    items: [
+      ["viewAllStaff", "View All Staff"],
+      ["createStaff", "Add Staff Records (HR bundle)"],
+      ["editStaff", "Edit Staff Records (HR bundle)"],
+      ["deleteStaff", "Delete Staff Records (HR bundle)"],
+      ["createClient", "Add Client Records"],
+      ["editClients", "Edit Client Records"],
+      ["deleteClient", "Delete Client Records"],
+    ],
+  },
+  {
+    title: "Clinical & Documentation",
+    icon: FileText,
+    description: "Notes, goals, incidents, and training",
+    items: [
+      ["approveSessionNotes", "Approve Session Notes"],
+      ["editGoals", "Edit Goals"],
+      ["viewAllIncidents", "View All Incidents"],
+      ["changeIncidentStatus", "Change Incident Status"],
+      ["viewIncidentBadge", "View Incident Badge"],
+      ["manageTraining", "Manage Training"],
+    ],
+  },
+  {
+    title: "Time & Payroll",
+    icon: Clock,
+    description: "Timecard review and pay periods",
+    items: [
+      ["viewAllTimecards", "View All Timecards"],
+      ["approveTimecards", "Approve Timecards"],
+      ["exportPayroll", "Export Payroll (Billing bundle)"],
+      ["lockPayPeriod", "Lock Pay Period"],
+      ["unlockTimecard", "Unlock Timecard"],
+    ],
+  },
+  {
+    title: "Billing & Finance",
+    icon: DollarSign,
+    description: "Claims, rates, and billing access",
+    items: [
+      ["accessBilling", "Access Billing (Billing bundle)"],
+      ["editServiceCodes", "Edit Service Codes (Billing bundle)"],
+    ],
+  },
+  {
+    title: "Administration & Access",
+    icon: Shield,
+    description: "Users, settings, and impersonation",
+    items: [
+      ["createUser", "Invite / Add Users"],
+      ["editUser", "Edit Users & Roles"],
+      ["deleteUser", "Delete Users"],
+      ["accessSettings", "Access Settings"],
+      ["loginAs", "Login As (Super Admin only)"],
+    ],
+  },
+];
 
 const ROLES = ["dsp", "manager", "admin", "super_admin"];
 
@@ -138,26 +173,40 @@ export default function RolePreview() {
                   })}
                 </tr>
               ))}
-              <tr className="bg-muted/20 border-t-2">
-                <td className="px-4 py-2 font-semibold text-xs text-muted-foreground uppercase tracking-wider" colSpan={5}>Feature Permissions</td>
-              </tr>
-              {Object.entries(FEATURE_LABELS).map(([key, label]) => (
-                <tr key={key} className="border-b last:border-0 hover:bg-muted/20">
-                  <td className="px-4 py-2 text-muted-foreground">{label}</td>
-                  {ROLES.map(role => {
-                    const allowed = canMap[key];
-                    const hasAccess = allowed ? allowed.includes(role) : false;
-                    return (
-                      <td key={role} className="px-4 py-2 text-center">
-                        <PermissionToggle
-                          hasAccess={hasAccess}
-                          editable={isSuperAdmin}
-                          onClick={() => isSuperAdmin && togglePermission("can", key, role)}
-                        />
-                      </td>
-                    );
-                  })}
-                </tr>
+              {FEATURE_CATEGORIES.map(category => (
+                <React.Fragment key={category.title}>
+                  <tr className="bg-muted/20 border-t-2">
+                    <td className="px-4 py-2" colSpan={5}>
+                      <div className="flex items-center gap-2">
+                        <category.icon className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+                          {category.title}
+                        </span>
+                        <span className="text-xs text-muted-foreground/70 normal-case tracking-normal">
+                          — {category.description}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  {category.items.map(([key, label]) => (
+                    <tr key={key} className="border-b last:border-0 hover:bg-muted/20">
+                      <td className="px-4 py-2 text-muted-foreground">{label}</td>
+                      {ROLES.map(role => {
+                        const allowed = canMap[key];
+                        const hasAccess = allowed ? allowed.includes(role) : false;
+                        return (
+                          <td key={role} className="px-4 py-2 text-center">
+                            <PermissionToggle
+                              hasAccess={hasAccess}
+                              editable={isSuperAdmin}
+                              onClick={() => isSuperAdmin && togglePermission("can", key, role)}
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
