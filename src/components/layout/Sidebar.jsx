@@ -46,7 +46,6 @@ const ALL_NAV = [
       { path: "/recognition", label: "Recognition", icon: Trophy },
       { path: "/hr", label: "HR & Compliance", icon: Briefcase },
       { path: "/hr/signatures", label: "E-Signatures", icon: FileSignature },
-      { path: "/hr/trainings", label: "Training Builder", icon: GraduationCap },
       { path: "/compliance", label: "Compliance", icon: ShieldCheck },
     ],
   },
@@ -54,6 +53,7 @@ const ALL_NAV = [
     section: "Training",
     items: [
       { path: "/my-trainings", label: "My Trainings", icon: GraduationCap },
+      { path: "/hr/trainings", label: "Training Builder", icon: GraduationCap },
       { path: "/hr/training-verify", label: "Verify Trainings", icon: ClipboardCheck },
       { path: "/reports/training-hours", label: "Training Hours", icon: BarChart3 },
     ],
