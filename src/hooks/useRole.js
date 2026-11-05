@@ -3,6 +3,17 @@ import { useRolePreview } from "@/lib/RolePreviewContext";
 import { usePermissions } from "@/lib/PermissionsContext";
 import { useImpersonation } from "@/lib/ImpersonationContext";
 
+// Allow-list. A User record has app access ONLY when is_super_admin is true, or
+// its role is exactly one of APP_ROLES and it is not deactivated. Anything else
+// ("user", empty, unexpected values) has no access at all.
+export const APP_ROLES = ["dsp", "manager", "admin"];
+
+export function hasAppAccess(userRecord) {
+  if (!userRecord) return false;
+  if (userRecord.is_super_admin === true) return true;
+  return APP_ROLES.includes(userRecord.role) && userRecord.is_deactivated !== true;
+}
+
 export function useRole() {
   const { user } = useAuth();
   const { previewRole } = useRolePreview();
@@ -24,6 +35,8 @@ export function useRole() {
     role,
     realRole,
     effectiveUser,
+    // Single source of truth for the whole-app access gate.
+    hasAccess: hasAppAccess(effectiveUser),
     bundles,
     isReadOnly,
     // Role flags

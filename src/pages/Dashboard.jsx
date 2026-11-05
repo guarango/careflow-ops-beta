@@ -12,6 +12,10 @@ export default function Dashboard() {
   // (a DSP being previewed must never see the admin's data).
   const viewer = effectiveUser || user;
 
+  // Layout is chosen only on an exact role match — never defaulted to Admin.
   if (role === "dsp") return <DSPDashboard user={viewer} />;
-  return <AdminDashboard user={viewer} />;
+  if (role === "manager" || role === "admin" || role === "super_admin") {
+    return <AdminDashboard user={viewer} />;
+  }
+  return null;
 }

@@ -1,18 +1,14 @@
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
-import { useImpersonation } from "@/lib/ImpersonationContext";
+import { useRole } from "@/hooks/useRole";
 import { Button } from "@/components/ui/button";
 import { LogOut, ShieldAlert } from "lucide-react";
 
-// Blocks anyone whose User record has no app role or is deactivated.
+// Blocks anyone without app access (allow-list in useRole).
 // Nothing below this guard (sidebar, dashboard, data queries) is mounted for them.
 export default function AccountAccessGuard() {
-  const { user, logout } = useAuth();
-  const { impersonation } = useImpersonation();
-  const effectiveUser = impersonation?.targetUser || user;
-
-  const hasAccess = effectiveUser?.is_super_admin
-    || (!!effectiveUser?.role && !effectiveUser?.is_deactivated);
+  const { logout } = useAuth();
+  const { hasAccess } = useRole();
 
   if (!hasAccess) {
     return (
