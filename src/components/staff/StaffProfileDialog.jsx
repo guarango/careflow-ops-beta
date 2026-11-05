@@ -16,9 +16,11 @@ import SensitiveValue from "@/components/shared/SensitiveValue";
 const CONTRACT_AREAS = ["DSPD", "DCFS", "Private Pay", "Licensed Program", "Foster Care"];
 const CERT_NAMES = ["CPR/First Aid", "Medication Administration", "CPI / Crisis Prevention", "HIPAA", "Mandated Reporter", "Abuse & Neglect", "Driver's License", "Other"];
 
-export default function StaffProfileDialog({ staff, onSave, onClose, canAssign = false, canEditHR = false, readOnly = false }) {
+export default function StaffProfileDialog({ staff, onSave, onClose, canAssign = false, canViewHR = false, canEditHR = false, readOnly = false }) {
   const [form, setForm] = useState(staff);
   const [tab, setTab] = useState("personal");
+  // Personal + Employment + Certs are always shown; Compliance and Assigned are gated.
+  const tabCols = 3 + (canViewHR ? 1 : 0) + (canAssign ? 1 : 0);
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
@@ -85,10 +87,10 @@ export default function StaffProfileDialog({ staff, onSave, onClose, canAssign =
         )}
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className={`grid flex-shrink-0 ${canAssign ? "grid-cols-5" : "grid-cols-4"}`}>
+          <TabsList className={`grid flex-shrink-0 ${tabCols === 5 ? "grid-cols-5" : tabCols === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
             <TabsTrigger value="personal"><User className="w-3.5 h-3.5 mr-1.5" />Personal</TabsTrigger>
             <TabsTrigger value="employment"><Briefcase className="w-3.5 h-3.5 mr-1.5" />Employment</TabsTrigger>
-            <TabsTrigger value="compliance"><Shield className="w-3.5 h-3.5 mr-1.5" />Compliance</TabsTrigger>
+            {canViewHR && <TabsTrigger value="compliance"><Shield className="w-3.5 h-3.5 mr-1.5" />Compliance</TabsTrigger>}
             <TabsTrigger value="certifications"><Award className="w-3.5 h-3.5 mr-1.5" />Certs</TabsTrigger>
             {canAssign && <TabsTrigger value="assigned"><Users className="w-3.5 h-3.5 mr-1.5" />Assigned</TabsTrigger>}
           </TabsList>
@@ -250,79 +252,12 @@ export default function StaffProfileDialog({ staff, onSave, onClose, canAssign =
               <div><Label>Notes</Label><Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} rows={3} /></div>
             </TabsContent>
 
-            {/* COMPLIANCE TAB */}
+            {/* COMPLIANCE TAB — HR files need the HR bundle view code */}
+            {canViewHR && (
             <TabsContent value="compliance" className="mt-0 space-y-5">
-              {canEditHR ? (<>
-              {/* Background Check */}
-              <div className="bg-muted rounded-lg p-4 space-y-3">
-                <h3 className="text-sm font-semibold">Background Check</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label className="text-xs">Date</Label><Input type="date" value={form.background_check_date || ""} onChange={e => set("background_check_date", e.target.value)} className="h-8 text-sm" /></div>
-                  <div>
-                    <Label className="text-xs">Status</Label>
-                    <Select value={form.background_check_status || ""} onValueChange={v => set("background_check_status", v)}>
-                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>
-                        {["Pending","Cleared","Failed","Expired"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-2"><Label className="text-xs">Notes</Label><Input value={form.background_check_notes || ""} onChange={e => set("background_check_notes", e.target.value)} className="h-8 text-sm" /></div>
-                </div>
-              </div>
-
-              {/* I-9 */}
-              <div className="bg-muted rounded-lg p-4 space-y-3">
-                <h3 className="text-sm font-semibold">I-9 Verification</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox checked={form.i9_verified || false} onCheckedChange={v => set("i9_verified", v)} id="i9" />
-                    <label htmlFor="i9" className="text-sm">I-9 Verified</label>
-                  </div>
-                  <div><Label className="text-xs">Verification Date</Label><Input type="date" value={form.i9_date || ""} onChange={e => set("i9_date", e.target.value)} className="h-8 text-sm" /></div>
-                </div>
-              </div>
-
-              {/* Drug Screen */}
-              <div className="bg-muted rounded-lg p-4 space-y-3">
-                <h3 className="text-sm font-semibold">Drug Screen</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label className="text-xs">Date</Label><Input type="date" value={form.drug_screen_date || ""} onChange={e => set("drug_screen_date", e.target.value)} className="h-8 text-sm" /></div>
-                  <div>
-                    <Label className="text-xs">Result</Label>
-                    <Select value={form.drug_screen_status || ""} onValueChange={v => set("drug_screen_status", v)}>
-                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>
-                        {["Pending","Passed","Failed","Expired"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              </>) : (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  HR compliance documents are restricted. Contact an administrator for access.
-                </p>
-              )}
-              {/* TB Test */}
-              <div className="bg-muted rounded-lg p-4 space-y-3">
-                <h3 className="text-sm font-semibold">TB Test</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  <div><Label className="text-xs">Test Date</Label><Input type="date" value={form.tb_test_date || ""} onChange={e => set("tb_test_date", e.target.value)} className="h-8 text-sm" /></div>
-                  <div><Label className="text-xs">Expiry Date</Label><Input type="date" value={form.tb_test_expiry || ""} onChange={e => set("tb_test_expiry", e.target.value)} className="h-8 text-sm" /></div>
-                  <div>
-                    <Label className="text-xs">Result</Label>
-                    <Select value={form.tb_test_result || ""} onValueChange={v => set("tb_test_result", v)}>
-                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>
-                        {["Negative","Positive","Pending"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
+...
             </TabsContent>
+            )}
 
             {/* CERTIFICATIONS TAB */}
             <TabsContent value="certifications" className="mt-0 space-y-4">

@@ -47,7 +47,7 @@ export const NAV_ACCESS = {
   "/hr/training-verify":    ["manager", "hr_bundle"],
   "/hr/signatures":         ["hr_bundle"],
   "/reports/training-hours": ["manager", "admin"],
-  "/finance":               ["manager", "admin", "billing_bundle"],
+  "/finance":               ["billing_bundle"],
   "/reports":               ["manager", "admin"],
   "/recognition":           ["dsp", "manager", "admin"],
   "/notifications":         ["dsp", "manager", "admin"],
@@ -68,7 +68,7 @@ export const CAN = {
   // Care
   editClients:            ["manager", "admin"],
   createClient:           ["admin"],
-  deleteClient:           ["admin"],
+  deleteClient:           [],
   editGoals:              ["manager", "admin"],
   bspEdit:                ["manager", "admin"],
   ispEdit:                ["admin"],
@@ -82,58 +82,61 @@ export const CAN = {
   createIncident:         ["dsp", "manager", "admin"],
   changeIncidentStatus:   ["manager", "admin"],
   approveIncidents:       ["admin"],
-  viewAllIncidents:       ["manager", "admin"],
+  viewAllIncidents:       [],
   viewIncidentBadge:      ["manager", "admin"],
   staffFilesView:         ["hr_bundle"],
+  viewStaffHRFiles:       ["hr_bundle"],
   viewSensitiveIdentifiers: ["hr_bundle"],
   viewSensitiveHRDetails: ["hr_bundle"],
-  viewSensitiveRates:     ["billing_bundle"],
+  viewSensitiveRates:     [],
+  viewClientCompliance:   ["manager", "admin"],
   viewAgencyCompliance:   ["admin"],
-  viewAllNotifications:   ["admin"],
-  hrAnalytics:            ["admin"],
+  viewAllNotifications:   [],
+  hrAnalytics:            [],
 
   // Staff & Operations
   scheduleBuild:          ["manager", "admin"],
   clockInOut:             ["dsp", "manager", "admin"],
   approveTimecards:       ["manager", "admin"],
-  viewAllTimecards:       ["manager", "admin"],
-  lockPayPeriod:          ["admin"],
+  viewAllTimecards:       [],
+  lockPayPeriod:          [],
   unlockTimecard:         ["admin"],
   editHouses:             ["manager", "admin"],
   deleteHouse:            ["admin"],
-  viewAllStaff:           ["manager", "admin"],
+  viewAllStaff:           ["admin"],
   editStaffDirectory:     ["admin", "hr_bundle"],
   editStaff:              ["hr_bundle"],
-  createStaff:            ["hr_bundle"],
-  deleteStaff:            ["hr_bundle"],
+  createStaff:            ["admin"],
+  deleteStaff:            [],
   createUser:             ["admin"],
   editUser:               ["admin"],
-  deleteUser:             ["admin"],
+  deleteUser:             [],
   accessSettings:         ["admin"],
   viewPermissions:        ["admin"],
   editFormFields:         ["admin"],
   manageRecognition:      ["admin"],
-  giveKudos:              ["manager", "admin"],
+  giveKudos:              [],
   loginAs:                [],
 
   // Training
   manageTraining:         ["hr_bundle"],
   verifyTraining:         ["manager", "hr_bundle"],
   manageSignatures:       ["hr_bundle"],
-  sendSignatureRequests:  ["hr_bundle"],
-  viewTeamSignatures:     ["manager", "admin"],
+  sendSignatureRequests:  [],
+  viewTeamSignatures:     [],
 
   // Finance
   editServiceCodes:       ["admin"],
-  authorizationsManage:   ["billing_bundle"],
+  authorizationsManage:   ["admin", "billing_bundle"],
   editRates:              ["billing_bundle"],
   accessBilling:          ["billing_bundle"],
-  viewServiceCodes:       ["manager", "admin"],
-  viewUnitTracking:       ["manager", "admin"],
+  viewServiceCodes:       ["admin", "billing_bundle"],
+  viewAuditLog:           ["admin"],
+  viewUnitTracking:       ["manager", "admin", "billing_bundle"],
   exportPayroll:          ["billing_bundle"],
   billingExport:          ["billing_bundle"],
   evvExport:              ["billing_bundle"],
-  hrAccess:               ["hr_bundle"],
+  hrAccess:               [],
   superAdminAccess:       [],
 };
 
@@ -147,7 +150,9 @@ export const FEATURE_SECTIONS = [
     features: [
       { key: "dashboard", label: "Dashboard", paths: ["/"] },
       { key: "clients", label: "Clients", paths: ["/clients"], actions: [
+        { code: "createClient", level: "Create", label: "Add new client" },
         { code: "editClients", level: "Edit", label: "Edit client records" },
+        { code: "deleteClient", level: "Delete", label: "Delete client" },
       ] },
       { key: "goals", label: "Client goals", paths: ["/goals"], actions: [
         { code: "editGoals", level: "Edit", label: "Edit goals" },
@@ -178,15 +183,23 @@ export const FEATURE_SECTIONS = [
         { code: "createIncident", level: "Create", label: "File incidents" },
         { code: "changeIncidentStatus", level: "Edit", label: "Edit incidents" },
         { code: "approveIncidents", level: "Approve", label: "Approve incidents" },
+        { code: "viewIncidentBadge", level: "View", label: "Open-incident count badge" },
+        { code: "viewAllIncidents", level: "View", label: "See all incidents" },
       ] },
       { key: "complianceClients", label: "Compliance (clients)", paths: ["/compliance"], actions: [
+        { code: "viewClientCompliance", level: "View", label: "View client compliance files" },
         { code: "viewAgencyCompliance", level: "View", label: "Agency score & agency file" },
       ] },
       { key: "complianceStaff", label: "Compliance (staff files)", paths: ["/compliance"], hideView: true, actions: [
         { code: "staffFilesView", level: "View", label: "View staff compliance files" },
+        { code: "viewSensitiveHRDetails", level: "View", label: "See HR details (background, I-9, pay)" },
       ] },
       { key: "sensitiveIdentifiers", label: "Sensitive identifiers", paths: [], hideView: true, actions: [
         { code: "viewSensitiveIdentifiers", level: "View", label: "Reveal sensitive identifiers" },
+        { code: "viewSensitiveRates", level: "View", label: "See client rates" },
+      ] },
+      { key: "notificationCenter", label: "Notification center", paths: ["/notifications"], actions: [
+        { code: "viewAllNotifications", level: "View", label: "See all agency notifications" },
       ] },
     ],
   },
@@ -199,22 +212,37 @@ export const FEATURE_SECTIONS = [
       { key: "timecards", label: "Timecards", paths: ["/timecards"], actions: [
         { code: "clockInOut", level: "Create", label: "Clock in / out" },
         { code: "approveTimecards", level: "Approve", label: "Approve timecards" },
+        { code: "viewAllTimecards", level: "View", label: "See all timecards" },
+        { code: "unlockTimecard", level: "Edit", label: "Unlock an approved timecard" },
+        { code: "lockPayPeriod", level: "Edit", label: "Lock a pay period" },
       ] },
       { key: "houses", label: "Houses", paths: ["/houses"], actions: [
         { code: "editHouses", level: "Edit", label: "Edit houses" },
         { code: "deleteHouse", level: "Delete", label: "Delete houses" },
       ] },
       { key: "staffDirectory", label: "Staff directory", paths: ["/staff"], actions: [
+        { code: "viewAllStaff", level: "View", label: "See all staff, not just my team" },
         { code: "editStaffDirectory", level: "Edit", label: "Edit phone & assignments" },
       ] },
       { key: "staffHRFiles", label: "Staff HR files", paths: ["/staff"], hideView: true, actions: [
+        { code: "viewStaffHRFiles", level: "View", label: "View HR files (background, I-9, drug screen, TB)" },
         { code: "editStaff", level: "Edit", label: "Edit HR files (SSN, background, pay)" },
+        { code: "deleteStaff", level: "Delete", label: "Delete staff member" },
+      ] },
+      { key: "hrManagement", label: "HR management", paths: ["/hr"], hideView: true, actions: [
+        { code: "hrAccess", level: "View", label: "Open HR management" },
+        { code: "hrAnalytics", level: "View", label: "HR analytics" },
       ] },
       { key: "users", label: "Users & invites", paths: ["/agency-admin"], hideView: true, actions: [
-        { code: "editUser", level: "Edit", label: "Invite & manage users" },
+        { code: "createUser", level: "Create", label: "Invite users" },
+        { code: "createStaff", level: "Create", label: "Add staff" },
+        { code: "editUser", level: "Edit", label: "Manage users" },
+        { code: "loginAs", level: "Edit", label: "Login as a user" },
+        { code: "deleteUser", level: "Delete", label: "Delete user" },
       ] },
       { key: "recognition", label: "Recognition", paths: ["/recognition"], actions: [
         { code: "manageRecognition", level: "Edit", label: "Manage recognition" },
+        { code: "giveKudos", level: "View", label: "Give kudos" },
       ] },
     ],
   },
@@ -230,24 +258,30 @@ export const FEATURE_SECTIONS = [
       ] },
       { key: "signatureTemplates", label: "E-signature templates", paths: ["/hr/signatures"], actions: [
         { code: "manageSignatures", level: "Edit", label: "Manage signature templates" },
+        { code: "sendSignatureRequests", level: "Create", label: "Send signature requests" },
+        { code: "viewTeamSignatures", level: "View", label: "See team signatures" },
       ] },
     ],
   },
   {
     title: "Finance",
     features: [
-      { key: "serviceCodes", label: "Service codes", paths: ["/finance"], hideView: true, actions: [
+      { key: "serviceCodes", label: "Service codes", paths: ["/agency-admin"], hideView: true, actions: [
+        { code: "viewServiceCodes", level: "View", label: "View service codes" },
         { code: "editServiceCodes", level: "Edit", label: "Edit service codes" },
       ] },
-      { key: "authorizationsUnits", label: "Authorizations & units", paths: ["/finance"], hideView: true, actions: [
+      { key: "authorizationsUnits", label: "Authorizations & units", paths: ["/clients"], hideView: true, actions: [
+        { code: "viewUnitTracking", level: "View", label: "View unit tracking" },
         { code: "authorizationsManage", level: "Edit", label: "Manage authorizations & units" },
       ] },
       { key: "rates", label: "Rates / Finance", paths: ["/finance"], hideView: true, actions: [
+        { code: "accessBilling", level: "View", label: "Billing overview" },
         { code: "editRates", level: "Edit", label: "Edit rates" },
       ] },
       { key: "payrollExport", label: "Payroll & billing export", paths: ["/finance"], hideView: true, actions: [
         { code: "exportPayroll", level: "Create", label: "Export payroll" },
         { code: "billingExport", level: "Create", label: "Export billing" },
+        { code: "evvExport", level: "Create", label: "Export EVV" },
       ] },
     ],
   },
@@ -264,7 +298,12 @@ export const FEATURE_SECTIONS = [
       { key: "formFields", label: "Form fields", paths: ["/agency-admin"], hideView: true, actions: [
         { code: "editFormFields", level: "Edit", label: "Edit form fields" },
       ] },
-      { key: "auditLog", label: "Audit log", paths: ["/audit-log"] },
+      { key: "auditLog", label: "Audit log", paths: ["/audit-log"], actions: [
+        { code: "viewAuditLog", level: "View", label: "Open the audit log" },
+      ] },
+      { key: "superAdminConsole", label: "Super admin", paths: ["/super-admin"], hideView: true, actions: [
+        { code: "superAdminAccess", level: "View", label: "Platform super admin console" },
+      ] },
     ],
   },
 ];

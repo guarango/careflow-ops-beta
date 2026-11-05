@@ -37,6 +37,7 @@ export default function Staff() {
   const { can } = useRole();
   const canCreateStaff = can("createStaff");
   // HR-sensitive fields (SSN, background checks, pay) need the HR bundle.
+  const canViewHR = can("viewStaffHRFiles");
   const canEditHR = can("editStaff");
   // Directory edits (contact info, client & house assignments) do not.
   const canEditStaff = canEditHR || can("editStaffDirectory");
@@ -138,7 +139,7 @@ export default function Staff() {
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {filtered.map((s) => {
-            const alerts = complianceAlerts(s);
+            const alerts = canViewHR ? complianceAlerts(s) : [];
             const initials = `${s.first_name?.[0] || ""}${s.last_name?.[0] || ""}`.toUpperCase();
             const colors = ["bg-blue-100 text-blue-700", "bg-purple-100 text-purple-700", "bg-green-100 text-green-700", "bg-pink-100 text-pink-700", "bg-amber-100 text-amber-700", "bg-cyan-100 text-cyan-700", "bg-rose-100 text-rose-700"];
             const color = colors[(s.first_name?.charCodeAt(0) || 0) % colors.length];
@@ -178,13 +179,13 @@ export default function Staff() {
                   <TableHead>Role</TableHead>
                   <TableHead className="hidden md:table-cell">Contact</TableHead>
                   <TableHead className="hidden md:table-cell">Type</TableHead>
-                  <TableHead className="hidden md:table-cell">Compliance</TableHead>
+                  {canViewHR && <TableHead className="hidden md:table-cell">Compliance</TableHead>}
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((s) => {
-                  const alerts = complianceAlerts(s);
+                  const alerts = canViewHR ? complianceAlerts(s) : [];
                   return (
                     <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(s)}>
                       <TableCell className="font-medium">{s.first_name} {s.last_name}</TableCell>
@@ -202,16 +203,18 @@ export default function Staff() {
                           <span className="text-xs text-muted-foreground">{s.employment_type || "—"}</span>
                         )}
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {alerts.length > 0 ? (
-                          <div className="flex items-center gap-1">
-                            <AlertTriangle className="w-3.5 h-3.5 text-chart-4" />
-                            <span className="text-xs text-chart-4">{alerts.length} missing</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-accent">✓ Complete</span>
-                        )}
-                      </TableCell>
+                      {canViewHR && (
+                        <TableCell className="hidden md:table-cell">
+                          {alerts.length > 0 ? (
+                            <div className="flex items-center gap-1">
+                              <AlertTriangle className="w-3.5 h-3.5 text-chart-4" />
+                              <span className="text-xs text-chart-4">{alerts.length} missing</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-accent">✓ Complete</span>
+                          )}
+                        </TableCell>
+                      )}
                       <TableCell><StatusBadge status={s.status || "Active"} /></TableCell>
                     </TableRow>
                   );
@@ -228,6 +231,7 @@ export default function Staff() {
           onSave={handleSave}
           onClose={() => { setShowDialog(false); setEditingStaff(null); }}
           canAssign={canEditStaff}
+          canViewHR={canViewHR}
           canEditHR={canEditHR}
           readOnly={!canEditStaff}
         />

@@ -17,10 +17,23 @@ import AuditReportDialog from "@/components/compliance/AuditReportDialog";
 export default function Compliance() {
   const { user } = useAuth();
   const { can } = useRole();
-  const [activeTab, setActiveTab] = useState("staff");
   const [showAuditReport, setShowAuditReport] = useState(false);
+  // Each tab is its own feature; the route opens when any of them is viewable.
+  const canStaffFiles = can("staffFilesView");
+  const canClientFiles = can("viewClientCompliance");
   // Agency score + agency file are agency-wide views, not caseload views.
   const isAdmin = can("viewAgencyCompliance");
+
+  const tabs = [
+    canStaffFiles && { value: "staff", label: "Staff Files" },
+    canClientFiles && { value: "client", label: "Client Files" },
+    canClientFiles && { value: "charting", label: "Charting" },
+    isAdmin && { value: "agency-score", label: "Agency Score" },
+    isAdmin && { value: "agency-file", label: "Agency File" },
+  ].filter(Boolean);
+  const [selected, setSelected] = useState(null);
+  const activeTab = tabs.some((t) => t.value === selected) ? selected : tabs[0]?.value;
+  const shows = (value) => tabs.some((t) => t.value === value);
 
   return (
     <div>
@@ -41,30 +54,34 @@ export default function Compliance() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setSelected}>
         <TabsList className="mb-4 flex-wrap h-auto">
-          <TabsTrigger value="staff">Staff Files</TabsTrigger>
-          <TabsTrigger value="client">Client Files</TabsTrigger>
-          <TabsTrigger value="charting">Charting</TabsTrigger>
-          {isAdmin && <TabsTrigger value="agency-score">Agency Score</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="agency-file">Agency File</TabsTrigger>}
+          {tabs.map((t) => (
+            <TabsTrigger key={t.value} value={t.value}>{t.label}</TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value="staff">
-          <StaffFilesDashboard />
-        </TabsContent>
-        <TabsContent value="client">
-          <ClientFilesDashboard user={user} />
-        </TabsContent>
-        <TabsContent value="charting">
-          <ChartingDashboard user={user} />
-        </TabsContent>
-        {isAdmin && (
+        {shows("staff") && (
+          <TabsContent value="staff">
+            <StaffFilesDashboard />
+          </TabsContent>
+        )}
+        {shows("client") && (
+          <TabsContent value="client">
+            <ClientFilesDashboard user={user} />
+          </TabsContent>
+        )}
+        {shows("charting") && (
+          <TabsContent value="charting">
+            <ChartingDashboard user={user} />
+          </TabsContent>
+        )}
+        {shows("agency-score") && (
           <TabsContent value="agency-score">
             <AgencyScoreDashboardProvider />
           </TabsContent>
         )}
-        {isAdmin && (
+        {shows("agency-file") && (
           <TabsContent value="agency-file">
             <AgencyFileSettings user={user} />
           </TabsContent>

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/useRole";
+import ClientAuthorizations from "@/components/clients/ClientAuthorizations";
 import {
   ArrowLeft, Pencil, User, Users, Pill, Target, ClipboardList, Heart,
 } from "lucide-react";
@@ -242,6 +243,11 @@ export default function ClientProfile() {
             )}
           </CardContent>
         </Card>
+
+        {/* Authorizations & units */}
+        <div className="md:col-span-2">
+          <ClientAuthorizations client={client} />
+        </div>
 
         {/* Recent notes */}
         <Card className="md:col-span-2">
