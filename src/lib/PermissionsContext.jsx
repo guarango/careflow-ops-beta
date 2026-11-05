@@ -133,6 +133,51 @@ export function PermissionsProvider({ children }) {
     }
   }, [matrix]);
 
+  // Toggle one role across several nav paths in a single save
+  // (used by matrix rows that cover more than one page)
+  const toggleNavPaths = useCallback(async (paths, role) => {
+    const grant = !paths.every(p => (matrix.navAccess[p] || []).includes(role));
+    const navOverride = {};
+    paths.forEach(p => {
+      const current = [...(matrix.navAccess[p] || [])];
+      navOverride[p] = grant
+        ? (current.includes(role) ? current : [...current, role])
+        : current.filter(r => r !== role);
+    });
+
+    const newMatrix = { ...matrix, navAccess: { ...matrix.navAccess, ...navOverride } };
+    setMatrix(newMatrix);
+
+    setSaving(true);
+    try {
+      const page = await base44.entities.PermissionMatrix.filter(
+        { matrix_key: MATRIX_KEY },
+        { limit: 1 }
+      );
+      const existing = page?.items?.[0];
+
+      if (existing) {
+        await base44.entities.PermissionMatrix.update(existing.id, {
+          nav_access: { ...(existing.nav_access || {}), ...navOverride },
+          can: existing.can || {},
+          updated_at: new Date().toISOString(),
+        });
+      } else {
+        await base44.entities.PermissionMatrix.create({
+          matrix_key: MATRIX_KEY,
+          nav_access: navOverride,
+          can: {},
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to save permission override:", err);
+      setMatrix(matrix);
+    } finally {
+      setSaving(false);
+    }
+  }, [matrix]);
+
   // Reset all overrides back to defaults
   const resetToDefaults = useCallback(async () => {
     setSaving(true);
@@ -165,6 +210,7 @@ export function PermissionsProvider({ children }) {
       can,
       canAccessPath,
       togglePermission,
+      toggleNavPaths,
       resetToDefaults,
     }}>
       {children}

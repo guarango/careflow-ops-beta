@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, Target, CalendarDays, UserCog,
-  Check, X, Briefcase, Info, RotateCcw, Brain,
+  Check, X, Briefcase, Info, RotateCcw, Brain, ClipboardList,
 } from "lucide-react";
 import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
 import { useRole } from "@/hooks/useRole";
@@ -20,6 +20,7 @@ const ALL_NAV = [
   { label: "Session Notes", icon: FileText, path: "/session-notes" },
   { label: "Incidents", icon: AlertTriangle, path: "/incidents" },
   { label: "Behavior Support Plans", icon: Brain, path: "/bsp" },
+  { label: "Monthly & Quarterly Summaries", icon: ClipboardList, path: "/summaries/monthly", paths: ["/summaries/monthly", "/summaries/quarterly"] },
   { label: "eMAR", icon: Pill, path: "/emar" },
   { label: "Timecards", icon: Clock, path: "/timecards" },
   { label: "Compliance", icon: Shield, path: "/compliance" },
@@ -99,7 +100,7 @@ const ROLES = ["dsp", "manager", "admin", "super_admin"];
  */
 export default function RolePermissionsPanel() {
   const { isSuperAdmin } = useRole();
-  const { matrix, togglePermission, resetToDefaults, saving } = usePermissions();
+  const { matrix, togglePermission, toggleNavPaths, resetToDefaults, saving } = usePermissions();
 
   const navAccess = matrix.navAccess;
   const canMap = matrix.can;
@@ -147,29 +148,34 @@ export default function RolePermissionsPanel() {
               <tr className="bg-muted/20 border-t">
                 <td className="px-4 py-2 font-semibold text-xs text-muted-foreground uppercase tracking-wider" colSpan={5}>Navigation Pages</td>
               </tr>
-              {ALL_NAV.map(item => (
-                <tr key={item.path} className="border-b last:border-0 hover:bg-muted/20">
-                  <td className="px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <item.icon className="w-3.5 h-3.5 text-muted-foreground" />
-                      {item.label}
-                    </div>
-                  </td>
-                  {ROLES.map(role => {
-                    const allowed = navAccess[item.path];
-                    const hasAccess = allowed ? allowed.includes(role) : (role === "admin" || role === "super_admin");
-                    return (
-                      <td key={role} className="px-4 py-2 text-center">
-                        <PermissionToggle
-                          hasAccess={hasAccess}
-                          editable={isSuperAdmin}
-                          onClick={() => isSuperAdmin && togglePermission("nav", item.path, role)}
-                        />
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+              {ALL_NAV.map(item => {
+                const paths = item.paths || [item.path];
+                return (
+                  <tr key={item.path} className="border-b last:border-0 hover:bg-muted/20">
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <item.icon className="w-3.5 h-3.5 text-muted-foreground" />
+                        {item.label}
+                      </div>
+                    </td>
+                    {ROLES.map(role => {
+                      const hasAccess = paths.every(p => {
+                        const allowed = navAccess[p];
+                        return allowed ? allowed.includes(role) : (role === "admin" || role === "super_admin");
+                      });
+                      return (
+                        <td key={role} className="px-4 py-2 text-center">
+                          <PermissionToggle
+                            hasAccess={hasAccess}
+                            editable={isSuperAdmin}
+                            onClick={() => isSuperAdmin && toggleNavPaths(paths, role)}
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
               {FEATURE_CATEGORIES.map(category => (
                 <React.Fragment key={category.title}>
                   <tr className="bg-muted/20 border-t-2">

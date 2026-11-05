@@ -47,8 +47,8 @@ export const NAV_ACCESS = {
   "/my-trainings":  ["dsp", "manager", "admin", "super_admin"],
   "/hr/training-verify": ["manager", "admin", "super_admin"],
   "/reports/training-hours": ["manager", "admin", "super_admin"],
-  "/summaries/monthly":    ["manager", "admin", "super_admin"],
-  "/summaries/quarterly":  ["manager", "admin", "super_admin"],
+  "/summaries/monthly":    ["dsp", "manager", "admin", "super_admin"],
+  "/summaries/quarterly":  ["dsp", "manager", "admin", "super_admin"],
   "/sign":          ["dsp", "manager", "admin", "super_admin"],
   "/recognition":  ["manager", "admin", "super_admin"],
 };
