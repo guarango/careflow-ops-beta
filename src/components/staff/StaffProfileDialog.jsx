@@ -12,6 +12,8 @@ import { User, Briefcase, Shield, Award, Plus, Trash2, Paperclip, ExternalLink, 
 import { base44 } from "@/api/base44Client";
 import AssignedClientsTab from "./AssignedClientsTab";
 import SensitiveValue from "@/components/shared/SensitiveValue";
+import StatusBadge from "@/components/shared/StatusBadge";
+import { ACCESS_LABELS } from "@/lib/staffFilters";
 
 const CONTRACT_AREAS = ["DSPD", "DCFS", "Private Pay", "Licensed Program", "Foster Care"];
 const CERT_NAMES = ["CPR/First Aid", "Medication Administration", "CPI / Crisis Prevention", "HIPAA", "Mandated Reporter", "Abuse & Neglect", "Driver's License", "Other"];
@@ -194,7 +196,7 @@ export default function StaffProfileDialog({ staff, onSave, onClose, canAssign =
                   </Select>
                 </div>
                 <div>
-                  <Label>Position / Role</Label>
+                  <Label>Job title</Label>
                   <Select value={form.role || ""} onValueChange={v => set("role", v)}>
                     <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
@@ -214,17 +216,16 @@ export default function StaffProfileDialog({ staff, onSave, onClose, canAssign =
                 </div>
                 <div>
                   <Label>Status</Label>
-                  <Select value={form.status || "Active"} onValueChange={v => set("status", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {["Active","On Leave","Inactive","Terminated"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <div className="mt-1.5"><StatusBadge status={form.status || "Pending"} /></div>
+                </div>
+                <div>
+                  <Label>App access</Label>
+                  <div className="mt-1.5">
+                    <Badge variant="outline" className="text-[11px]">{ACCESS_LABELS[form.app_access || "dsp"]}</Badge>
+                    <p className="text-[11px] text-muted-foreground mt-1">Set in Settings &amp; Admin → Users</p>
+                  </div>
                 </div>
                 <div><Label>Hire Date</Label><Input type="date" value={form.hire_date || ""} onChange={e => set("hire_date", e.target.value)} /></div>
-                {form.status === "Terminated" && (
-                  <div><Label>Termination Date</Label><Input type="date" value={form.termination_date || ""} onChange={e => set("termination_date", e.target.value)} /></div>
-                )}
               </div>
 
               <div className="border-t pt-4">

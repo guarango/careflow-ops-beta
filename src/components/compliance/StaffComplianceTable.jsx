@@ -68,7 +68,7 @@ export default function StaffComplianceTable({ staff, allDocs, calcCompliance, o
               <TableHeader>
                 <TableRow>
                   <TableHead>Staff Member</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Job title</TableHead>
                   <TableHead>Compliance %</TableHead>
                   <TableHead>Missing</TableHead>
                   <TableHead>Expiring</TableHead>

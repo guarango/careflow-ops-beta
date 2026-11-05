@@ -10,51 +10,91 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserCog, Plus, Mail, ShieldCheck, Users, Briefcase, Crown, Eye, LogIn, Lock, Info } from "lucide-react";
+import { UserCog, Plus, Mail, ShieldCheck, Users, Briefcase, Info } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useRole } from "@/hooks/useRole";
-import { useImpersonation } from "@/lib/ImpersonationContext";
-import { getRoleLabel, getRoleBadgeColor, ROLE_DESCRIPTIONS } from "@/lib/permissions";
+import { getRoleLabel, ROLE_DESCRIPTIONS } from "@/lib/permissions";
+import StatusBadge from "@/components/shared/StatusBadge";
+import StaffStatusFilter from "@/components/shared/StaffStatusFilter";
+import StaffProfileDialog from "@/components/staff/StaffProfileDialog";
 import EditUserDialog from "@/components/users/EditUserDialog";
 import UserActionsMenu from "@/components/users/UserActionsMenu";
-import LoginAsReasonDialog from "@/components/users/LoginAsReasonDialog";
+import { DEFAULT_STATUS_TAB, peopleInTab, matchesSearch, ACCESS_LABELS, personStatus } from "@/lib/staffFilters";
+
+const JOB_TITLES = ["DSP", "Nurse", "QIDP", "Supervisor", "Admin", "Behavioral Specialist", "Mental Health Pro", "Contractor", "Volunteer", "Non-Client Facing", "Other"];
 
 const ROLE_CARDS = [
-  { key: "dsp",         icon: Users,       color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-  { key: "manager",     icon: Briefcase,   color: "bg-violet-500/10 text-violet-600 border-violet-500/20" },
-  { key: "admin",       icon: ShieldCheck, color: "bg-primary/10 text-primary border-primary/20" },
-  { key: "super_admin", icon: Crown,       color: "bg-destructive/10 text-destructive border-destructive/20" },
+  { key: "dsp", icon: Users, color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+  { key: "manager", icon: Briefcase, color: "bg-violet-500/10 text-violet-600 border-violet-500/20" },
+  { key: "admin", icon: ShieldCheck, color: "bg-primary/10 text-primary border-primary/20" },
 ];
 
+/**
+ * Users = the access view of every person (the same StaffMember records the Staff page shows).
+ * Every access change goes through setStaffAccess; nobody is ever deleted.
+ */
 export default function UserManagement() {
+  const { can } = useRole();
+  const canEditUser = can("editUser");
+  const canViewHR = can("viewStaffHRFiles");
+  const canEditHR = can("editStaff");
+  const canEditStaffProfile = canEditHR || can("editStaffDirectory");
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("dsp");
+  const [inviteJobTitle, setInviteJobTitle] = useState("DSP");
+  const [inviteAccess, setInviteAccess] = useState("dsp");
   const [hrBundle, setHrBundle] = useState(false);
   const [billingBundle, setBillingBundle] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [impersonating, setImpersonating] = useState(false);
-  const [loginAsTarget, setLoginAsTarget] = useState(null);
-  const [editUser, setEditUser] = useState(null);
+  const [editPerson, setEditPerson] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
   const [savingUser, setSavingUser] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { isSuperAdmin, can } = useRole();
-  const { loginAs } = useImpersonation();
-  const canCreateUser = can("createUser");
-  const canEditUser = can("editUser");
-  const canDeleteUser = can("deleteUser");
-  const showActions = isSuperAdmin || canEditUser || canDeleteUser;
+  const [statusTab, setStatusTab] = useState(DEFAULT_STATUS_TAB);
+  const [search, setSearch] = useState("");
+  const [profileStaff, setProfileStaff] = useState(null);
 
-  const { data: usersData, refetch } = useQuery({
+  const { data: rows = [], refetch } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
       const res = await base44.functions.invoke("manageUsers", { action: "list" });
-      return res.data;
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data.rows || [];
     },
   });
-  const users = usersData?.users || [];
+
+  const { data: staffRecords = [] } = useQuery({
+    queryKey: ["staff"],
+    queryFn: () => base44.entities.StaffMember.list(),
+  });
+
+  const refreshAll = () => {
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ["staff"] });
+  };
+
+  const callAccess = async (payload) => {
+    const res = await base44.functions.invoke("setStaffAccess", payload);
+    if (res.data?.error) throw new Error(res.data.error);
+    return res.data;
+  };
+
+  const visible = peopleInTab(rows, statusTab).filter((r) => matchesSearch(r, search));
+
+  const openProfile = (row) => {
+    const record = staffRecords.find((s) => s.id === row.staffId);
+    if (record) setProfileStaff(record);
+  };
+
+  const saveProfile = async (formData) => {
+    const { app_access, hr_bundle, billing_bundle, status, invited_by, invited_at, activated_at, deactivated_at, deactivated_by, deactivation_reason, ...profile } = formData;
+    await base44.entities.StaffMember.update(formData.id, profile);
+    setProfileStaff(null);
+    refreshAll();
+  };
 
   const handleInvite = async () => {
     if (!inviteEmail) return;
@@ -63,18 +103,20 @@ export default function UserManagement() {
       const res = await base44.functions.invoke("manageUsers", {
         action: "invite",
         email: inviteEmail,
-        role: inviteRole,
-        hrBundle: inviteRole === "admin" ? hrBundle : false,
-        billingBundle: inviteRole === "admin" ? billingBundle : false,
+        job_title: inviteJobTitle,
+        app_access: inviteAccess,
+        hr_bundle: inviteAccess === "admin" ? hrBundle : false,
+        billing_bundle: inviteAccess === "admin" ? billingBundle : false,
       });
       if (res.data?.error) throw new Error(res.data.error);
-      toast({ title: "Invitation sent", description: `${inviteEmail} has been invited as ${getRoleLabel(inviteRole)}.` });
+      toast({ title: "Invitation sent", description: `${inviteEmail} was invited as ${getRoleLabel(inviteAccess)}.` });
       setInviteEmail("");
-      setInviteRole("dsp");
+      setInviteJobTitle("DSP");
+      setInviteAccess("dsp");
       setHrBundle(false);
       setBillingBundle(false);
       setShowInvite(false);
-      refetch();
+      refreshAll();
     } catch (err) {
       toast({ title: "Invite failed", description: err.message, variant: "destructive" });
     } finally {
@@ -82,33 +124,14 @@ export default function UserManagement() {
     }
   };
 
-  const handleLoginAs = async (targetUser, reason) => {
-    setImpersonating(true);
-    try {
-      await loginAs(targetUser.id, reason);
-      toast({ title: "Login As active", description: `You are now viewing as ${targetUser.full_name || targetUser.email}.` });
-      window.location.href = "/";
-    } catch (err) {
-      toast({ title: "Login As failed", description: err.message, variant: "destructive" });
-    } finally {
-      setImpersonating(false);
-      setLoginAsTarget(null);
-    }
-  };
-
-  const handleEditUser = (user) => {
-    setEditUser(user);
-    setShowEdit(true);
-  };
-
-  const handleSaveUser = async ({ userId, role, hrBundle, billingBundle }) => {
+  const handleSaveAccess = async ({ staffId, app_access, hr_bundle, billing_bundle }) => {
     setSavingUser(true);
     try {
-      const res = await base44.functions.invoke("manageUsers", { action: "update", userId, role, hrBundle, billingBundle });
-      if (res.data?.error) throw new Error(res.data.error);
-      toast({ title: "User updated", description: "Role and bundles have been saved." });
+      await callAccess({ staffId, app_access, hr_bundle, billing_bundle });
+      toast({ title: "Access updated", description: "Saved and applied to their login." });
       setShowEdit(false);
-      refetch();
+      setEditPerson(null);
+      refreshAll();
     } catch (err) {
       toast({ title: "Update failed", description: err.message, variant: "destructive" });
     } finally {
@@ -116,67 +139,84 @@ export default function UserManagement() {
     }
   };
 
-  const handleResetPassword = async (user) => {
+  const handleResetPassword = async (person) => {
     try {
-      const res = await base44.functions.invoke("manageUsers", { action: "reset_password", email: user.email });
+      const res = await base44.functions.invoke("manageUsers", { action: "reset_password", email: person.email });
       if (res.data?.error) throw new Error(res.data.error);
-      toast({ title: "Reset email sent", description: `A password reset link has been sent to ${user.email}.` });
+      toast({ title: "Reset email sent", description: `A password reset link was sent to ${person.email}.` });
     } catch (err) {
       toast({ title: "Reset failed", description: err.message, variant: "destructive" });
     }
   };
 
-  const handleToggleDeactivated = async (user, deactivated) => {
+  const handleDeactivate = async (person, reason) => {
     try {
-      const res = await base44.functions.invoke("manageUsers", { action: "set_deactivated", userId: user.id, deactivated });
-      if (res.data?.error) throw new Error(res.data.error);
-      toast({ title: deactivated ? "User deactivated" : "User reactivated", description: `${user.full_name || user.email} is ${deactivated ? "now deactivated" : "active again"}.` });
-      refetch();
+      await callAccess({ staffId: person.staffId, action: "deactivate", reason });
+      toast({ title: "Deactivated", description: `${person.name} can no longer sign in. Their history is kept.` });
+      refreshAll();
     } catch (err) {
       toast({ title: "Action failed", description: err.message, variant: "destructive" });
     }
   };
 
-  const handleDeleteUser = async (user) => {
+  const handleReactivate = async (person) => {
     try {
-      const res = await base44.functions.invoke("manageUsers", { action: "delete", userId: user.id });
-      if (res.data?.error) throw new Error(res.data.error);
-      toast({ title: "User deleted", description: `${user.full_name || user.email} has been removed.` });
-      refetch();
+      await callAccess({ staffId: person.staffId, action: "reactivate" });
+      toast({ title: "Reactivated", description: `${person.name} can sign in again.` });
+      refreshAll();
     } catch (err) {
-      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+      toast({ title: "Action failed", description: err.message, variant: "destructive" });
     }
   };
 
-  const effectiveRole = (u) => u.is_super_admin ? "super_admin" : u.role;
+  const handleResendInvite = async (person) => {
+    try {
+      const res = await base44.functions.invoke("manageUsers", { action: "resend_invite", staffId: person.staffId });
+      if (res.data?.error) throw new Error(res.data.error);
+      toast({ title: "Invite resent", description: `A new invite was emailed to ${person.email}.` });
+      refreshAll();
+    } catch (err) {
+      toast({ title: "Resend failed", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleCancelInvite = async (person) => {
+    try {
+      await callAccess({ staffId: person.staffId, action: "cancel_invite" });
+      toast({ title: "Invite cancelled", description: `${person.name}'s pending invite was removed.` });
+      refreshAll();
+    } catch (err) {
+      toast({ title: "Cancel failed", description: err.message, variant: "destructive" });
+    }
+  };
 
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Users</h2>
-          <p className="text-sm text-muted-foreground">Manage platform access for DSP, Manager, Admin, and Super Admin users</p>
+          <p className="text-sm text-muted-foreground">Everyone in the agency — one staff record and one login each. This is the access view.</p>
         </div>
-        {canCreateUser && (
+        {can("createUser") && (
           <Button onClick={() => setShowInvite(true)}>
             <Plus className="w-4 h-4 mr-2" />Invite User
           </Button>
         )}
       </div>
 
-      {/* Role Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Role cards — DSP, Manager, Admin only */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {ROLE_CARDS.map(({ key, icon: Icon, color }) => {
-          const count = users.filter(u => effectiveRole(u) === key).length;
+          const count = visible.filter((p) => p.app_access === key).length;
           return (
             <Card key={key} className="p-4">
               <div className="flex items-center gap-2.5 mb-2">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center border ${color}`}>
-                  <Icon className="w-4.5 h-4.5" />
+                  <Icon className="w-4 h-4" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-sm">{getRoleLabel(key)}</p>
-                  <Badge variant="outline" className={`text-[10px] border ${color}`}>{count} user{count !== 1 ? "s" : ""}</Badge>
+                  <p className="font-semibold text-sm">{ACCESS_LABELS[key]}</p>
+                  <Badge variant="outline" className={`text-[10px] border ${color}`}>{count} {count === 1 ? "person" : "people"}</Badge>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">{ROLE_DESCRIPTIONS[key]}</p>
@@ -185,96 +225,101 @@ export default function UserManagement() {
         })}
       </div>
 
-      {/* Bundle explanation */}
-      <div className="mb-6 p-4 bg-muted rounded-lg flex items-start gap-2">
+      <div className="mb-4 p-4 bg-muted rounded-lg flex items-start gap-2">
         <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          <strong>Permission Bundles:</strong> Admins can optionally enable the <strong>HR bundle</strong> (staff HR files, onboarding, e-signature templates, trainings, staff compliance) and/or <strong>Billing bundle</strong> (service code rates, authorizations, unit tracking, payroll export, billing export, EVV export). An Admin without a bundle cannot open those areas.
+          <strong>Job title is HR information only</strong> — it never grants access. <strong>App access</strong> and the optional
+          <strong> HR</strong> / <strong>Billing</strong> bundles (Admins only) decide what the person can open. App access changes every time through one audited path.
         </p>
       </div>
 
-      {/* Users Table */}
+      <Card className="mb-4">
+        <div className="py-3 px-4 flex flex-col gap-3 md:flex-row md:items-center">
+          <StaffStatusFilter people={rows} value={statusTab} onChange={setStatusTab} />
+          <div className="relative flex-1">
+            <Input
+              placeholder="Search by name, email, or job title..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+      </Card>
+
       <Card>
         <div className="overflow-x-auto">
-          <Table className="min-w-[900px]">
+          <Table className="min-w-[950px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead>Job title</TableHead>
+                <TableHead>App access</TableHead>
                 <TableHead>Bundles</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Joined</TableHead>
-                {showActions && <TableHead className="text-right">Actions</TableHead>}
+                <TableHead>Last login</TableHead>
+                {canEditUser && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map(u => {
-                const role = effectiveRole(u);
-                const cfg = getRoleBadgeColor(role);
-                return (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
-                    <TableCell className="text-sm">
-                      <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-muted-foreground" />{u.email}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`text-[11px] border ${cfg}`}>{getRoleLabel(role)}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {role === "admin" && (
-                          <>
-                            {u.hr_bundle && <Badge variant="outline" className="text-[10px] bg-violet-500/10 text-violet-600 border-violet-500/20">HR</Badge>}
-                            {u.billing_bundle && <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20">Billing</Badge>}
-                            {!u.hr_bundle && !u.billing_bundle && <span className="text-xs text-muted-foreground">—</span>}
-                          </>
-                        )}
-                        {role !== "admin" && <span className="text-xs text-muted-foreground">—</span>}
+              {visible.map((p) => (
+                <TableRow key={p.staffId}>
+                  <TableCell>
+                    <button
+                      type="button"
+                      onClick={() => openProfile(p)}
+                      className="font-medium text-left hover:text-primary hover:underline"
+                    >
+                      {p.name}
+                    </button>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-muted-foreground" />{p.email || "—"}</span>
+                  </TableCell>
+                  <TableCell className="text-sm">{p.job_title || "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-[11px]">{ACCESS_LABELS[p.app_access] || p.app_access}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      {p.app_access === "admin" ? (
+                        <>
+                          {p.hr_bundle && <Badge variant="outline" className="text-[10px] bg-violet-500/10 text-violet-600 border-violet-500/20">HR</Badge>}
+                          {p.billing_bundle && <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20">Billing</Badge>}
+                          {!p.hr_bundle && !p.billing_bundle && <span className="text-xs text-muted-foreground">—</span>}
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell><StatusBadge status={personStatus(p)} /></TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {p.last_login ? new Date(p.last_login).toLocaleDateString() : (p.status === "Pending" ? "Never" : "—")}
+                  </TableCell>
+                  {canEditUser && (
+                    <TableCell className="text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end">
+                        <UserActionsMenu
+                          person={p}
+                          canEdit={canEditUser}
+                          onEdit={(person) => { setEditPerson(person); setShowEdit(true); }}
+                          onResetPassword={handleResetPassword}
+                          onDeactivate={handleDeactivate}
+                          onReactivate={handleReactivate}
+                          onResendInvite={handleResendInvite}
+                          onCancelInvite={handleCancelInvite}
+                        />
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {u.is_deactivated ? (
-                        <Badge variant="outline" className="text-[11px] bg-red-500/10 text-red-600 border-red-500/20">Deactivated</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-[11px] bg-green-500/10 text-green-600 border-green-500/20">Active</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{u.created_date ? new Date(u.created_date).toLocaleDateString() : "—"}</TableCell>
-                    {showActions && (
-                      <TableCell className="text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {isSuperAdmin && role !== "super_admin" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-xs"
-                              disabled={impersonating}
-                              onClick={() => setLoginAsTarget(u)}
-                            >
-                              <LogIn className="w-3 h-3 mr-1" />
-                              Login As
-                            </Button>
-                          )}
-                          <UserActionsMenu
-                            user={u}
-                            isSuperAdmin={isSuperAdmin}
-                            canEdit={canEditUser}
-                            canDelete={canDeleteUser}
-                            onEdit={handleEditUser}
-                            onResetPassword={handleResetPassword}
-                            onToggleDeactivated={handleToggleDeactivated}
-                            onDelete={handleDeleteUser}
-                          />
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })}
-              {users.length === 0 && (
+                  )}
+                </TableRow>
+              ))}
+              {visible.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={showActions ? 7 : 6} className="text-center text-muted-foreground py-8 text-sm">No users found.</TableCell>
+                  <TableCell colSpan={canEditUser ? 8 : 7} className="text-center text-muted-foreground py-8 text-sm">
+                    {rows.length === 0 ? "No people yet — invite someone to get started." : "No one in this filter."}
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -282,37 +327,31 @@ export default function UserManagement() {
         </div>
       </Card>
 
-      {/* Auth notes */}
-      <div className="mt-4 space-y-3">
-        <div className="p-4 bg-muted rounded-lg flex items-start gap-2">
-          <Mail className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-muted-foreground">
-            <strong>Email Login:</strong> All users log in via email-based authentication. Invite users by email and they'll receive a secure link to set up their account.
-          </p>
-        </div>
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
-          <Lock className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-amber-800">
-            <strong>MFA Required in Production:</strong> Manager, Admin, and Super Admin accounts must use multi-factor authentication. This is enforced at the platform authentication layer.
-          </p>
-        </div>
-      </div>
-
-      {/* Invite Dialog */}
+      {/* Invite dialog — this is how a person is added */}
       <Dialog open={showInvite} onOpenChange={setShowInvite}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><UserCog className="w-5 h-5" />Invite User</DialogTitle>
-            <DialogDescription>Send an email invitation with a role assignment.</DialogDescription>
+            <DialogDescription>Creates the person's staff record and one login.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Email Address</Label>
-              <Input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="user@example.com" />
+              <Input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="person@example.com" />
             </div>
             <div>
-              <Label>Role</Label>
-              <Select value={inviteRole} onValueChange={(v) => { setInviteRole(v); setHrBundle(false); setBillingBundle(false); }}>
+              <Label>Job title</Label>
+              <Select value={inviteJobTitle} onValueChange={setInviteJobTitle}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {JOB_TITLES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1.5">HR information only — it never grants access.</p>
+            </div>
+            <div>
+              <Label>App access</Label>
+              <Select value={inviteAccess} onValueChange={(v) => { setInviteAccess(v); if (v !== "admin") { setHrBundle(false); setBillingBundle(false); } }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="dsp">DSP — Assigned clients only</SelectItem>
@@ -320,11 +359,10 @@ export default function UserManagement() {
                   <SelectItem value="admin">Admin — Full agency access</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground mt-1.5">{ROLE_DESCRIPTIONS[inviteRole]}</p>
+              <p className="text-xs text-muted-foreground mt-1.5">{ROLE_DESCRIPTIONS[inviteAccess]}</p>
             </div>
 
-            {/* Bundle checkboxes — only for Admin */}
-            {inviteRole === "admin" && (
+            {inviteAccess === "admin" && (
               <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Permission Bundles (optional)</p>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -335,17 +373,6 @@ export default function UserManagement() {
                   <Checkbox checked={billingBundle} onCheckedChange={(v) => setBillingBundle(!!v)} />
                   <span className="text-sm">Billing bundle — rates, authorizations, payroll/billing/EVV export</span>
                 </label>
-                <p className="text-[11px] text-muted-foreground">An Admin without bundles cannot open HR or Billing areas.</p>
-              </div>
-            )}
-
-            {/* Assignment note for DSP/Manager */}
-            {(inviteRole === "dsp" || inviteRole === "manager") && (
-              <div className="p-3 rounded-lg border bg-blue-50 border-blue-200 flex items-start gap-2">
-                <Info className="w-3.5 h-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-blue-800">
-                  Client and house assignment for {getRoleLabel(inviteRole)} users will be configured in the next step after the invitation is accepted.
-                </p>
               </div>
             )}
           </div>
@@ -358,22 +385,25 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */}
       <EditUserDialog
-        user={editUser}
+        person={editPerson}
         open={showEdit}
-        onOpenChange={setShowEdit}
-        onSave={handleSaveUser}
+        onOpenChange={(v) => { setShowEdit(v); if (!v) setEditPerson(null); }}
+        onSave={handleSaveAccess}
         loading={savingUser}
       />
 
-      <LoginAsReasonDialog
-        open={!!loginAsTarget}
-        targetUser={loginAsTarget}
-        starting={impersonating}
-        onClose={() => setLoginAsTarget(null)}
-        onConfirm={(reason) => handleLoginAs(loginAsTarget, reason)}
-      />
+      {profileStaff && (
+        <StaffProfileDialog
+          staff={profileStaff}
+          onSave={saveProfile}
+          onClose={() => setProfileStaff(null)}
+          canAssign={canEditStaffProfile}
+          canViewHR={canViewHR}
+          canEditHR={canEditHR}
+          readOnly={!canEditStaffProfile}
+        />
+      )}
     </div>
   );
 }

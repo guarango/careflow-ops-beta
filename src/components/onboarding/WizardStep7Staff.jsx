@@ -67,7 +67,7 @@ export default function WizardStep7Staff({ data, onNext, onBack }) {
           <div className="col-span-3">First Name</div>
           <div className="col-span-3">Last Name</div>
           <div className="col-span-4">Email</div>
-          <div className="col-span-1">Role</div>
+          <div className="col-span-1">Job title</div>
           <div className="col-span-1"></div>
         </div>
         {invites.map((inv, i) => (

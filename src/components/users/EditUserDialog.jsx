@@ -1,47 +1,54 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { getRoleLabel, ROLE_DESCRIPTIONS } from "@/lib/permissions";
+import { ROLE_DESCRIPTIONS } from "@/lib/permissions";
 
-export default function EditUserDialog({ user, open, onOpenChange, onSave, loading }) {
-  const [role, setRole] = useState(user?.role || "dsp");
+/**
+ * Change access — app access + bundles only.
+ * Saved through setStaffAccess, which mirrors onto the person's login and audits the change.
+ * Job title is HR information and is never set here.
+ */
+export default function EditUserDialog({ person, open, onOpenChange, onSave, loading }) {
+  const [appAccess, setAppAccess] = useState("dsp");
   const [hrBundle, setHrBundle] = useState(false);
   const [billingBundle, setBillingBundle] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      setRole(user.role || "dsp");
-      setHrBundle(!!user.hr_bundle);
-      setBillingBundle(!!user.billing_bundle);
+    if (person) {
+      setAppAccess(person.app_access || "dsp");
+      setHrBundle(!!person.hr_bundle);
+      setBillingBundle(!!person.billing_bundle);
     }
-  }, [user]);
+  }, [person]);
+
+  if (!person) return null;
 
   const handleSave = () => {
-    onSave({ userId: user.id, role, hrBundle, billingBundle });
+    onSave({
+      staffId: person.staffId,
+      app_access: appAccess,
+      hr_bundle: appAccess === "admin" ? hrBundle : false,
+      billing_bundle: appAccess === "admin" ? billingBundle : false,
+    });
   };
-
-  if (!user) return null;
-  const effectiveRole = user.is_super_admin ? "super_admin" : user.role;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit User — {user.full_name || user.email}</DialogTitle>
-          <DialogDescription>Update role and permission bundles.</DialogDescription>
+          <DialogTitle>Change access — {person.name}</DialogTitle>
+          <DialogDescription>
+            {person.job_title ? `Job title: ${person.job_title}. ` : ""}
+            Job title never grants access; app access is what this person can open.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="p-3 rounded-lg border bg-muted/30">
-            <p className="text-xs text-muted-foreground">Current role</p>
-            <p className="text-sm font-medium">{getRoleLabel(effectiveRole)}</p>
-          </div>
           <div>
-            <Label>Role</Label>
-            <Select value={role} onValueChange={(v) => { setRole(v); setHrBundle(false); setBillingBundle(false); }} disabled={!!user.is_super_admin}>
+            <Label>App access</Label>
+            <Select value={appAccess} onValueChange={(v) => { setAppAccess(v); if (v !== "admin") { setHrBundle(false); setBillingBundle(false); } }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="dsp">DSP — Assigned clients only</SelectItem>
@@ -49,25 +56,33 @@ export default function EditUserDialog({ user, open, onOpenChange, onSave, loadi
                 <SelectItem value="admin">Admin — Full agency access</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground mt-1.5">{ROLE_DESCRIPTIONS[role]}</p>
+            <p className="text-xs text-muted-foreground mt-1.5">{ROLE_DESCRIPTIONS[appAccess]}</p>
           </div>
-          {role === "admin" && !user.is_super_admin && (
+
+          {appAccess === "admin" && (
             <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Permission Bundles</p>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox checked={hrBundle} onCheckedChange={(v) => setHrBundle(!!v)} />
-                <span className="text-sm">HR bundle</span>
+                <span className="text-sm">HR bundle — staff files, onboarding, trainings, compliance</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox checked={billingBundle} onCheckedChange={(v) => setBillingBundle(!!v)} />
-                <span className="text-sm">Billing bundle</span>
+                <span className="text-sm">Billing bundle — rates, authorizations, payroll/billing/EVV export</span>
               </label>
+              <p className="text-[11px] text-muted-foreground">Bundles only apply to Admins.</p>
             </div>
+          )}
+
+          {person.status === "Pending" && (
+            <p className="text-xs text-muted-foreground bg-muted rounded-md px-3 py-2">
+              This person has not signed in yet — the access you choose is applied when they accept the invite.
+            </p>
           )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={loading}>{loading ? "Saving..." : "Save Changes"}</Button>
+          <Button onClick={handleSave} disabled={loading}>{loading ? "Saving..." : "Save Access"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

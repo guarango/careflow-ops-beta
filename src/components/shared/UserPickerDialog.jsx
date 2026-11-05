@@ -37,7 +37,9 @@ export default function UserPickerDialog({ open, onClose }) {
     }
   }, [open]);
 
+  // The Super Admin is never a pickable person.
   const filtered = users.filter((u) => {
+    if (u.is_super_admin) return false;
     const q = search.toLowerCase();
     return (
       (u.full_name || "").toLowerCase().includes(q) ||

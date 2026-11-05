@@ -26,7 +26,7 @@ export default function HROverview({ staff, leaveRequests, reviews, trainings })
   });
 
   const active = staff.filter(s => s.status === "Active").length;
-  const onLeave = staff.filter(s => s.status === "On Leave").length;
+  const pendingInvites = staff.filter(s => s.status === "Pending").length;
   const pendingLeave = leaveRequests.filter(l => l.status === "Pending").length;
   const expiringTraining = trainings.filter(t => t.status === "Expiring Soon").length;
 
@@ -43,7 +43,7 @@ export default function HROverview({ staff, leaveRequests, reviews, trainings })
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Active Staff", value: active, icon: UserCheck, color: "text-accent" },
-          { label: "On Leave", value: onLeave, icon: Clock, color: "text-amber-500" },
+          { label: "Pending Invites", value: pendingInvites, icon: Clock, color: "text-amber-500" },
           { label: "Leave Requests", value: pendingLeave, icon: Users, color: "text-primary" },
           { label: "Expiring Certs", value: expiringTraining, icon: UserX, color: "text-destructive" },
         ].map(({ label, value, icon: Icon, color }) => (
@@ -78,7 +78,7 @@ export default function HROverview({ staff, leaveRequests, reviews, trainings })
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead>Job title</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Hire Date</TableHead>
                 <TableHead>Open Review</TableHead>

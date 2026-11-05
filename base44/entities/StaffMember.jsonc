@@ -10,14 +10,15 @@
     },
     "email": {
       "type": "string",
-      "format": "email"
+      "format": "email",
+      "description": "The person's email \u2014 also the identity of their single login"
     },
     "phone": {
       "type": "string"
     },
     "user_id": {
       "type": "string",
-      "description": "User account ID linked to this staff member"
+      "description": "User account ID linked to this staff member (set when the invite is accepted)"
     },
     "date_of_birth": {
       "type": "string",
@@ -81,7 +82,49 @@
         "Volunteer",
         "Non-Client Facing",
         "Other"
-      ]
+      ],
+      "description": "Job title (HR information only \u2014 never grants app access)"
+    },
+    "app_access": {
+      "type": "string",
+      "enum": [
+        "dsp",
+        "manager",
+        "admin"
+      ],
+      "default": "dsp",
+      "description": "App access level chosen by an Admin. Independent of job title. Changed only through setStaffAccess."
+    },
+    "hr_bundle": {
+      "type": "boolean",
+      "default": false,
+      "description": "HR permission bundle \u2014 only valid when app_access is admin"
+    },
+    "billing_bundle": {
+      "type": "boolean",
+      "default": false,
+      "description": "Billing permission bundle \u2014 only valid when app_access is admin"
+    },
+    "invited_by": {
+      "type": "string",
+      "description": "Name of the admin who sent the invite"
+    },
+    "invited_at": {
+      "type": "string",
+      "description": "When the invite was sent"
+    },
+    "activated_at": {
+      "type": "string",
+      "description": "When the person first signed in"
+    },
+    "deactivated_at": {
+      "type": "string"
+    },
+    "deactivated_by": {
+      "type": "string"
+    },
+    "deactivation_reason": {
+      "type": "string"
     },
     "staff_type": {
       "type": "string",
@@ -122,12 +165,12 @@
     "status": {
       "type": "string",
       "enum": [
+        "Pending",
         "Active",
-        "On Leave",
-        "Inactive",
-        "Terminated"
+        "Inactive"
       ],
-      "default": "Active"
+      "default": "Pending",
+      "description": "Pending = invited, not signed in yet. Active = has signed in. Inactive = deactivated, history kept."
     },
     "hire_date": {
       "type": "string",
@@ -331,21 +374,9 @@
       }
     },
     "update": {
-      "$or": [
-        {
-          "data.email": "{{user.email}}"
-        },
-        {
-          "id": {
-            "$in": "{{user.data.team_staff_ids}}"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
       "user_condition": {

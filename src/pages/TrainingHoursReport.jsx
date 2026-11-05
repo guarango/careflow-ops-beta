@@ -119,7 +119,7 @@ export default function TrainingHoursReport() {
       <h1>Training Hours Report</h1>
       <p>Period: ${startDate} to ${endDate}</p>
       <p>Total staff: ${staffSummary.length} · Total hours: ${totalHours.toFixed(1)} · Under 12 hrs: ${underCount}</p>
-      <table><thead><tr><th>Staff</th><th>Role</th><th>Hours</th><th>Trainings</th><th>Yearly Total</th><th>Under 12</th></tr></thead>
+      <table><thead><tr><th>Staff</th><th>Job title</th><th>Hours</th><th>Trainings</th><th>Yearly Total</th><th>Under 12</th></tr></thead>
       <tbody>
       ${staffSummary.map(s => `<tr><td>${s.staff.first_name} ${s.staff.last_name}</td><td>${s.staff.role || ""}</td><td>${s.totalHours.toFixed(1)}</td><td>${s.trainingsCompleted}</td><td>${s.yearTotal.toFixed(1)}</td><td class="${s.under12Hours ? "flag" : ""}">${s.under12Hours ? "YES" : ""}</td></tr>`).join("")}
       </tbody></table>

@@ -17,16 +17,31 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, KeyRound, Pencil, Ban, Trash2, Power } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { MoreHorizontal, KeyRound, ShieldCheck, Ban, Power, Send, XCircle } from "lucide-react";
 
-export default function UserActionsMenu({ user, onEdit, onResetPassword, onToggleDeactivated, onDelete, isSuperAdmin, canEdit = true, canDelete = true }) {
-  const [showDelete, setShowDelete] = useState(false);
+/**
+ * People are never deleted — Deactivate (with a reason) and Reactivate cover it,
+ * and a pending invite can be cancelled. Every action runs through setStaffAccess.
+ */
+export default function UserActionsMenu({
+  person,
+  onEdit,
+  onResetPassword,
+  onDeactivate,
+  onReactivate,
+  onResendInvite,
+  onCancelInvite,
+  canEdit = true,
+}) {
   const [showDeactivate, setShowDeactivate] = useState(false);
-  const isSelf = user._is_self;
-  const isSuperAdminUser = !!user.is_super_admin;
-  const isDeactivated = !!user.is_deactivated;
+  const [showCancel, setShowCancel] = useState(false);
+  const [reason, setReason] = useState("");
 
-  if (!canEdit && !canDelete) return null;
+  if (!canEdit) return null;
+
+  const isPending = person.status === "Pending";
+  const isInactive = person.status === "Inactive";
 
   return (
     <>
@@ -36,77 +51,97 @@ export default function UserActionsMenu({ user, onEdit, onResetPassword, onToggl
             <MoreHorizontal className="w-4 h-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          {canEdit && (
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem onClick={() => onEdit(person)}>
+            <ShieldCheck className="w-3.5 h-3.5 mr-2" />
+            Change access
+          </DropdownMenuItem>
+
+          {/* Pending people have no password yet; inactive people cannot sign in. */}
+          {person.status === "Active" && (
+            <DropdownMenuItem onClick={() => onResetPassword(person)}>
+              <KeyRound className="w-3.5 h-3.5 mr-2" />
+              Reset password
+            </DropdownMenuItem>
+          )}
+
+          {isPending && (
             <>
-              <DropdownMenuItem onClick={() => onEdit(user)}>
-                <Pencil className="w-3.5 h-3.5 mr-2" />
-                Edit Role
+              <DropdownMenuItem onClick={() => onResendInvite(person)}>
+                <Send className="w-3.5 h-3.5 mr-2" />
+                Resend invite
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onResetPassword(user)} disabled={isSelf}>
-                <KeyRound className="w-3.5 h-3.5 mr-2" />
-                Reset Password
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setShowDeactivate(true)}
-                disabled={isSelf || isSuperAdminUser}
-              >
-                {isDeactivated ? (
-                  <><Power className="w-3.5 h-3.5 mr-2" />Reactivate</>
-                ) : (
-                  <><Ban className="w-3.5 h-3.5 mr-2" />Deactivate</>
-                )}
+              <DropdownMenuItem onClick={() => setShowCancel(true)} className="text-destructive focus:text-destructive">
+                <XCircle className="w-3.5 h-3.5 mr-2" />
+                Cancel invite
               </DropdownMenuItem>
             </>
           )}
-          {canEdit && canDelete && <DropdownMenuSeparator />}
-          {canDelete && (
-            <DropdownMenuItem
-              onClick={() => setShowDelete(true)}
-              disabled={isSelf || isSuperAdminUser}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="w-3.5 h-3.5 mr-2" />
-              Delete User
-            </DropdownMenuItem>
+
+          {!isPending && <DropdownMenuSeparator />}
+
+          {!isPending && (
+            isInactive ? (
+              <DropdownMenuItem onClick={() => onReactivate(person)}>
+                <Power className="w-3.5 h-3.5 mr-2" />
+                Reactivate
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={() => setShowDeactivate(true)}>
+                <Ban className="w-3.5 h-3.5 mr-2" />
+                Deactivate
+              </DropdownMenuItem>
+            )
           )}
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={showDeactivate} onOpenChange={setShowDeactivate}>
+      <AlertDialog open={showDeactivate} onOpenChange={(v) => { setShowDeactivate(v); if (!v) setReason(""); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{isDeactivated ? "Reactivate" : "Deactivate"} {user.full_name || user.email}?</AlertDialogTitle>
+            <AlertDialogTitle>Deactivate {person.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              {isDeactivated
-                ? "This user will regain access to the platform."
-                : "This user will no longer be able to log in or access the platform."}
+              They will no longer be able to sign in. All of their history is kept, and you can reactivate at any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">
+              Reason <span className="text-destructive">*</span>
+            </label>
+            <Textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Why is this person being deactivated?"
+              rows={2}
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => onToggleDeactivated(user, !isDeactivated)}>
-              Confirm
+            <AlertDialogAction
+              disabled={!reason.trim()}
+              onClick={() => { onDeactivate(person, reason.trim()); setReason(""); }}
+            >
+              Deactivate
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={showDelete} onOpenChange={setShowDelete}>
+      <AlertDialog open={showCancel} onOpenChange={setShowCancel}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {user.full_name || user.email}?</AlertDialogTitle>
+            <AlertDialogTitle>Cancel {person.name}'s invite?</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the user account. This action cannot be undone.
+              This removes the pending invite because they never signed in. It cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Keep invite</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => onDelete(user)}
+              onClick={() => onCancelInvite(person)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Permanently
+              Cancel invite
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

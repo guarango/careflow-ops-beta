@@ -7,8 +7,8 @@ const COLORS = ["#0ea5e9", "#22c55e", "#a855f7", "#f59e0b", "#ef4444", "#14b8a6"
 
 export default function HRAnalytics({ staff, leaveRequests, reviews, trainings }) {
   const active = staff.filter(s => s.status === "Active");
-  const terminated = staff.filter(s => s.status === "Terminated");
-  const turnoverRate = staff.length > 0 ? Math.round((terminated.length / staff.length) * 100) : 0;
+  const inactive = staff.filter(s => s.status === "Inactive");
+  const turnoverRate = staff.length > 0 ? Math.round((inactive.length / staff.length) * 100) : 0;
 
   // Headcount by role
   const byRole = Object.entries(

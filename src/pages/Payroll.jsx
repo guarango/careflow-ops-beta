@@ -160,7 +160,7 @@ export default function Payroll() {
                 <thead>
                   <tr className="border-b bg-muted/30 text-xs text-muted-foreground">
                     <th className="text-left px-4 py-3 font-medium">Staff Member</th>
-                    <th className="text-left px-4 py-3 font-medium">Role</th>
+                    <th className="text-left px-4 py-3 font-medium">Job title</th>
                     <th className="text-right px-4 py-3 font-medium">Shifts</th>
                     <th className="text-right px-4 py-3 font-medium">Hours</th>
                     <th className="text-right px-4 py-3 font-medium">Gross Pay</th>

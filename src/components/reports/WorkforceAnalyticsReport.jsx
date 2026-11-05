@@ -26,7 +26,7 @@ export default function WorkforceAnalyticsReport() {
   const { data: shifts = [] } = useQuery({ queryKey: ["shifts-wf"], queryFn: () => base44.entities.ShiftSchedule.list() });
 
   const activeStaff = staff.filter(s => s.status === "Active");
-  const terminatedStaff = staff.filter(s => s.status === "Terminated");
+  const terminatedStaff = staff.filter(s => s.status === "Inactive");
   const turnoverRate = staff.length ? Math.round(terminatedStaff.length / staff.length * 100) : 0;
 
   // Certifications

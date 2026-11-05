@@ -1,91 +1,65 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import { getCaller, unauthorized, forbidden } from '../../shared/functionAuth.ts';
+import { applyStaffAccess } from '../../shared/staffAccess.ts';
 
 /**
- * applyPendingUserConfig
+ * applyPendingUserConfig — now runs on the StaffMember itself.
  *
- * Called by the "Apply Pending User Config" workflow when a user signs up
- * or logs in. Checks for a PendingUserConfig matching the user's email and
- * applies the stored role, bundles, and assignment fields to the User record.
- *
- * This solves the race condition where inviteUser() doesn't create a User
- * record synchronously — the config is stored at invite time and applied
- * once the user actually accepts and the User record exists.
+ * Called by the "Apply Pending User Config" workflow when someone signs up or logs in.
+ * There is no separate pending table any more: the pending person IS the StaffMember
+ * with status Pending. Signing in links the login to that record, flips it to Active,
+ * and mirrors its app access onto the User login (through applyStaffAccess).
  */
-export default async function(req) {
+export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
+    const svc = base44.asServiceRole.entities;
 
     const caller = await getCaller(base44);
     if (!caller) return unauthorized();
 
     const body = await req.json().catch(() => ({}));
-    const { email } = body;
-    if (!email) {
-      return Response.json({ error: 'email is required' }, { status: 400 });
-    }
+    const email = (body.email || caller.email || '').toLowerCase();
+    if (!email) return Response.json({ error: 'email is required' }, { status: 400 });
 
-    // Bind the request to the account it is for: a regular caller may only apply
-    // their own invite config; an admin (invite workflow) may apply for that email.
-    if (caller.role !== 'admin' && (caller.email || '').toLowerCase() !== email.toLowerCase()) {
+    // A regular caller may only activate their own record; an admin may do it for that email.
+    if (caller.role !== 'admin' && (caller.email || '').toLowerCase() !== email) {
       return forbidden();
     }
 
-    // Find an unapplied PendingUserConfig for this email
-    const configRes = await base44.asServiceRole.entities.PendingUserConfig.filter({
-      email: email.toLowerCase(),
-      applied: false,
-    });
-    const configs = Array.isArray(configRes) ? configRes : (configRes?.items || []);
-    const config = configs[0];
+    const staffRes = await svc.StaffMember.filter({ email });
+    const staff = (Array.isArray(staffRes) ? staffRes : (staffRes?.items || []))[0];
+    if (!staff) return Response.json({ applied: false, reason: 'no staff record for this email' });
 
-    if (!config) {
-      return Response.json({ applied: false, reason: 'no pending config' });
+    const userRes = await svc.User.filter({ email });
+    const targetUser = (Array.isArray(userRes) ? userRes : (userRes?.items || []))[0];
+    if (!targetUser) return Response.json({ applied: false, reason: 'user account not found' });
+    if (targetUser.is_super_admin) {
+      return Response.json({ applied: false, reason: 'the super admin account is never managed from a staff record' });
     }
 
-    // Build the update payload
-    const updateData = {
-      role: config.role,
-      is_super_admin: false,
-    };
+    const alreadyLinked = staff.user_id === targetUser.id;
 
-    if (config.role === 'admin') {
-      updateData.hr_bundle = !!config.hr_bundle;
-      updateData.billing_bundle = !!config.billing_bundle;
-    } else {
-      updateData.hr_bundle = false;
-      updateData.billing_bundle = false;
-    }
+    // Bind the login to the person, then activate (or keep inactive) through the single writer.
+    await svc.StaffMember.update(staff.id, { user_id: targetUser.id });
 
-    if (config.staff_member_id) updateData.staff_member_id = config.staff_member_id;
-    if (config.assigned_client_ids) updateData.assigned_client_ids = config.assigned_client_ids;
-    if (config.assigned_house_ids) updateData.assigned_house_ids = config.assigned_house_ids;
-    if (config.team_staff_ids) updateData.team_staff_ids = config.team_staff_ids;
-
-    // Resolve the target account from the config's own email — never from a caller-supplied id
-    const userRes = await base44.asServiceRole.entities.User.filter({ email: config.email });
-    const matchedUsers = Array.isArray(userRes) ? userRes : (userRes?.items || []);
-    const targetUser = matchedUsers[0];
-    if (!targetUser) {
-      return Response.json({ applied: false, reason: 'user account not found' });
-    }
-
-    // Apply to the User record
-    await base44.asServiceRole.entities.User.update(targetUser.id, updateData);
-
-    // Mark the config as applied (prevents replay)
-    await base44.asServiceRole.entities.PendingUserConfig.update(config.id, {
-      applied: true,
-      applied_user_id: targetUser.id,
-      applied_at: new Date().toISOString(),
+    const result = await applyStaffAccess(base44, {
+      staffId: staff.id,
+      app_access: staff.app_access || 'dsp',
+      hr_bundle: !!staff.hr_bundle,
+      billing_bundle: !!staff.billing_bundle,
+      status: staff.status === 'Inactive' ? 'Inactive' : 'Active',
+      action: staff.status === 'Inactive' ? 'set_access' : 'activate',
+      actor: { full_name: 'System (sign-in)', email: '' },
     });
 
     return Response.json({
       applied: true,
       email,
-      role: config.role,
+      staff_id: staff.id,
       user_id: targetUser.id,
-      config_id: config.id,
+      status: result.new.status,
+      first_sign_in: !alreadyLinked,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

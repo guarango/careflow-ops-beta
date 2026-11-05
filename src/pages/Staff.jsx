@@ -5,24 +5,17 @@ import PageHeader from "@/components/shared/PageHeader";
 import StatusBadge from "@/components/shared/StatusBadge";
 import EmptyState from "@/components/shared/EmptyState";
 import StaffProfileDialog from "@/components/staff/StaffProfileDialog";
-import { Button } from "@/components/ui/button";
+import StaffStatusFilter from "@/components/shared/StaffStatusFilter";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Search, Phone, Mail, AlertTriangle, Link2 } from "lucide-react";
+import { Users, Search, Phone, Mail, AlertTriangle } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { useViewMode } from "@/hooks/useViewMode";
 import EntityCard from "@/components/shared/EntityCard";
-import Can from "@/components/shared/Can";
 import ViewToggle from "@/components/shared/ViewToggle";
-import { useToast } from "@/components/ui/use-toast";
-
-const emptyStaff = {
-  first_name: "", last_name: "", email: "", phone: "", role: "DSP", status: "Active",
-  staff_type: "Regular", hire_date: "", notes: "", certifications: [], references: [],
-  contract_areas: []
-};
+import { DEFAULT_STATUS_TAB, peopleInTab, matchesSearch, personStatus } from "@/lib/staffFilters";
 
 function complianceAlerts(s) {
   const alerts = [];
@@ -33,112 +26,82 @@ function complianceAlerts(s) {
   return alerts;
 }
 
+/**
+ * Staff = the HR view of the same StaffMember records the Users tab shows.
+ * People are added by inviting them (Users tab), never here.
+ */
 export default function Staff() {
   const { can } = useRole();
-  const canCreateStaff = can("createStaff");
-  // HR-sensitive fields (SSN, background checks, pay) need the HR bundle.
   const canViewHR = can("viewStaffHRFiles");
   const canEditHR = can("editStaff");
-  // Directory edits (contact info, client & house assignments) do not.
   const canEditStaff = canEditHR || can("editStaffDirectory");
-  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [search, setSearch] = useState("");
+  const [statusTab, setStatusTab] = useState(DEFAULT_STATUS_TAB);
   const [viewMode, setViewMode] = useViewMode("staff");
-  const [linking, setLinking] = useState(false);
 
-  const handleLinkUsers = async () => {
-    setLinking(true);
-    try {
-      const res = await base44.functions.invoke("linkStaffUsers", {});
-      const d = res.data;
-      toast({
-        title: "Staff linked & synced",
-        description: `${d.linked} of ${d.totalStaff} staff linked to user accounts. ${d.unlinked} pending invitation acceptance.`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["staff"] });
-    } catch (err) {
-      toast({ title: "Link failed", description: err.message, variant: "destructive" });
-    } finally {
-      setLinking(false);
-    }
-  };
-
-  const queryClient = useQueryClient();
   const { data: staff = [], isLoading } = useQuery({
     queryKey: ["staff"],
     queryFn: () => base44.entities.StaffMember.list(),
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.StaffMember.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["staff"] }); setShowDialog(false); setEditingStaff(null); },
-  });
-
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.StaffMember.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["staff"] }); setShowDialog(false); setEditingStaff(null); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setShowDialog(false);
+      setEditingStaff(null);
+    },
   });
 
-  const openNew = () => { setEditingStaff({ ...emptyStaff }); setShowDialog(true); };
-  const openEdit = (s) => { setEditingStaff(s); setShowDialog(true); };
+  const openProfile = (s) => { setEditingStaff(s); setShowDialog(true); };
 
+  // HR edits never touch access — app access changes only through setStaffAccess.
   const handleSave = (formData) => {
-    if (formData.id) {
-      if (!canEditStaff) return;
-      updateMutation.mutate({ id: formData.id, data: formData });
-    } else {
-      if (!canCreateStaff) return;
-      createMutation.mutate(formData);
-    }
+    if (!formData.id || !canEditStaff) return;
+    const { app_access, hr_bundle, billing_bundle, status, invited_by, invited_at, activated_at, deactivated_at, deactivated_by, deactivation_reason, ...profile } = formData;
+    updateMutation.mutate({ id: formData.id, data: profile });
   };
 
-  const filtered = staff.filter(s =>
-    `${s.first_name} ${s.last_name} ${s.email} ${s.role}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const visible = peopleInTab(staff, statusTab).filter((s) => matchesSearch(s, search));
 
   return (
     <div>
       <PageHeader
-        title="Staff Management"
-        subtitle={`${staff.length} team members`}
-        action={
-          <div className="flex gap-2">
-            {can("editUser") && (
-              <Button variant="outline" onClick={handleLinkUsers} disabled={linking}>
-                <Link2 className="w-4 h-4 mr-2" />{linking ? "Linking..." : "Link Users & Sync"}
-              </Button>
-            )}
-            <Can do="createStaff">
-              <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Add Staff</Button>
-            </Can>
-          </div>
-        }
+        title="Staff"
+        subtitle={`${visible.length} of ${staff.length} people · HR view of the same records as the Users tab`}
       />
 
       <Card className="mb-6">
-        <CardContent className="py-3">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search staff by name, email, or role..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 border-0 bg-transparent focus-visible:ring-0"
-              />
-            </div>
-            <ViewToggle value={viewMode} onChange={setViewMode} />
+        <div className="py-3 px-4 flex flex-col gap-3 md:flex-row md:items-center">
+          <StaffStatusFilter people={staff} value={statusTab} onChange={setStatusTab} />
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, email, or job title..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 border-0 bg-transparent focus-visible:ring-0"
+            />
           </div>
-        </CardContent>
+          <ViewToggle value={viewMode} onChange={setViewMode} />
+        </div>
       </Card>
 
-      {filtered.length === 0 && !isLoading ? (
-        <EmptyState icon={Users} title="No staff members" description="Add your first staff member to get started." action={canCreateStaff && <Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-1" />Add Staff</Button>} />
+      {visible.length === 0 && !isLoading ? (
+        <EmptyState
+          icon={Users}
+          title={staff.length === 0 ? "No people yet" : "No one in this filter"}
+          description={staff.length === 0
+            ? "People are added by inviting them from Settings & Admin → Users."
+            : "Try another status filter or clear your search."}
+        />
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {filtered.map((s) => {
+          {visible.map((s) => {
             const alerts = canViewHR ? complianceAlerts(s) : [];
             const initials = `${s.first_name?.[0] || ""}${s.last_name?.[0] || ""}`.toUpperCase();
             const colors = ["bg-blue-100 text-blue-700", "bg-purple-100 text-purple-700", "bg-green-100 text-green-700", "bg-pink-100 text-pink-700", "bg-amber-100 text-amber-700", "bg-cyan-100 text-cyan-700", "bg-rose-100 text-rose-700"];
@@ -146,18 +109,18 @@ export default function Staff() {
             return (
               <EntityCard
                 key={s.id}
-                onClick={() => openEdit(s)}
+                onClick={() => openProfile(s)}
                 initials={initials}
                 photoUrl={s.photo_url}
                 colorClass={color}
                 title={`${s.first_name} ${s.last_name}`}
-                subtitle={s.role}
+                subtitle={s.role || "—"}
                 badge={s.staff_type === "Probationary" && (
                   <Badge variant="outline" className="text-[10px] border-chart-4/30 bg-chart-4/10 text-chart-4">Probationary</Badge>
                 )}
                 footer={
                   <>
-                    <StatusBadge status={s.status || "Active"} />
+                    <StatusBadge status={personStatus(s)} />
                     {alerts.length > 0 && (
                       <span className="flex items-center gap-0.5 text-[10px] text-chart-4">
                         <AlertTriangle className="w-3 h-3" />{alerts.length}
@@ -176,7 +139,7 @@ export default function Staff() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Job title</TableHead>
                   <TableHead className="hidden md:table-cell">Contact</TableHead>
                   <TableHead className="hidden md:table-cell">Type</TableHead>
                   {canViewHR && <TableHead className="hidden md:table-cell">Compliance</TableHead>}
@@ -184,12 +147,12 @@ export default function Staff() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((s) => {
+                {visible.map((s) => {
                   const alerts = canViewHR ? complianceAlerts(s) : [];
                   return (
-                    <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(s)}>
+                    <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openProfile(s)}>
                       <TableCell className="font-medium">{s.first_name} {s.last_name}</TableCell>
-                      <TableCell className="text-sm">{s.role}</TableCell>
+                      <TableCell className="text-sm">{s.role || "—"}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="flex flex-col gap-0.5">
                           {s.email && <span className="text-xs flex items-center gap-1"><Mail className="w-3 h-3" />{s.email}</span>}
@@ -215,7 +178,7 @@ export default function Staff() {
                           )}
                         </TableCell>
                       )}
-                      <TableCell><StatusBadge status={s.status || "Active"} /></TableCell>
+                      <TableCell><StatusBadge status={personStatus(s)} /></TableCell>
                     </TableRow>
                   );
                 })}

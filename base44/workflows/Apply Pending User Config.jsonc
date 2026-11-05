@@ -8,7 +8,7 @@
       ]
     }
   },
-  "description": "When a user signs up, checks for a stored PendingUserConfig and applies the saved role, bundles, and assignments to the User record.",
+  "description": "When a user signs up, links their login to their StaffMember record, flips it to Active, and mirrors its app access onto the login.",
   "name": "Apply Pending User Config",
   "definition": {
     "document": {

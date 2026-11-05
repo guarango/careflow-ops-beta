@@ -121,7 +121,7 @@ export default function AssignTrainingDialog({ training, open, onClose }) {
 
           {assignTo === "role" && (
             <div className="space-y-1">
-              <Label>Role</Label>
+              <Label>Job title</Label>
               <Select value={selectedRole} onValueChange={setSelectedRole}>
                 <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                 <SelectContent>
