@@ -86,8 +86,28 @@ export default async function(req) {
     if (action === 'set_deactivated') {
       const { userId, deactivated } = body;
       if (!userId) return Response.json({ error: 'User ID is required' }, { status: 400 });
+
+      const target = await base44.asServiceRole.entities.User.get(userId).catch(() => null);
       await base44.asServiceRole.entities.User.update(userId, { is_deactivated: !!deactivated });
-      return Response.json({ success: true, deactivated: !!deactivated });
+
+      // Keep the linked staff record's status in step with the user account
+      const matches = [];
+      const byUserId = await base44.asServiceRole.entities.StaffMember.filter({ user_id: userId });
+      matches.push(...(Array.isArray(byUserId) ? byUserId : []));
+      if (target?.email) {
+        const byEmail = await base44.asServiceRole.entities.StaffMember.filter({ email: target.email });
+        for (const s of (Array.isArray(byEmail) ? byEmail : [])) {
+          if (!matches.some(m => m.id === s.id)) matches.push(s);
+        }
+      }
+      const staffUpdates = matches
+        .filter(s => deactivated ? s.status !== 'Inactive' : s.status === 'Inactive')
+        .map(s => ({ id: s.id, status: deactivated ? 'Inactive' : 'Active' }));
+      if (staffUpdates.length > 0) {
+        await base44.asServiceRole.entities.StaffMember.bulkUpdate(staffUpdates);
+      }
+
+      return Response.json({ success: true, deactivated: !!deactivated, staffUpdated: staffUpdates.length });
     }
 
     // ─── Delete a user ───────────────────────────────────────────────
