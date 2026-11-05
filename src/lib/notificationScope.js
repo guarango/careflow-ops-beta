@@ -7,10 +7,11 @@
  * them by mistake. If a notification references a client we cannot match to
  * the viewer's assignments, it is hidden.
  */
-export function viewerScope(viewer) {
-  const role = viewer?.is_super_admin ? "super_admin" : viewer?.role;
+// canViewAllNotifications comes from the matrix (viewAllNotifications code).
+// Everyone without it is a caseload viewer.
+export function viewerScope(viewer, canViewAllNotifications = false) {
   return {
-    isCaseloadMode: role === "dsp" || role === "manager",
+    isCaseloadMode: !canViewAllNotifications,
     assignedClientIds: viewer?.assigned_client_ids || [],
   };
 }

@@ -16,7 +16,7 @@ import SensitiveValue from "@/components/shared/SensitiveValue";
 const CONTRACT_AREAS = ["DSPD", "DCFS", "Private Pay", "Licensed Program", "Foster Care"];
 const CERT_NAMES = ["CPR/First Aid", "Medication Administration", "CPI / Crisis Prevention", "HIPAA", "Mandated Reporter", "Abuse & Neglect", "Driver's License", "Other"];
 
-export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = false, canEditHR = false, readOnly = false }) {
+export default function StaffProfileDialog({ staff, onSave, onClose, canAssign = false, canEditHR = false, readOnly = false }) {
   const [form, setForm] = useState(staff);
   const [tab, setTab] = useState("personal");
 
@@ -85,12 +85,12 @@ export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = f
         )}
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className={`grid flex-shrink-0 ${isAdmin ? "grid-cols-5" : "grid-cols-4"}`}>
+          <TabsList className={`grid flex-shrink-0 ${canAssign ? "grid-cols-5" : "grid-cols-4"}`}>
             <TabsTrigger value="personal"><User className="w-3.5 h-3.5 mr-1.5" />Personal</TabsTrigger>
             <TabsTrigger value="employment"><Briefcase className="w-3.5 h-3.5 mr-1.5" />Employment</TabsTrigger>
             <TabsTrigger value="compliance"><Shield className="w-3.5 h-3.5 mr-1.5" />Compliance</TabsTrigger>
             <TabsTrigger value="certifications"><Award className="w-3.5 h-3.5 mr-1.5" />Certs</TabsTrigger>
-            {isAdmin && <TabsTrigger value="assigned"><Users className="w-3.5 h-3.5 mr-1.5" />Assigned</TabsTrigger>}
+            {canAssign && <TabsTrigger value="assigned"><Users className="w-3.5 h-3.5 mr-1.5" />Assigned</TabsTrigger>}
           </TabsList>
 
           <div className="flex-1 overflow-y-auto mt-4 pr-1">
@@ -384,8 +384,8 @@ export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = f
               </div>
             </TabsContent>
 
-            {/* ASSIGNED CLIENTS TAB (Admin only) */}
-            {isAdmin && (
+            {/* ASSIGNED CLIENTS TAB (directory edit permission) */}
+            {canAssign && (
               <TabsContent value="assigned" className="mt-0">
                 {staff.id ? (
                   <AssignedClientsTab staff={staff} />

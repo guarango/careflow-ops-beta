@@ -34,7 +34,7 @@ function complianceAlerts(s) {
 }
 
 export default function Staff() {
-  const { isAdmin, can } = useRole();
+  const { can } = useRole();
   const canCreateStaff = can("createStaff");
   // HR-sensitive fields (SSN, background checks, pay) need the HR bundle.
   const canEditHR = can("editStaff");
@@ -104,7 +104,7 @@ export default function Staff() {
         subtitle={`${staff.length} team members`}
         action={
           <div className="flex gap-2">
-            {isAdmin && (
+            {can("editUser") && (
               <Button variant="outline" onClick={handleLinkUsers} disabled={linking}>
                 <Link2 className="w-4 h-4 mr-2" />{linking ? "Linking..." : "Link Users & Sync"}
               </Button>
@@ -227,7 +227,7 @@ export default function Staff() {
           staff={editingStaff}
           onSave={handleSave}
           onClose={() => { setShowDialog(false); setEditingStaff(null); }}
-          isAdmin={isAdmin}
+          canAssign={canEditStaff}
           canEditHR={canEditHR}
           readOnly={!canEditStaff}
         />

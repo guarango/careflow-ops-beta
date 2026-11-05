@@ -30,11 +30,11 @@ export default function NotificationBell({ currentUser, dark = true }) {
   const [ackNote, setAckNote] = useState("");
   const panelRef = useRef(null);
   const navigate = useNavigate();
-  const { effectiveUser } = useRole();
+  const { effectiveUser, can } = useRole();
   // While viewing as another user, the feed belongs to that user, and it is
   // limited to the clients in their caseload.
   const viewer = effectiveUser || currentUser;
-  const scope = viewerScope(viewer);
+  const scope = viewerScope(viewer, can("viewAllNotifications"));
 
   const fetchNotifications = async () => {
     if (!viewer?.id) return;
@@ -123,7 +123,8 @@ export default function NotificationBell({ currentUser, dark = true }) {
     setAckNote("");
   };
 
-  const isAdmin = currentUser?.role === "admin";
+  // Acknowledge / dismiss controls are the agency-wide notification view.
+  const isAdmin = can("viewAllNotifications");
 
   return (
     <div className="relative" ref={panelRef}>

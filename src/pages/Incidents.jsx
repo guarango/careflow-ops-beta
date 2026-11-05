@@ -18,7 +18,7 @@ import IncidentDetailDialog from "@/components/incidents/IncidentDetailDialog";
 import IncidentTrends from "@/components/incidents/IncidentTrends";
 
 export default function Incidents() {
-  const { can, isDSP, isAdmin } = useRole();
+  const { can, isDSP } = useRole();
   const { isDSPMode, assignedClientIds } = useAssignedClients();
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
@@ -92,12 +92,14 @@ export default function Incidents() {
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowTrends(!showTrends)}><BarChart3 className="w-4 h-4 mr-2" />Trends</Button>
-            <Button onClick={openNew} className="bg-destructive hover:bg-destructive/90"><Plus className="w-4 h-4 mr-2" />Report Incident</Button>
+            {can("createIncident") && (
+              <Button onClick={openNew} className="bg-destructive hover:bg-destructive/90"><Plus className="w-4 h-4 mr-2" />Report Incident</Button>
+            )}
           </div>
         }
       />
 
-      {isDSP && (
+      {!canReview && (
         <div className="flex items-center gap-2 mb-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm text-amber-700">
           <Lock className="w-4 h-4 flex-shrink-0" />
           <span>Incidents you submit are sent to your supervisor for review. A submitted report is locked — you can view it and its status, but only your supervisor can edit it.</span>

@@ -44,7 +44,7 @@ const emptyClient = {
 export default function Clients() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isAdmin, can } = useRole();
+  const { can } = useRole();
   const { isDSPMode, assignedClientIds } = useAssignedClients();
   const canEditClients = can("editClients");
   const canCreateClient = can("createClient");
@@ -316,7 +316,7 @@ export default function Clients() {
 
             {editing && canEditClients && (
               <div className="border-t pt-4">
-                <AssignedStaffSection clientId={editing.id} isAdmin={isAdmin} />
+                <AssignedStaffSection clientId={editing.id} canAssign={can("editStaffDirectory")} />
               </div>
             )}
           </div>

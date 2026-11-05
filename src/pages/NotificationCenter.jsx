@@ -48,10 +48,10 @@ const CHANNEL_ICONS = {
 
 export default function NotificationCenter() {
   const { user } = useAuth();
-  const { effectiveUser } = useRole();
+  const { effectiveUser, can } = useRole();
   const viewer = effectiveUser || user;
-  const viewerIsAdmin = viewer?.is_super_admin || viewer?.role === "admin" || viewer?.role === "super_admin";
-  const scope = viewerScope(viewer);
+  const viewerIsAdmin = can("viewAllNotifications");
+  const scope = viewerScope(viewer, viewerIsAdmin);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isAdmin = viewerIsAdmin;

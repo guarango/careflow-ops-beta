@@ -2,6 +2,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useRolePreview } from "@/lib/RolePreviewContext";
 import { usePermissions } from "@/lib/PermissionsContext";
 import { useImpersonation } from "@/lib/ImpersonationContext";
+import { PREVIEW_PRESETS } from "@/lib/permissions";
 
 // Allow-list. A User record has app access ONLY when is_super_admin is true, or
 // its role is exactly one of APP_ROLES and it is not deactivated. Anything else
@@ -24,12 +25,16 @@ export function useRole() {
   const effectiveUser = impersonation?.targetUser || user;
   // No default role: a User with no role (or a deactivated one) has no app access.
   const realRole = effectiveUser?.is_super_admin ? "super_admin" : (effectiveUser?.role || null);
-  const role = previewRole || realRole;
+  // A preview applies the previewed role AND its bundles — never the real user's.
+  const preview = previewRole ? PREVIEW_PRESETS[previewRole] : null;
+  const role = preview ? preview.role : realRole;
 
-  const bundles = {
-    hr: effectiveUser?.hr_bundle || false,
-    billing: effectiveUser?.billing_bundle || false,
-  };
+  const bundles = preview
+    ? { hr: !!preview.hr, billing: !!preview.billing }
+    : {
+        hr: effectiveUser?.hr_bundle || false,
+        billing: effectiveUser?.billing_bundle || false,
+      };
 
   return {
     role,

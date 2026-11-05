@@ -13,8 +13,11 @@ import HRSelfService from "@/components/hr/HRSelfService";
 import { useRole } from "@/hooks/useRole";
 
 export default function HR() {
-  const { isAdmin, isDSP } = useRole();
-  const [activeTab, setActiveTab] = useState(isDSP ? "self" : "overview");
+  const { can } = useRole();
+  // Staff-wide HR tabs are the "view all staff" capability; analytics is admin.
+  const canViewStaff = can("viewAllStaff");
+  const isAdmin = can("hrAnalytics");
+  const [activeTab, setActiveTab] = useState(canViewStaff ? "overview" : "self");
 
   const { data: staff = [] } = useQuery({
     queryKey: ["staff"],
@@ -37,10 +40,10 @@ export default function HR() {
   });
 
   const tabs = [
-    ...(!isDSP ? [{ value: "overview", label: "Staff Overview", icon: Users }] : []),
-    ...(!isDSP ? [{ value: "timeoff", label: "Time Off", icon: Calendar }] : []),
-    ...(!isDSP ? [{ value: "performance", label: "Performance", icon: Star }] : []),
-    ...(!isDSP ? [{ value: "training", label: "Training", icon: BookOpen }] : []),
+    ...(canViewStaff ? [{ value: "overview", label: "Staff Overview", icon: Users }] : []),
+    ...(canViewStaff ? [{ value: "timeoff", label: "Time Off", icon: Calendar }] : []),
+    ...(canViewStaff ? [{ value: "performance", label: "Performance", icon: Star }] : []),
+    ...(canViewStaff ? [{ value: "training", label: "Training", icon: BookOpen }] : []),
     ...(isAdmin ? [{ value: "analytics", label: "Analytics", icon: BarChart2 }] : []),
     { value: "self", label: "My Portal", icon: User },
   ];
@@ -62,7 +65,7 @@ export default function HR() {
           ))}
         </TabsList>
 
-        {!isDSP && (
+        {canViewStaff && (
           <>
             <TabsContent value="overview">
               <HROverview staff={staff} leaveRequests={leaveRequests} reviews={reviews} trainings={trainings} />

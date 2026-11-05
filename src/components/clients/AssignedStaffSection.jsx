@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Users, X } from "lucide-react";
 
-export default function AssignedStaffSection({ clientId, isAdmin }) {
+export default function AssignedStaffSection({ clientId, canAssign = false }) {
   const queryClient = useQueryClient();
 
   const { data: staffList = [] } = useQuery({
@@ -37,7 +37,7 @@ export default function AssignedStaffSection({ clientId, isAdmin }) {
       {assignedStaff.length === 0 ? (
         <p className="text-xs text-muted-foreground italic">
           No staff assigned to this client.
-          {isAdmin && " Open a staff profile to manage assignments."}
+          {canAssign && " Open a staff profile to manage assignments."}
         </p>
       ) : (
         <div className="space-y-2">
@@ -52,7 +52,7 @@ export default function AssignedStaffSection({ clientId, isAdmin }) {
                   <p className="text-xs text-muted-foreground">{s.role || "Staff"}</p>
                 </div>
               </div>
-              {isAdmin && (
+              {canAssign && (
                 <Button
                   variant="ghost"
                   size="icon"

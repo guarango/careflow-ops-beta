@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Settings, Shield } from "lucide-react";
 import StaffFilesDashboard, { computeStaffAvg } from "@/components/compliance/StaffFilesDashboard";
+import { useRole } from "@/hooks/useRole";
 import ClientFilesDashboard, { computeClientAvg } from "@/components/compliance/ClientFilesDashboard";
 import ChartingDashboard, { computeChartingAvg } from "@/components/compliance/ChartingDashboard";
 import AgencyScoreDashboard from "@/components/compliance/AgencyScoreDashboard";
@@ -15,9 +16,11 @@ import AuditReportDialog from "@/components/compliance/AuditReportDialog";
 
 export default function Compliance() {
   const { user } = useAuth();
+  const { can } = useRole();
   const [activeTab, setActiveTab] = useState("staff");
   const [showAuditReport, setShowAuditReport] = useState(false);
-  const isAdmin = user?.role === "admin";
+  // Agency score + agency file are agency-wide views, not caseload views.
+  const isAdmin = can("viewAgencyCompliance");
 
   return (
     <div>
@@ -48,7 +51,7 @@ export default function Compliance() {
         </TabsList>
 
         <TabsContent value="staff">
-          <StaffFilesDashboard user={user} />
+          <StaffFilesDashboard />
         </TabsContent>
         <TabsContent value="client">
           <ClientFilesDashboard user={user} />
@@ -92,8 +95,9 @@ function AgencyScoreDashboardProvider() {
  * so the score can never contradict what a tab shows.
  */
 function ScoreExtractor({ onStaffScore, onClientScore, onChartingScore }) {
-  const { user } = useAuth();
-  const isAdminView = user?.role === "admin" || user?.role === "super_admin" || !!user?.is_super_admin;
+  const { can } = useRole();
+  // Same code the Staff Files tab uses, so the score matches the columns shown.
+  const isAdminView = can("viewSensitiveHRDetails");
 
   const { data: staff = [] } = useQuery({ queryKey: ["staff-comp-grid"], queryFn: () => base44.entities.StaffMember.list() });
   const { data: compDocs = [] } = useQuery({ queryKey: ["staff-comp-docs-grid"], queryFn: () => base44.entities.StaffComplianceDocument.list() });

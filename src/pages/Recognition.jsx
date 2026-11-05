@@ -8,12 +8,11 @@ import ManagerRecognition from "@/components/recognition/ManagerRecognition";
 import AdminRecognition from "@/components/recognition/AdminRecognition";
 
 export default function Recognition() {
-  const { isDSP, isManager, isAdmin, can } = useRole();
-  const [activeTab, setActiveTab] = useState(isDSP ? "dsp" : isManager ? "manager" : "admin");
-
-  const showDSP = isDSP || isAdmin || isManager;
-  const showManager = isManager || isAdmin;
+  const { can } = useRole();
+  const showDSP = true;
+  const showManager = can("giveKudos");
   const showAdmin = can("manageRecognition");
+  const [activeTab, setActiveTab] = useState(showAdmin ? "admin" : showManager ? "manager" : "dsp");
 
   return (
     <div>

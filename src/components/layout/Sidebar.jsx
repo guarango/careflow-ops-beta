@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useRole } from "@/hooks/useRole";
-import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
+import { getRoleLabel, getRoleBadgeColor, getPreviewLabel } from "@/lib/permissions";
 import { useRolePreview } from "@/lib/RolePreviewContext";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -72,7 +72,7 @@ const ALL_NAV = [
   },
 ];
 
-const PREVIEW_ROLES = ["dsp", "manager", "admin"];
+const PREVIEW_ROLES = ["dsp", "manager", "admin", "admin_hr", "admin_billing"];
 
 // Tooltip for collapsed icon-only sidebar (tablet)
 function NavTooltip({ label, children }) {
@@ -208,7 +208,7 @@ export default function Sidebar() {
                 >
                   <Eye className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
                   <span className="flex-1 text-left text-xs text-[#94A3B8]">
-                    {previewRole ? `Viewing as ${getRoleLabel(previewRole)}` : "Preview Role"}
+                    {previewRole ? `Viewing as ${getPreviewLabel(previewRole)}` : "Preview Role"}
                   </span>
                   <ChevronDown className={cn("w-3.5 h-3.5 text-[#64748B] transition-transform", rolePickerOpen && "rotate-180")} />
                 </button>
@@ -218,10 +218,10 @@ export default function Sidebar() {
                       onClick={() => { setPreviewRole(null); setRolePickerOpen(false); }}
                       className="w-full text-left px-3 py-2 text-xs hover:bg-accent transition-colors font-medium text-foreground"
                     >
-                      Reset (Admin view)
+                      Reset to my role
                     </button>
                     <div className="border-t border-border" />
-                    {PREVIEW_ROLES.filter(r => r !== "admin").map((r) => (
+                    {PREVIEW_ROLES.map((r) => (
                       <button
                         key={r}
                         onClick={() => { setPreviewRole(r); setRolePickerOpen(false); }}
@@ -230,7 +230,7 @@ export default function Sidebar() {
                           previewRole === r && "bg-accent font-semibold"
                         )}
                       >
-                        {getRoleLabel(r)}
+                        {getPreviewLabel(r)}
                       </button>
                     ))}
                     {realRole === "super_admin" && (

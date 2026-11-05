@@ -29,7 +29,9 @@ const EMPTY_FORM = {
 };
 
 export default function Houses() {
-  const { isAdmin } = useRole();
+  const { isAdmin, can } = useRole();
+  const canEdit = can("editHouses");
+  const canDelete = can("deleteHouse");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -120,7 +122,7 @@ export default function Houses() {
       <PageHeader
         title="Houses & Locations"
         subtitle="Manage residential homes, day programs, and service locations"
-        action={isAdmin && (
+        action={canEdit && (
           <Button onClick={openCreate}>
             <Plus className="w-4 h-4 mr-2" />Add House
           </Button>
@@ -138,18 +140,18 @@ export default function Houses() {
                 <TableHead>Clients</TableHead>
                 <TableHead>Geofence</TableHead>
                 <TableHead>Status</TableHead>
-                {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                {canEdit && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-muted-foreground py-8 text-sm">Loading...</TableCell>
+                  <TableCell colSpan={canEdit ? 7 : 6} className="text-center text-muted-foreground py-8 text-sm">Loading...</TableCell>
                 </TableRow>
               ) : houses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-muted-foreground py-8 text-sm">
-                    No houses yet. {isAdmin && "Click \"Add House\" to create one."}
+                  <TableCell colSpan={canEdit ? 7 : 6} className="text-center text-muted-foreground py-8 text-sm">
+                    No houses yet. {canEdit && "Click \"Add House\" to create one."}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -180,15 +182,17 @@ export default function Houses() {
                         {h.status || "Active"}
                       </Badge>
                     </TableCell>
-                    {isAdmin && (
+                    {canEdit && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openEdit(h)}>
                             <Pencil className="w-3 h-3 mr-1" />Edit
                           </Button>
-                          <Button variant="outline" size="sm" className="h-7 text-xs text-destructive" onClick={() => handleDelete(h)}>
-                            Delete
-                          </Button>
+                          {canDelete && (
+                            <Button variant="outline" size="sm" className="h-7 text-xs text-destructive" onClick={() => handleDelete(h)}>
+                              Delete
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     )}

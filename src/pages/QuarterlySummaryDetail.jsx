@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
+import { useRole } from "@/hooks/useRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ export default function QuarterlySummaryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { can } = useRole();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [overallStatus, setOverallStatus] = useState("");
@@ -47,7 +49,7 @@ export default function QuarterlySummaryDetail() {
     }
   }, [summary]);
 
-  const isManager = user?.role === "admin" || user?.role === "manager";
+  const isManager = can("approveSummaries");
   const canEdit = isManager && summary?.status !== "Sent to SC";
 
   const dueDate = summary ? new Date(summary.due_date) : null;

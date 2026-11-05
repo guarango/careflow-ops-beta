@@ -88,6 +88,9 @@ export const CAN = {
   viewSensitiveIdentifiers: ["hr_bundle"],
   viewSensitiveHRDetails: ["hr_bundle"],
   viewSensitiveRates:     ["billing_bundle"],
+  viewAgencyCompliance:   ["admin"],
+  viewAllNotifications:   ["admin"],
+  hrAnalytics:            ["admin"],
 
   // Staff & Operations
   scheduleBuild:          ["manager", "admin"],
@@ -97,6 +100,7 @@ export const CAN = {
   lockPayPeriod:          ["admin"],
   unlockTimecard:         ["admin"],
   editHouses:             ["manager", "admin"],
+  deleteHouse:            ["admin"],
   viewAllStaff:           ["manager", "admin"],
   editStaffDirectory:     ["admin", "hr_bundle"],
   editStaff:              ["hr_bundle"],
@@ -175,7 +179,9 @@ export const FEATURE_SECTIONS = [
         { code: "changeIncidentStatus", level: "Edit", label: "Edit incidents" },
         { code: "approveIncidents", level: "Approve", label: "Approve incidents" },
       ] },
-      { key: "complianceClients", label: "Compliance (clients)", paths: ["/compliance"] },
+      { key: "complianceClients", label: "Compliance (clients)", paths: ["/compliance"], actions: [
+        { code: "viewAgencyCompliance", level: "View", label: "Agency score & agency file" },
+      ] },
       { key: "complianceStaff", label: "Compliance (staff files)", paths: ["/compliance"], hideView: true, actions: [
         { code: "staffFilesView", level: "View", label: "View staff compliance files" },
       ] },
@@ -196,6 +202,7 @@ export const FEATURE_SECTIONS = [
       ] },
       { key: "houses", label: "Houses", paths: ["/houses"], actions: [
         { code: "editHouses", level: "Edit", label: "Edit houses" },
+        { code: "deleteHouse", level: "Delete", label: "Delete houses" },
       ] },
       { key: "staffDirectory", label: "Staff directory", paths: ["/staff"], actions: [
         { code: "editStaffDirectory", level: "Edit", label: "Edit phone & assignments" },
@@ -311,6 +318,21 @@ export function can(role, permission, bundles = {}) {
 
 export function canAccessPath(role, path, bundles = {}) {
   return checkPathAccess(NAV_ACCESS, CAN, role, path, bundles);
+}
+
+// ─── Preview Role presets ────────────────────────────────────────────────
+// Previewing applies BOTH the role and its bundles, so a previewed Admin sees
+// exactly what an Admin with (or without) that bundle sees.
+export const PREVIEW_PRESETS = {
+  dsp:           { label: "DSP",                role: "dsp",     hr: false, billing: false },
+  manager:       { label: "Manager",            role: "manager", hr: false, billing: false },
+  admin:         { label: "Admin (no bundles)", role: "admin",   hr: false, billing: false },
+  admin_hr:      { label: "Admin + HR",         role: "admin",   hr: true,  billing: false },
+  admin_billing: { label: "Admin + Billing",    role: "admin",   hr: false, billing: true },
+};
+
+export function getPreviewLabel(token) {
+  return PREVIEW_PRESETS[token]?.label || getRoleLabel(token);
 }
 
 export function getRoleLabel(role) {

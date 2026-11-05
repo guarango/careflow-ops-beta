@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import ComplianceGrid from "./ComplianceGrid";
+import { useRole } from "@/hooks/useRole";
 import { docStatus, expiryStatus, daysUntil, rowPct, REQUIRED_TRAINING_HOURS } from "./complianceStatus";
 
 const ADMIN_COLUMNS = [
@@ -28,14 +29,14 @@ const MANAGER_COLUMNS = [
   { key: "expiring", label: "Expiring" },
 ];
 
-export function computeStaffRow(staff, compDocs, onboardingDocs, trainings, isAdmin) {
+export function computeStaffRow(staff, compDocs, onboardingDocs, trainings, canViewHR) {
   const name = `${staff.first_name} ${staff.last_name}`;
   const myComp = compDocs.filter(d => d.staff_id === staff.id);
   const myOnboard = onboardingDocs.filter(d => d.staff_id === staff.id);
   const myTrainings = trainings.filter(t => t.staff_id === staff.id);
   const cells = {};
 
-  if (isAdmin) {
+  if (canViewHR) {
     const bg = myComp.find(d => d.document_type?.toLowerCase().includes("background"));
     cells.background_check = bg
       ? { status: docStatus(bg.status, bg.expiration_date), label: "Background Check", detail: bg.expiration_date ? `Expires ${bg.expiration_date}` : "On file" }
@@ -107,17 +108,19 @@ export function computeStaffRow(staff, compDocs, onboardingDocs, trainings, isAd
  * Staff Files average — the exact same per-row calculation the Staff Files
  * tab renders, so the Agency Score can never disagree with the tab.
  */
-export function computeStaffAvg(staff, compDocs, onboardingDocs, trainings, isAdmin) {
+export function computeStaffAvg(staff, compDocs, onboardingDocs, trainings, canViewHR) {
   const active = staff.filter(s => s.status === "Active" || !s.status);
-  const rows = active.map(s => computeStaffRow(s, compDocs, onboardingDocs, trainings, isAdmin));
+  const rows = active.map(s => computeStaffRow(s, compDocs, onboardingDocs, trainings, canViewHR));
   if (!rows.length) return 0;
   return Math.round(rows.reduce((a, r) => a + r.pct, 0) / rows.length);
 }
 
-export default function StaffFilesDashboard({ user, onSelectCell }) {
+export default function StaffFilesDashboard({ onSelectCell }) {
+  const { can } = useRole();
   const [search, setSearch] = React.useState("");
-  const isAdmin = user?.role === "admin";
-  const columns = isAdmin ? ADMIN_COLUMNS : MANAGER_COLUMNS;
+  // HR file details (background, OIG, onboarding, policies) need the matrix code.
+  const canViewHR = can("viewSensitiveHRDetails");
+  const columns = canViewHR ? ADMIN_COLUMNS : MANAGER_COLUMNS;
 
   const { data: staff = [] } = useQuery({ queryKey: ["staff-comp-grid"], queryFn: () => base44.entities.StaffMember.list() });
   const { data: compDocs = [] } = useQuery({ queryKey: ["staff-comp-docs-grid"], queryFn: () => base44.entities.StaffComplianceDocument.list() });
@@ -127,9 +130,9 @@ export default function StaffFilesDashboard({ user, onSelectCell }) {
   const rows = useMemo(() => {
     const active = staff.filter(s => s.status === "Active" || !s.status);
     return active
-      .map(s => computeStaffRow(s, compDocs, onboardingDocs, trainings, isAdmin))
+      .map(s => computeStaffRow(s, compDocs, onboardingDocs, trainings, canViewHR))
       .filter(r => r.name.toLowerCase().includes(search.toLowerCase()));
-  }, [staff, compDocs, onboardingDocs, trainings, isAdmin, search]);
+  }, [staff, compDocs, onboardingDocs, trainings, canViewHR, search]);
 
   const avgPct = rows.length ? Math.round(rows.reduce((a, r) => a + r.pct, 0) / rows.length) : 0;
 
