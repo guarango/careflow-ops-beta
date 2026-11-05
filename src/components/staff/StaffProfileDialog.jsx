@@ -16,7 +16,7 @@ import SensitiveValue from "@/components/shared/SensitiveValue";
 const CONTRACT_AREAS = ["DSPD", "DCFS", "Private Pay", "Licensed Program", "Foster Care"];
 const CERT_NAMES = ["CPR/First Aid", "Medication Administration", "CPI / Crisis Prevention", "HIPAA", "Mandated Reporter", "Abuse & Neglect", "Driver's License", "Other"];
 
-export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = false, readOnly = false }) {
+export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = false, canEditHR = false, readOnly = false }) {
   const [form, setForm] = useState(staff);
   const [tab, setTab] = useState("personal");
 
@@ -103,7 +103,7 @@ export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = f
                 <div><Label>Date of Birth</Label><Input type="date" value={form.date_of_birth || ""} onChange={e => set("date_of_birth", e.target.value)} /></div>
                 <div>
                   <Label>SSN (Last 4 digits)</Label>
-                  {isAdmin ? (
+                  {canEditHR ? (
                     <Input value={form.ssn_last4 || ""} maxLength={4} placeholder="####" onChange={e => set("ssn_last4", e.target.value.replace(/\D/g, ""))} />
                   ) : (
                     <div className="mt-1"><SensitiveValue value={form.ssn_last4} field="staff SSN" subject={{ type: "StaffMember", id: staff?.id, name: `${form.first_name || ""} ${form.last_name || ""}`.trim() }} canReveal={false} /></div>
@@ -252,7 +252,7 @@ export default function StaffProfileDialog({ staff, onSave, onClose, isAdmin = f
 
             {/* COMPLIANCE TAB */}
             <TabsContent value="compliance" className="mt-0 space-y-5">
-              {isAdmin ? (<>
+              {canEditHR ? (<>
               {/* Background Check */}
               <div className="bg-muted rounded-lg p-4 space-y-3">
                 <h3 className="text-sm font-semibold">Background Check</h3>

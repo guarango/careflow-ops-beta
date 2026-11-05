@@ -82,6 +82,8 @@ export const CAN = {
   viewAllTimecards:       ["manager", "admin", "super_admin"],
   approveSessionNotes:    ["manager", "admin", "super_admin"],
   editStaff:              ["admin", "super_admin"],
+  // Core staff directory: contact info, client/house assignments. No HR bundle needed.
+  editStaffDirectory:     ["admin", "super_admin"],
   changeIncidentStatus:   ["manager", "admin", "super_admin"],
   viewAllIncidents:       ["manager", "admin", "super_admin"],
   editClients:            ["manager", "admin", "super_admin"],

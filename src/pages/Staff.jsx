@@ -36,7 +36,10 @@ function complianceAlerts(s) {
 export default function Staff() {
   const { isAdmin, can } = useRole();
   const canCreateStaff = can("createStaff");
-  const canEditStaff = can("editStaff");
+  // HR-sensitive fields (SSN, background checks, pay) need the HR bundle.
+  const canEditHR = can("editStaff");
+  // Directory edits (contact info, client & house assignments) do not.
+  const canEditStaff = canEditHR || can("editStaffDirectory");
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
@@ -225,6 +228,7 @@ export default function Staff() {
           onSave={handleSave}
           onClose={() => { setShowDialog(false); setEditingStaff(null); }}
           isAdmin={isAdmin}
+          canEditHR={canEditHR}
           readOnly={!canEditStaff}
         />
       )}

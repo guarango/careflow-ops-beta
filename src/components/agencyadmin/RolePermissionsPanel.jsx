@@ -38,6 +38,7 @@ const FEATURE_CATEGORIES = [
       ["viewAllStaff", "View All Staff"],
       ["createStaff", "Add Staff Records (HR bundle)"],
       ["editStaff", "Edit Staff Records (HR bundle)"],
+      ["editStaffDirectory", "Edit Staff Directory (phone & assignments)"],
       ["deleteStaff", "Delete Staff Records (HR bundle)"],
       ["createClient", "Add Client Records"],
       ["editClients", "Edit Client Records"],
