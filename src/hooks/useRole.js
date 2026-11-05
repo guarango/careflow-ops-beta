@@ -45,7 +45,8 @@ export function useRole() {
     bundles,
     isReadOnly,
     // Role flags
-    isSuperAdmin:  role === "super_admin",
+    // Super Admin is who you really are — a preview never grants it.
+    isSuperAdmin:  realRole === "super_admin",
     isManager:     role === "manager",
     isAdmin:       role === "admin" || role === "super_admin",
     isDSP:         role === "dsp",

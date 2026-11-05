@@ -9,16 +9,22 @@ import SuperAdminReleases from "@/components/superadmin/SuperAdminReleases";
 import SuperAdminStateReporting from "@/components/superadmin/SuperAdminStateReporting";
 import SuperAdminAnalytics from "@/components/superadmin/SuperAdminAnalytics";
 import AIFeatureManager from "@/components/ai/AIFeatureManager";
+import { useRole } from "@/hooks/useRole";
+import AccessDenied from "@/components/shared/AccessDenied";
 import SuperAdminIntegrations from "@/components/superadmin/SuperAdminIntegrations";
 import { Activity, Building2, CreditCard, BarChart3, Megaphone, Globe, TrendingUp, Sparkles, Plug } from "lucide-react";
 
 export default function SuperAdmin() {
   const [activeTab, setActiveTab] = useState("agencies");
+  const { isSuperAdmin } = useRole();
 
   const { data: agencies = [] } = useQuery({
     queryKey: ["agencies"],
     queryFn: () => base44.entities.Agency.list("-created_date", 500),
+    enabled: isSuperAdmin,
   });
+
+  if (!isSuperAdmin) return <AccessDenied />;
 
   return (
     <div className="min-h-screen bg-background">

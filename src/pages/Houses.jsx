@@ -29,7 +29,7 @@ const EMPTY_FORM = {
 };
 
 export default function Houses() {
-  const { isAdmin, can } = useRole();
+  const { can } = useRole();
   const canEdit = can("editHouses");
   const canDelete = can("deleteHouse");
   const { toast } = useToast();
@@ -57,7 +57,7 @@ export default function Houses() {
       }
       return counts;
     },
-    enabled: isAdmin,
+    enabled: canEdit,
   });
 
   const openCreate = () => {
@@ -172,7 +172,7 @@ export default function Houses() {
                       <Badge variant="outline" className="text-[11px]">{h.program_type || "—"}</Badge>
                     </TableCell>
                     <TableCell className="text-sm">
-                      {isAdmin ? (
+                      {canEdit ? (
                         <span className="flex items-center gap-1"><Users className="w-3 h-3 text-muted-foreground" />{clientCounts[h.id] || 0}</span>
                       ) : "—"}
                     </TableCell>

@@ -9,6 +9,7 @@ import {
   Heart, Users, AlertTriangle, Shield, ArrowRight, ShieldAlert, Activity,
 } from "lucide-react";
 import { todayISO } from "@/lib/dateUtils";
+import { useRole } from "@/hooks/useRole";
 import TodayVisitsCard from "./TodayVisitsCard";
 import BillingSnapshotCard from "./BillingSnapshotCard";
 import AlertListCard from "./AlertListCard";
@@ -38,6 +39,8 @@ const QUICK_ACTIONS = [
 ];
 
 export default function AdminDashboard({ user }) {
+  const { canAccessPath } = useRole();
+  const quickActions = QUICK_ACTIONS.filter((a) => canAccessPath(a.path));
   const today = todayISO();
   const monthStart = `${today.slice(0, 7)}-01`;
 
@@ -218,7 +221,7 @@ export default function AdminDashboard({ user }) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            {QUICK_ACTIONS.map((a) => (
+            {quickActions.map((a) => (
               <Link key={a.path} to={a.path}>
                 <Button variant="outline" size="sm" className="w-full justify-start text-xs h-11 md:h-9">{a.label}</Button>
               </Link>

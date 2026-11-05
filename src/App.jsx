@@ -122,9 +122,9 @@ const AuthenticatedApp = () => {
         </Route>
         {/* Standalone routes — no sidebar layout */}
         <Route path="/super-admin" element={<SuperAdmin />} />
-        <Route path="/onboarding" element={<OnboardingWizard />} />
+        <Route path="/onboarding" element={<RouteGuard path="/onboarding"><OnboardingWizard /></RouteGuard>} />
         <Route path="/sign/:requestId" element={<SignDocument />} />
-        <Route path="/api/docs" element={<APIDocs />} />
+        <Route path="/api/docs" element={<RouteGuard path="/api/docs"><APIDocs /></RouteGuard>} />
         <Route path="/oauth/consent" element={<OAuthConsent />} />
         <Route path="/users" element={<Navigate to="/agency-admin?tab=users" replace />} />
         </Route>

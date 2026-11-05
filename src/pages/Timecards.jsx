@@ -35,7 +35,7 @@ const emptyTC = {
 const PAYROLL_ROLES = ["admin", "hr", "billing", "program_director", "supervisor"];
 
 export default function Timecards() {
-  const { role, can } = useRole();
+  const { can } = useRole();
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
 
@@ -331,7 +331,7 @@ export default function Timecards() {
           description="Create your first timecard entry."
           action={<Button onClick={() => setShowDialog(true)} size="sm"><Plus className="w-4 h-4 mr-1" />New Entry</Button>}
         />
-      ) : role === "dsp" ? (
+      ) : !can("viewAllTimecards") && !can("approveTimecards") ? (
         <DSPPayPeriodView timecards={filtered} />
       ) : (
         <Card>
@@ -421,20 +421,17 @@ export default function Timecards() {
                           can("approveTimecards") && t.status === "Pending" && (
                             isOT ? (
                               <div className="flex gap-1 items-center">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  disabled={!isAdminOrHR}
-                                  className={`h-7 text-xs px-2 ${isAdminOrHR ? "text-orange-600 hover:bg-orange-50" : "opacity-40 cursor-not-allowed"}`}
-                                  onClick={() => isAdminOrHR && handleOTOverride(t)}
-                                  title={isAdminOrHR ? "Override & Approve OT entry" : "OT Review Required — Admin/HR only"}
-                                >
-                                  {isAdminOrHR ? (
-                                    <><AlertTriangle className="w-3 h-3 mr-1" />Override</>
-                                  ) : (
-                                    "OT Review Required"
-                                  )}
-                                </Button>
+                                {isAdminOrHR && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-xs px-2 text-orange-600 hover:bg-orange-50"
+                                    onClick={() => handleOTOverride(t)}
+                                    title="Override & Approve OT entry"
+                                  >
+                                    <AlertTriangle className="w-3 h-3 mr-1" />Override
+                                  </Button>
+                                )}
                                 <Button
                                   variant="ghost"
                                   size="icon"

@@ -95,7 +95,7 @@ function NavTooltip({ label, children }) {
 
 export default function Sidebar() {
   const location = useLocation();
-  const { role, realRole, can, canAccessPath, isReadOnly } = useRole();
+  const { role, isSuperAdmin, can, canAccessPath, isReadOnly } = useRole();
   const { previewRole, setPreviewRole } = useRolePreview();
   const { impersonation, returnToSelf } = useImpersonation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -183,7 +183,7 @@ export default function Sidebar() {
 
       {/* Role switcher */}
       <div className="px-3 py-3 border-t border-[#1E293B] shrink-0">
-        {realRole === "super_admin" ? (
+        {isSuperAdmin ? (
           <div className="relative">
             {impersonation ? (
               <div className="space-y-2">
@@ -233,7 +233,7 @@ export default function Sidebar() {
                         {getPreviewLabel(r)}
                       </button>
                     ))}
-                    {realRole === "super_admin" && (
+                    {isSuperAdmin && (
                       <>
                         <div className="border-t border-border" />
                         <button
