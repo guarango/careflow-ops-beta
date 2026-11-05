@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Users, Heart, FileText, AlertTriangle,
   Pill, Clock, Shield, DollarSign, Target, CalendarDays, UserCog,
-  Check, X, Briefcase, Info, RotateCcw,
+  Check, X, Briefcase, Info, RotateCcw, Brain,
 } from "lucide-react";
 import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
 import { useRole } from "@/hooks/useRole";
@@ -19,6 +19,7 @@ const ALL_NAV = [
   { label: "Client Goals", icon: Target, path: "/goals" },
   { label: "Session Notes", icon: FileText, path: "/session-notes" },
   { label: "Incidents", icon: AlertTriangle, path: "/incidents" },
+  { label: "Behavior Support Plans", icon: Brain, path: "/bsp" },
   { label: "eMAR", icon: Pill, path: "/emar" },
   { label: "Timecards", icon: Clock, path: "/timecards" },
   { label: "Compliance", icon: Shield, path: "/compliance" },
