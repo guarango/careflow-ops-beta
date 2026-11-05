@@ -3,25 +3,20 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserCog, Plus, Mail, ShieldCheck, Users, Briefcase, Info } from "lucide-react";
+import { Plus, Mail, ShieldCheck, Users, Briefcase, Info } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useRole } from "@/hooks/useRole";
-import { getRoleLabel, ROLE_DESCRIPTIONS } from "@/lib/permissions";
+import { ROLE_DESCRIPTIONS } from "@/lib/permissions";
 import StatusBadge from "@/components/shared/StatusBadge";
 import StaffStatusFilter from "@/components/shared/StaffStatusFilter";
 import StaffProfileDialog from "@/components/staff/StaffProfileDialog";
 import EditUserDialog from "@/components/users/EditUserDialog";
 import UserActionsMenu from "@/components/users/UserActionsMenu";
+import InviteUserDialog from "@/components/users/InviteUserDialog";
 import { DEFAULT_STATUS_TAB, peopleInTab, matchesSearch, ACCESS_LABELS, personStatus } from "@/lib/staffFilters";
-
-const JOB_TITLES = ["DSP", "Nurse", "QIDP", "Supervisor", "Admin", "Behavioral Specialist", "Mental Health Pro", "Contractor", "Volunteer", "Non-Client Facing", "Other"];
 
 const ROLE_CARDS = [
   { key: "dsp", icon: Users, color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
@@ -44,12 +39,6 @@ export default function UserManagement() {
   const queryClient = useQueryClient();
 
   const [showInvite, setShowInvite] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteJobTitle, setInviteJobTitle] = useState("DSP");
-  const [inviteAccess, setInviteAccess] = useState("dsp");
-  const [hrBundle, setHrBundle] = useState(false);
-  const [billingBundle, setBillingBundle] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [editPerson, setEditPerson] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
   const [savingUser, setSavingUser] = useState(false);
@@ -94,34 +83,6 @@ export default function UserManagement() {
     await base44.entities.StaffMember.update(formData.id, profile);
     setProfileStaff(null);
     refreshAll();
-  };
-
-  const handleInvite = async () => {
-    if (!inviteEmail) return;
-    setLoading(true);
-    try {
-      const res = await base44.functions.invoke("manageUsers", {
-        action: "invite",
-        email: inviteEmail,
-        job_title: inviteJobTitle,
-        app_access: inviteAccess,
-        hr_bundle: inviteAccess === "admin" ? hrBundle : false,
-        billing_bundle: inviteAccess === "admin" ? billingBundle : false,
-      });
-      if (res.data?.error) throw new Error(res.data.error);
-      toast({ title: "Invitation sent", description: `${inviteEmail} was invited as ${getRoleLabel(inviteAccess)}.` });
-      setInviteEmail("");
-      setInviteJobTitle("DSP");
-      setInviteAccess("dsp");
-      setHrBundle(false);
-      setBillingBundle(false);
-      setShowInvite(false);
-      refreshAll();
-    } catch (err) {
-      toast({ title: "Invite failed", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSaveAccess = async ({ staffId, app_access, hr_bundle, billing_bundle }) => {
@@ -295,7 +256,9 @@ export default function UserManagement() {
                   </TableCell>
                   <TableCell><StatusBadge status={personStatus(p)} /></TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {p.last_login ? new Date(p.last_login).toLocaleDateString() : (p.status === "Pending" ? "Never" : "—")}
+                    {p.status === "Pending"
+                      ? (p.invited_at ? `Invited ${new Date(p.invited_at).toLocaleDateString()}` : "Invited")
+                      : (p.last_login ? new Date(p.last_login).toLocaleDateString() : "—")}
                   </TableCell>
                   {canEditUser && (
                     <TableCell className="text-right whitespace-nowrap">
@@ -327,63 +290,8 @@ export default function UserManagement() {
         </div>
       </Card>
 
-      {/* Invite dialog — this is how a person is added */}
-      <Dialog open={showInvite} onOpenChange={setShowInvite}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><UserCog className="w-5 h-5" />Invite User</DialogTitle>
-            <DialogDescription>Creates the person's staff record and one login.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Email Address</Label>
-              <Input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="person@example.com" />
-            </div>
-            <div>
-              <Label>Job title</Label>
-              <Select value={inviteJobTitle} onValueChange={setInviteJobTitle}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {JOB_TITLES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1.5">HR information only — it never grants access.</p>
-            </div>
-            <div>
-              <Label>App access</Label>
-              <Select value={inviteAccess} onValueChange={(v) => { setInviteAccess(v); if (v !== "admin") { setHrBundle(false); setBillingBundle(false); } }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dsp">DSP — Assigned clients only</SelectItem>
-                  <SelectItem value="manager">Manager — Oversees clients & staff</SelectItem>
-                  <SelectItem value="admin">Admin — Full agency access</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1.5">{ROLE_DESCRIPTIONS[inviteAccess]}</p>
-            </div>
-
-            {inviteAccess === "admin" && (
-              <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Permission Bundles (optional)</p>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox checked={hrBundle} onCheckedChange={(v) => setHrBundle(!!v)} />
-                  <span className="text-sm">HR bundle — staff files, onboarding, trainings, compliance</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox checked={billingBundle} onCheckedChange={(v) => setBillingBundle(!!v)} />
-                  <span className="text-sm">Billing bundle — rates, authorizations, payroll/billing/EVV export</span>
-                </label>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowInvite(false)}>Cancel</Button>
-            <Button onClick={handleInvite} disabled={!inviteEmail || loading}>
-              {loading ? "Sending..." : "Send Invite"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* One invite form for the whole app (also used on the Staff page) */}
+      <InviteUserDialog open={showInvite} onOpenChange={setShowInvite} onInvited={refreshAll} />
 
       <EditUserDialog
         person={editPerson}

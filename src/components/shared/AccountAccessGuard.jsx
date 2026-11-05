@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { Outlet } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useRole } from "@/hooks/useRole";
 import { Button } from "@/components/ui/button";
@@ -7,8 +9,23 @@ import { LogOut, ShieldAlert } from "lucide-react";
 // Blocks anyone without app access (allow-list in useRole).
 // Nothing below this guard (sidebar, dashboard, data queries) is mounted for them.
 export default function AccountAccessGuard() {
-  const { logout } = useAuth();
+  const { logout, checkAppState } = useAuth();
   const { hasAccess } = useRole();
+  const attempted = useRef(false);
+
+  // Activation itself runs in the activateStaffAccount backend function (sign-in
+  // workflow). This only asks it once and re-reads the login, in case that finished
+  // after this page mounted — it never decides access here.
+  useEffect(() => {
+    if (hasAccess || attempted.current) return;
+    attempted.current = true;
+    base44.functions
+      .invoke("activateStaffAccount", {})
+      .then((res) => {
+        if (res.data?.applied) checkAppState();
+      })
+      .catch(() => {});
+  }, [hasAccess]);
 
   if (!hasAccess) {
     return (

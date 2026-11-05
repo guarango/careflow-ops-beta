@@ -7,10 +7,12 @@ import EmptyState from "@/components/shared/EmptyState";
 import StaffProfileDialog from "@/components/staff/StaffProfileDialog";
 import StaffStatusFilter from "@/components/shared/StaffStatusFilter";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, Search, Phone, Mail, AlertTriangle } from "lucide-react";
+import { Users, Search, Phone, Mail, AlertTriangle, Plus } from "lucide-react";
+import InviteUserDialog from "@/components/users/InviteUserDialog";
 import { useRole } from "@/hooks/useRole";
 import { useViewMode } from "@/hooks/useViewMode";
 import EntityCard from "@/components/shared/EntityCard";
@@ -37,6 +39,7 @@ export default function Staff() {
   const canEditStaff = canEditHR || can("editStaffDirectory");
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [search, setSearch] = useState("");
   const [statusTab, setStatusTab] = useState(DEFAULT_STATUS_TAB);
@@ -73,6 +76,11 @@ export default function Staff() {
       <PageHeader
         title="Staff"
         subtitle={`${visible.length} of ${staff.length} people · HR view of the same records as the Users tab`}
+        action={can("createUser") && (
+          <Button onClick={() => setShowInvite(true)}>
+            <Plus className="w-4 h-4 mr-2" />Invite User
+          </Button>
+        )}
       />
 
       <Card className="mb-6">
@@ -187,6 +195,8 @@ export default function Staff() {
           </div>
         </Card>
       )}
+
+      <InviteUserDialog open={showInvite} onOpenChange={setShowInvite} onInvited={() => queryClient.invalidateQueries({ queryKey: ["staff"] })} />
 
       {showDialog && editingStaff && (
         <StaffProfileDialog

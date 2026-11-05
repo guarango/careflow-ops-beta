@@ -63,6 +63,14 @@ export async function applyStaffAccess(base44, opts) {
     if (staff.status !== 'Pending' || staff.user_id) {
       throw new Error('Only a pending invite that was never accepted can be cancelled');
     }
+    // A cancelled invite takes its unsigned e-signature requests with it.
+    const requestsRaw = await svc.SignatureRequest.filter({ staff_id: staffId });
+    const requests = Array.isArray(requestsRaw) ? requestsRaw : (requestsRaw?.items || []);
+    const unsigned = requests.filter((r) => r.status !== 'Signed');
+    for (const request of unsigned) {
+      await svc.SignatureRequest.delete(request.id);
+    }
+
     await svc.StaffMember.delete(staffId);
     await svc.AuditLog.create({
       ...actor,

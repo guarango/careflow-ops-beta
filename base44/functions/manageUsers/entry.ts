@@ -60,7 +60,7 @@ export default async function (req) {
             billing_bundle: !!s.billing_bundle,
             status: s.status || 'Pending',
             user_id: linked?.id || s.user_id || null,
-            has_login: !!linked,
+            has_login: !!linked || !!s.user_id,
             last_login: linked?.last_login || linked?.last_sign_in || s.activated_at || null,
             invited_by: s.invited_by || '',
             invited_at: s.invited_at || '',
@@ -73,71 +73,152 @@ export default async function (req) {
       return Response.json({ rows, total: rows.length });
     }
 
-    // ─── Invite a person: creates the Pending StaffMember record ───────
+    // ─── Invite: one call saves the Pending record, sends the invite,
+    //     creates the signature requests and audit-logs it ───────────────
     if (action === 'invite') {
-      const { email, job_title, app_access, hr_bundle, billing_bundle } = body;
-      if (!email || !email.includes('@')) {
-        return Response.json({ error: 'A valid email is required' }, { status: 400 });
-      }
-      const access = normalizeAccess(app_access || 'dsp', hr_bundle, billing_bundle);
-      const cleanEmail = email.trim().toLowerCase();
-      const staff = (await allStaff()).find((s) => (s.email || '').toLowerCase() === cleanEmail);
-      const now = new Date().toISOString();
-      const nameParts = cleanEmail.split('@')[0].split(/[._-]/).filter(Boolean);
-      const guessedFirst = nameParts[0] ? nameParts[0][0].toUpperCase() + nameParts[0].slice(1) : cleanEmail;
+      const {
+        first_name, last_name, email, phone, job_title, app_access,
+        hr_bundle, billing_bundle, client_ids, house_ids, signature_template_ids, reactivate,
+      } = body;
 
-      let staffId = staff?.id;
-      const inviteFields = {
+      const missing = [];
+      if (!String(first_name || '').trim()) missing.push('First name');
+      if (!String(last_name || '').trim()) missing.push('Last name');
+      if (!email || !String(email).includes('@')) missing.push('Email');
+      if (!String(phone || '').trim()) missing.push('Phone');
+      if (!job_title) missing.push('Job title');
+      if (!app_access) missing.push('App access');
+      if (missing.length) {
+        return Response.json({ error: `Missing: ${missing.join(', ')}` }, { status: 400 });
+      }
+
+      const access = normalizeAccess(app_access, hr_bundle, billing_bundle);
+      const cleanEmail = String(email).trim().toLowerCase();
+      const now = new Date().toISOString();
+      const existing = (await allStaff()).find((s) => (s.email || '').toLowerCase() === cleanEmail);
+
+      if (existing && !reactivate) {
+        if (existing.status === 'Inactive') {
+          return Response.json(
+            { error: 'This person was deactivated — reactivate them instead.', needs_reactivate: true },
+            { status: 409 }
+          );
+        }
+        return Response.json({ error: 'This person already has an account.' }, { status: 409 });
+      }
+
+      const profile = {
+        first_name: String(first_name).trim(),
+        last_name: String(last_name).trim(),
         email: cleanEmail,
-        role: job_title || staff?.role || 'DSP',
+        phone: String(phone).trim(),
+        role: job_title,
         ...access,
-        invited_by: user.full_name || user.email,
-        invited_at: now,
+        // Admins see the whole agency; assignments only apply to DSPs and Managers.
+        assigned_client_ids: access.app_access === 'admin' ? (existing?.assigned_client_ids || []) : (client_ids || []),
+        assigned_house_ids: access.app_access === 'admin' ? (existing?.assigned_house_ids || []) : (house_ids || []),
       };
 
-      if (staff) {
-        await svc.StaffMember.update(staff.id, inviteFields);
+      let staffId;
+      let reactivated = false;
+      if (existing) {
+        await svc.StaffMember.update(existing.id, profile);
+        staffId = existing.id;
+        if (existing.status === 'Inactive') {
+          // Restore access through the single writer (never a direct role write).
+          await applyStaffAccess(base44, {
+            staffId,
+            app_access: access.app_access,
+            hr_bundle: access.hr_bundle,
+            billing_bundle: access.billing_bundle,
+            action: 'reactivate',
+            actor: user,
+          });
+          reactivated = true;
+        }
       } else {
         const created = await svc.StaffMember.create({
-          first_name: guessedFirst,
-          last_name: '',
+          ...profile,
           status: 'Pending',
-          ...inviteFields,
+          invited_by: user.full_name || user.email,
+          invited_at: now,
         });
         staffId = created.id;
       }
 
-      await base44.users.inviteUser(cleanEmail, 'user');
+      // Platform role is always "user" — app access lives on the staff record.
+      const foundUserRaw = await svc.User.filter({ email: cleanEmail }).catch(() => null);
+      const existingUser = (Array.isArray(foundUserRaw) ? foundUserRaw : (foundUserRaw?.items || []))[0] || null;
+      let inviteSent = false;
+      let inviteError = '';
+      if (!existingUser) {
+        try {
+          await base44.users.inviteUser(cleanEmail, 'user');
+          inviteSent = true;
+        } catch (err) {
+          // The record is already saved — report the email problem, don't lose the invite.
+          inviteError = err.message || 'invite email failed';
+        }
+      }
 
-      // If a login already exists, mirror the chosen access onto it now.
-      let mirrored = false;
-      const existing = (await allUsers()).find((u) => (u.email || '').toLowerCase() === cleanEmail);
-      if (existing && !existing.is_super_admin) {
-        const result = await applyStaffAccess(base44, {
-          staffId,
-          app_access: access.app_access,
-          hr_bundle: access.hr_bundle,
-          billing_bundle: access.billing_bundle,
-          status: staff?.status === 'Active' ? 'Active' : 'Pending',
-          action: 'set_access',
-          actor: user,
-        });
-        mirrored = result.mirrored;
+      // E-signature documents picked at invite time
+      const templateIds = Array.isArray(signature_template_ids) ? signature_template_ids : [];
+      let signaturesCreated = 0;
+      if (templateIds.length) {
+        const templatesRaw = await svc.SignatureTemplate.filter({ id: { $in: templateIds } });
+        const templates = Array.isArray(templatesRaw) ? templatesRaw : (templatesRaw?.items || []);
+        if (templates.length) {
+          const staffName = `${profile.first_name} ${profile.last_name}`.trim();
+          await svc.SignatureRequest.bulkCreate(
+            templates.map((t) => ({
+              template_id: t.id,
+              template_name: t.name,
+              staff_id: staffId,
+              staff_name: staffName,
+              staff_email: cleanEmail,
+              staff_role: profile.role,
+              sent_by: user.id,
+              sent_by_name: user.full_name || user.email,
+              sent_at: now,
+              status: 'Sent',
+            }))
+          );
+          signaturesCreated = templates.length;
+        }
       }
 
       await svc.AuditLog.create({
-        action: 'staff_invited',
+        action: 'User invited',
         actor_id: user.id,
         actor_name: user.full_name || user.email,
         actor_email: user.email,
         target_type: 'StaffMember',
         target_id: staffId,
-        target_name: cleanEmail,
-        details: JSON.stringify({ app_access: access.app_access, job_title: inviteFields.role, mirrored_to_user: mirrored }),
+        target_name: `${profile.first_name} ${profile.last_name}`.trim() || cleanEmail,
+        details: JSON.stringify({
+          email: cleanEmail,
+          job_title,
+          app_access: access.app_access,
+          hr_bundle: access.hr_bundle,
+          billing_bundle: access.billing_bundle,
+          clients: (client_ids || []).length,
+          houses: (house_ids || []).length,
+          signatures: signaturesCreated,
+          invite_sent: inviteSent,
+          reactivated,
+        }),
         timestamp: now,
       });
 
-      return Response.json({ success: true, email: cleanEmail, staffId, mirrored });
+      return Response.json({
+        success: true,
+        staffId,
+        email: cleanEmail,
+        inviteSent,
+        inviteError: inviteError || undefined,
+        signaturesCreated,
+        reactivated,
+      });
     }
 
     // ─── Resend a pending invite ──────────────────────────────────────
