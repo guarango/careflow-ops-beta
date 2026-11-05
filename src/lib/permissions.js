@@ -82,24 +82,24 @@ export const CAN = {
   createIncident:         ["dsp", "manager", "admin"],
   changeIncidentStatus:   ["manager", "admin"],
   approveIncidents:       ["admin"],
-  viewAllIncidents:       [],
+  viewAllIncidents:       ["admin"],
   viewIncidentBadge:      ["manager", "admin"],
   staffFilesView:         ["hr_bundle"],
   viewStaffHRFiles:       ["hr_bundle"],
   viewSensitiveIdentifiers: ["hr_bundle"],
   viewSensitiveHRDetails: ["hr_bundle"],
-  viewSensitiveRates:     [],
+  viewSensitiveRates:     ["billing_bundle"],
   viewClientCompliance:   ["manager", "admin"],
   viewAgencyCompliance:   ["admin"],
-  viewAllNotifications:   [],
-  hrAnalytics:            [],
+  viewAllNotifications:   ["admin"],
+  hrAnalytics:            ["hr_bundle"],
 
   // Staff & Operations
   scheduleBuild:          ["manager", "admin"],
   clockInOut:             ["dsp", "manager", "admin"],
   approveTimecards:       ["manager", "admin"],
-  viewAllTimecards:       [],
-  lockPayPeriod:          [],
+  viewAllTimecards:       ["admin", "billing_bundle"],
+  lockPayPeriod:          ["billing_bundle"],
   unlockTimecard:         ["admin"],
   editHouses:             ["manager", "admin"],
   deleteHouse:            ["admin"],
@@ -115,15 +115,15 @@ export const CAN = {
   viewPermissions:        ["admin"],
   editFormFields:         ["admin"],
   manageRecognition:      ["admin"],
-  giveKudos:              [],
+  giveKudos:              ["manager", "admin"],
   loginAs:                [],
 
   // Training
   manageTraining:         ["hr_bundle"],
   verifyTraining:         ["manager", "hr_bundle"],
   manageSignatures:       ["hr_bundle"],
-  sendSignatureRequests:  [],
-  viewTeamSignatures:     [],
+  sendSignatureRequests:  ["hr_bundle"],
+  viewTeamSignatures:     ["manager", "hr_bundle"],
 
   // Finance
   editServiceCodes:       ["admin"],
@@ -136,7 +136,7 @@ export const CAN = {
   exportPayroll:          ["billing_bundle"],
   billingExport:          ["billing_bundle"],
   evvExport:              ["billing_bundle"],
-  hrAccess:               [],
+  hrAccess:               ["hr_bundle"],
   superAdminAccess:       [],
 };
 
