@@ -22,7 +22,7 @@ const empty = { code: "", description: "", rate_type: "Hourly", unit_type: "Hour
 
 export default function ServiceCodesTab() {
   const { can } = useRole();
-  const canEdit = can("accessBilling");
+  const canEdit = can("editServiceCodes");
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(empty);

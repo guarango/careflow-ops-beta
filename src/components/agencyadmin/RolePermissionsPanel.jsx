@@ -1,120 +1,82 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Users, Heart, FileText, AlertTriangle,
-  Pill, Clock, Shield, DollarSign, Target, CalendarDays, UserCog,
-  Check, X, Briefcase, Info, RotateCcw, Brain, ClipboardList,
+  Check, X, Info, RotateCcw, ShieldCheck,
 } from "lucide-react";
-import { getRoleLabel, getRoleBadgeColor } from "@/lib/permissions";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { FEATURE_SECTIONS, getSubjectLabel } from "@/lib/permissions";
 import { useRole } from "@/hooks/useRole";
 import { usePermissions } from "@/lib/PermissionsContext";
 
-const ALL_NAV = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-  { label: "Staff", icon: Users, path: "/staff" },
-  { label: "Clients", icon: Heart, path: "/clients" },
-  { label: "Schedule", icon: CalendarDays, path: "/schedule" },
-  { label: "Client Goals", icon: Target, path: "/goals" },
-  { label: "Session Notes", icon: FileText, path: "/session-notes" },
-  { label: "Incidents", icon: AlertTriangle, path: "/incidents" },
-  { label: "Behavior Support Plans", icon: Brain, path: "/bsp" },
-  { label: "Monthly & Quarterly Summaries", icon: ClipboardList, path: "/summaries/monthly", paths: ["/summaries/monthly", "/summaries/quarterly"] },
-  { label: "eMAR", icon: Pill, path: "/emar" },
-  { label: "Timecards", icon: Clock, path: "/timecards" },
-  { label: "Compliance", icon: Shield, path: "/compliance" },
-  { label: "Finance", icon: DollarSign, path: "/finance" },
-  { label: "HR & Compliance", icon: Briefcase, path: "/hr" },
-  { label: "User Management", icon: UserCog, path: "/users" },
+const SUBJECT_COLUMNS = [
+  { key: "dsp", label: "DSP" },
+  { key: "manager", label: "Manager" },
+  { key: "admin", label: "Admin" },
+  { key: "hr_bundle", label: "+HR bundle" },
+  { key: "billing_bundle", label: "+Billing bundle" },
 ];
-
-const FEATURE_CATEGORIES = [
-  {
-    title: "People & Records",
-    icon: Users,
-    description: "Staff and client records",
-    items: [
-      ["viewAllStaff", "View All Staff"],
-      ["createStaff", "Add Staff Records (HR bundle)"],
-      ["editStaff", "Edit Staff Records (HR bundle)"],
-      ["editStaffDirectory", "Edit Staff Directory (phone & assignments)"],
-      ["deleteStaff", "Delete Staff Records (HR bundle)"],
-      ["createClient", "Add Client Records"],
-      ["editClients", "Edit Client Records"],
-      ["deleteClient", "Delete Client Records"],
-    ],
-  },
-  {
-    title: "Clinical & Documentation",
-    icon: FileText,
-    description: "Notes, goals, incidents, and training",
-    items: [
-      ["approveSessionNotes", "Approve Session Notes"],
-      ["editGoals", "Edit Goals"],
-      ["viewAllIncidents", "View All Incidents"],
-      ["changeIncidentStatus", "Change Incident Status"],
-      ["viewIncidentBadge", "View Incident Badge"],
-      ["manageTraining", "Manage Training"],
-    ],
-  },
-  {
-    title: "Time & Payroll",
-    icon: Clock,
-    description: "Timecard review and pay periods",
-    items: [
-      ["viewAllTimecards", "View All Timecards"],
-      ["approveTimecards", "Approve Timecards"],
-      ["exportPayroll", "Export Payroll (Billing bundle)"],
-      ["lockPayPeriod", "Lock Pay Period"],
-      ["unlockTimecard", "Unlock Timecard"],
-    ],
-  },
-  {
-    title: "Billing & Finance",
-    icon: DollarSign,
-    description: "Claims, rates, and billing access",
-    items: [
-      ["accessBilling", "Access Billing (Billing bundle)"],
-      ["editServiceCodes", "Edit Service Codes (Billing bundle)"],
-    ],
-  },
-  {
-    title: "Administration & Access",
-    icon: Shield,
-    description: "Users, settings, and impersonation",
-    items: [
-      ["createUser", "Invite / Add Users"],
-      ["editUser", "Edit Users & Roles"],
-      ["deleteUser", "Delete Users"],
-      ["accessSettings", "Access Settings"],
-      ["loginAs", "Login As (Super Admin only)"],
-    ],
-  },
-];
-
-const ROLES = ["dsp", "manager", "admin", "super_admin"];
 
 /**
  * Role permissions matrix, hosted inside Settings & Admin.
- * Editable only by Super Admin; other admins get a read-only view.
+ * Editable only by Super Admin; everyone else gets a read-only view.
+ * Every cell writes to the PermissionMatrix entity.
  */
 export default function RolePermissionsPanel() {
   const { isSuperAdmin } = useRole();
   const { matrix, togglePermission, toggleNavPaths, resetToDefaults, saving } = usePermissions();
+  const [confirmReset, setConfirmReset] = useState(false);
 
   const navAccess = matrix.navAccess;
   const canMap = matrix.can;
+
+  const viewHasAccess = (paths, subject) =>
+    paths.length > 0 && paths.every((p) => (navAccess[p] || []).includes(subject));
+
+  const actionHasAccess = (code, subject) => (canMap[code] || []).includes(subject);
+
+  const toggleView = (feature, subject) => {
+    const meta = { featureLabel: feature.label, rowLabel: "View page" };
+    if (feature.paths.length > 1) {
+      toggleNavPaths(feature.paths, subject, meta);
+    } else {
+      togglePermission("nav", feature.paths[0], subject, meta);
+    }
+  };
+
+  const toggleAction = (feature, action, subject) => {
+    togglePermission("can", action.code, subject, {
+      featureLabel: feature.label,
+      rowLabel: `${action.level}: ${action.label}`,
+    });
+  };
+
+  const renderCells = (hasAccessFn, onToggle) => SUBJECT_COLUMNS.map((col) => (
+    <td key={col.key} className="px-3 py-2 text-center align-middle">
+      <PermissionToggle
+        hasAccess={hasAccessFn(col.key)}
+        editable={isSuperAdmin}
+        onClick={() => onToggle(col.key)}
+        title={`${getSubjectLabel(col.key)} — ${hasAccessFn(col.key) ? "granted" : "not granted"}`}
+      />
+    </td>
+  ));
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Role Permissions</h2>
-          <p className="text-sm text-muted-foreground">Permission model for DSP, Manager, Admin, and Super Admin</p>
+          <h2 className="text-lg font-semibold text-foreground">Roles & Permissions</h2>
+          <p className="text-sm text-muted-foreground">
+            Who can open each page and take each action, across DSP, Manager, Admin, and the HR and Billing bundles.
+          </p>
         </div>
         {isSuperAdmin && (
-          <Button variant="outline" size="sm" onClick={() => resetToDefaults()} disabled={saving}>
+          <Button variant="outline" size="sm" onClick={() => setConfirmReset(true)} disabled={saving}>
             <RotateCcw className="w-4 h-4 mr-2" />
             Reset to Defaults
           </Button>
@@ -123,10 +85,19 @@ export default function RolePermissionsPanel() {
 
       <div className="p-4 bg-muted rounded-lg flex items-start gap-2">
         <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-        <p className="text-xs text-muted-foreground">
-          <strong>Bundles:</strong> Admin access to HR and Billing areas requires the matching bundle. An Admin without the HR or Billing bundle cannot open those areas.
-          {isSuperAdmin && " Click any checkmark or X below to toggle access for that role."}
-        </p>
+        <div className="text-xs text-muted-foreground space-y-1">
+          <p>
+            <strong>Bundles</strong> only apply to Admins who hold them — a DSP or Manager never gains access from a bundle.
+            <strong> Super Admin</strong> always has full access.
+          </p>
+          {!isSuperAdmin && (
+            <p className="flex items-center gap-1.5 font-medium text-foreground">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Permissions are managed by CareFlow support.
+            </p>
+          )}
+          {isSuperAdmin && <p>Click any checkmark or X to change it — changes save immediately and are written to the audit log.</p>}
+        </div>
       </div>
 
       <Card>
@@ -134,93 +105,130 @@ export default function RolePermissionsPanel() {
           <CardTitle className="text-sm">Full Permissions Matrix</CardTitle>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[820px]">
             <thead>
               <tr className="border-b bg-muted/30">
-                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Feature / Page</th>
-                {ROLES.map(role => (
-                  <th key={role} className="text-center px-6 py-2.5 font-medium">
-                    <Badge variant="outline" className={getRoleBadgeColor(role)}>{getRoleLabel(role)}</Badge>
+                <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Feature / Action</th>
+                {SUBJECT_COLUMNS.map((col) => (
+                  <th key={col.key} className="text-center px-3 py-2.5 font-medium">
+                    <Badge variant="outline" className={col.key === "admin" ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground"}>
+                      {col.label}
+                    </Badge>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              <tr className="bg-muted/20 border-t">
-                <td className="px-4 py-2 font-semibold text-xs text-muted-foreground uppercase tracking-wider" colSpan={5}>Navigation Pages</td>
-              </tr>
-              {ALL_NAV.map(item => {
-                const paths = item.paths || [item.path];
-                return (
-                  <tr key={item.path} className="border-b last:border-0 hover:bg-muted/20">
-                    <td className="px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <item.icon className="w-3.5 h-3.5 text-muted-foreground" />
-                        {item.label}
-                      </div>
-                    </td>
-                    {ROLES.map(role => {
-                      const hasAccess = paths.every(p => {
-                        const allowed = navAccess[p];
-                        return allowed ? allowed.includes(role) : (role === "admin" || role === "super_admin");
-                      });
-                      return (
-                        <td key={role} className="px-4 py-2 text-center">
-                          <PermissionToggle
-                            hasAccess={hasAccess}
-                            editable={isSuperAdmin}
-                            onClick={() => isSuperAdmin && toggleNavPaths(paths, role)}
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-              {FEATURE_CATEGORIES.map(category => (
-                <React.Fragment key={category.title}>
+              {FEATURE_SECTIONS.map((section) => (
+                <React.Fragment key={section.title}>
                   <tr className="bg-muted/20 border-t-2">
-                    <td className="px-4 py-2" colSpan={5}>
-                      <div className="flex items-center gap-2">
-                        <category.icon className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">
-                          {category.title}
-                        </span>
-                        <span className="text-xs text-muted-foreground/70 normal-case tracking-normal">
-                          — {category.description}
-                        </span>
-                      </div>
+                    <td className="px-4 py-2 font-semibold text-xs text-muted-foreground uppercase tracking-wider" colSpan={SUBJECT_COLUMNS.length + 1}>
+                      {section.title}
                     </td>
                   </tr>
-                  {category.items.map(([key, label]) => (
-                    <tr key={key} className="border-b last:border-0 hover:bg-muted/20">
-                      <td className="px-4 py-2 text-muted-foreground">{label}</td>
-                      {ROLES.map(role => {
-                        const allowed = canMap[key];
-                        const hasAccess = allowed ? allowed.includes(role) : false;
-                        return (
-                          <td key={role} className="px-4 py-2 text-center">
-                            <PermissionToggle
-                              hasAccess={hasAccess}
-                              editable={isSuperAdmin}
-                              onClick={() => isSuperAdmin && togglePermission("can", key, role)}
-                            />
+
+                  {section.features.map((feature) => {
+                    if (feature.hideView) {
+                      return (
+                        <React.Fragment key={feature.key}>
+                          <tr className="border-t bg-muted/10">
+                            <td colSpan={SUBJECT_COLUMNS.length + 1} className="px-4 pt-3 pb-1 text-xs font-semibold text-foreground">
+                              {feature.label}
+                            </td>
+                          </tr>
+                          {(feature.actions || []).map((action) => (
+                            <tr key={action.code} className="border-b last:border-0 hover:bg-muted/20">
+                              <td className="px-4 py-2 pl-8">
+                                <div className="flex items-center gap-2">
+                                  <LevelBadge level={action.level} />
+                                  <span className="text-muted-foreground">{action.label}</span>
+                                </div>
+                              </td>
+                              {renderCells(
+                                (subject) => actionHasAccess(action.code, subject),
+                                (subject) => toggleAction(feature, action, subject)
+                              )}
+                            </tr>
+                          ))}
+                        </React.Fragment>
+                      );
+                    }
+
+                    return (
+                      <React.Fragment key={feature.key}>
+                        <tr className="border-b hover:bg-muted/20">
+                          <td className="px-4 py-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{feature.label}</span>
+                              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">View page</span>
+                            </div>
                           </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
+                          {renderCells(
+                            (subject) => viewHasAccess(feature.paths, subject),
+                            (subject) => toggleView(feature, subject)
+                          )}
+                        </tr>
+                        {(feature.actions || []).map((action) => (
+                          <tr key={action.code} className="border-b last:border-0 hover:bg-muted/20">
+                            <td className="px-4 py-2 pl-8">
+                              <div className="flex items-center gap-2">
+                                <LevelBadge level={action.level} />
+                                <span className="text-muted-foreground">{action.label}</span>
+                              </div>
+                            </td>
+                            {renderCells(
+                              (subject) => actionHasAccess(action.code, subject),
+                              (subject) => toggleAction(feature, action, subject)
+                            )}
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })}
                 </React.Fragment>
               ))}
             </tbody>
           </table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset all permissions?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Every role and bundle goes back to the CareFlow default table. Custom changes are removed and the reset is written to the audit log.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { resetToDefaults(); setConfirmReset(false); }}
+            >
+              Reset to defaults
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-function PermissionToggle({ hasAccess, editable, onClick }) {
+function LevelBadge({ level }) {
+  const tone = {
+    Create: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+    Edit: "bg-violet-500/10 text-violet-600 border-violet-500/20",
+    Approve: "bg-amber-500/10 text-amber-700 border-amber-500/20",
+    View: "bg-green-500/10 text-green-700 border-green-500/20",
+  }[level] || "bg-muted text-muted-foreground";
+  return (
+    <span className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${tone}`}>
+      {level}
+    </span>
+  );
+}
+
+function PermissionToggle({ hasAccess, editable, onClick, title }) {
   if (!editable) {
     return hasAccess
       ? <Check className="w-4 h-4 text-green-600 mx-auto" />
@@ -229,7 +237,7 @@ function PermissionToggle({ hasAccess, editable, onClick }) {
   return (
     <button
       onClick={onClick}
-      title={hasAccess ? "Click to revoke" : "Click to grant"}
+      title={title || (hasAccess ? "Click to revoke" : "Click to grant")}
       className={`mx-auto p-1 rounded-md transition-colors hover:scale-110 ${
         hasAccess ? "text-green-600 hover:bg-green-100" : "text-red-400 hover:bg-red-100"
       }`}
