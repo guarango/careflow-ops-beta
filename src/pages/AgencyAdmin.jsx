@@ -15,11 +15,12 @@ import NotificationCenter from "@/pages/NotificationCenter";
 import AuditLogPage from "@/pages/AuditLogPage";
 import ESignatures from "@/pages/ESignatures";
 import ServiceCodesTab from "@/components/finance/ServiceCodesTab";
+import FormFieldsPanel from "@/components/customfields/FormFieldsPanel";
 
 import AIFeatureManager from "@/components/ai/AIFeatureManager";
 import AgencyIntegrationHub from "@/components/integrations/AgencyIntegrationHub";
 import IntegrationHealthDashboard from "@/components/integrations/IntegrationHealthDashboard";
-import { Settings, Palette, Bell, Code, CreditCard, Sparkles, Plug, Activity, MapPin, ShieldCheck, UsersRound, ScrollText, FileSignature, Code2 } from "lucide-react";
+import { Settings, Palette, Bell, Code, CreditCard, Sparkles, Plug, Activity, MapPin, ShieldCheck, UsersRound, ScrollText, FileSignature, Code2, ClipboardList } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useRole } from "@/hooks/useRole";
 
@@ -37,6 +38,7 @@ export default function AgencyAdmin() {
   const canNotifications = can("viewAllNotifications");
   const canAudit = can("viewAuditLog") || canAccessPath("/audit-log");
   const canSignatures = can("manageSignatures");
+  const canFormFields = can("editFormFields");
 
   const tabs = [
     canSettings && { value: "profile", label: "Agency Profile", icon: Settings },
@@ -48,6 +50,7 @@ export default function AgencyAdmin() {
     canSettings && { value: "ai-settings", label: "AI Features", icon: Sparkles },
     canSettings && { value: "integrations", label: "Integrations", icon: Plug },
     canSettings && { value: "int-health", label: "Integration Health", icon: Activity },
+    canFormFields && { value: "form-fields", label: "Form Fields", icon: ClipboardList },
     canPermissions && { value: "permissions", label: "Roles & Permissions", icon: ShieldCheck },
     canUsers && { value: "users", label: "Users", icon: UsersRound },
     canServiceCodes && { value: "service-codes", label: "Service Codes", icon: Code2 },
@@ -141,6 +144,11 @@ export default function AgencyAdmin() {
         {shows("int-health") && (
           <TabsContent value="int-health">
             <IntegrationHealthDashboard agencyId={agency?.id || "demo-agency"} />
+          </TabsContent>
+        )}
+        {shows("form-fields") && (
+          <TabsContent value="form-fields">
+            <FormFieldsPanel agencyId={agency?.id} />
           </TabsContent>
         )}
         {shows("permissions") && (

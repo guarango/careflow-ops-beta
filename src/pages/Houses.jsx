@@ -12,7 +12,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { useRole } from "@/hooks/useRole";
-import { Home, Plus, Pencil, MapPin, Users } from "lucide-react";
+import { Home, Plus, Pencil, MapPin, Users, Download } from "lucide-react";
+import { useFormFields } from "@/hooks/useFormFields";
+import CustomFieldsForm from "@/components/customfields/CustomFieldsForm";
+import CustomFieldsView from "@/components/customfields/CustomFieldsView";
+import {
+  activeFields, splitAnswers, valuesFromRecord, missingRequired,
+  withRetiredAnswers, saveRestrictedValues, loadRestrictedValues, downloadCsv,
+} from "@/lib/customFields";
 
 const PROGRAM_TYPES = ["Residential", "Day Program", "Community Living", "Supported Living", "Other"];
 
@@ -29,7 +36,7 @@ const EMPTY_FORM = {
 };
 
 export default function Houses() {
-  const { can } = useRole();
+  const { can, isAdmin } = useRole();
   const canEdit = can("editHouses");
   const canDelete = can("deleteHouse");
   const { toast } = useToast();
@@ -38,6 +45,9 @@ export default function Houses() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [customValues, setCustomValues] = useState({});
+  const { data: fieldDefinitions = [] } = useFormFields("house");
+  const houseFields = activeFields(fieldDefinitions);
 
   const { data: houses = [], isLoading } = useQuery({
     queryKey: ["houses"],
@@ -63,11 +73,18 @@ export default function Houses() {
   const openCreate = () => {
     setEditing(null);
     setForm(EMPTY_FORM);
+    setCustomValues({});
     setShowForm(true);
   };
 
-  const openEdit = (house) => {
+  const openEdit = async (house) => {
     setEditing(house);
+    let values = valuesFromRecord(house);
+    if (isAdmin) {
+      const restricted = await loadRestrictedValues("House", house.id).catch(() => []);
+      restricted.forEach((r) => { values[r.field_id] = r.value ?? ""; });
+    }
+    setCustomValues(values);
     setForm({
       name: house.name || "",
       address: house.address || "",
@@ -87,13 +104,22 @@ export default function Houses() {
       toast({ title: "Name required", variant: "destructive" });
       return;
     }
+    const missing = missingRequired(houseFields, customValues, { isAdmin, isNew: !editing });
+    if (missing.length) {
+      toast({ title: "Required field missing", description: missing.map((m) => m.label).join(", "), variant: "destructive" });
+      return;
+    }
     setSaving(true);
     try {
+      const { custom_fields, restricted } = splitAnswers(houseFields, customValues);
+      const payload = { ...form, custom_fields: withRetiredAnswers(editing?.custom_fields, houseFields, custom_fields) };
       if (editing) {
-        await base44.entities.House.update(editing.id, form);
+        await base44.entities.House.update(editing.id, payload);
+        if (isAdmin) await saveRestrictedValues("House", editing.id, restricted);
         toast({ title: "House updated" });
       } else {
-        await base44.entities.House.create(form);
+        const created = await base44.entities.House.create(payload);
+        if (isAdmin && created?.id) await saveRestrictedValues("House", created.id, restricted);
         toast({ title: "House created" });
       }
       queryClient.invalidateQueries({ queryKey: ["houses"] });
@@ -117,15 +143,34 @@ export default function Houses() {
     }
   };
 
+  const exportCsv = () => {
+    const cols = houseFields.filter((d) => isAdmin || !d.admin_only);
+    const headers = [
+      "Name", "Street address", "City", "State", "Zip", "Program type", "Status",
+      "Geofence radius (m)", "Notes", ...cols.map((c) => c.label),
+    ];
+    const rows = houses.map((h) => [
+      h.name, h.address, h.address_city, h.address_state, h.address_zip,
+      h.program_type, h.status, h.geofence_radius, h.notes,
+      ...cols.map((c) => h.custom_fields?.[c.id]?.value ?? ""),
+    ]);
+    downloadCsv("houses.csv", [headers, ...rows]);
+  };
+
   return (
     <div>
       <PageHeader
         title="Houses & Locations"
         subtitle="Manage residential homes, day programs, and service locations"
         action={canEdit && (
-          <Button onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-2" />Add House
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={exportCsv}>
+              <Download className="w-4 h-4 mr-2" />Export CSV
+            </Button>
+            <Button onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-2" />Add House
+            </Button>
+          </div>
         )}
       />
 
@@ -205,7 +250,7 @@ export default function Houses() {
       </Card>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Home className="w-5 h-5" />{editing ? "Edit House" : "Add House"}</DialogTitle>
             <DialogDescription>{editing ? "Update house details." : "Create a new house or service location."}</DialogDescription>
@@ -262,6 +307,13 @@ export default function Houses() {
               <Label>Notes</Label>
               <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes" />
             </div>
+            <CustomFieldsForm
+              definitions={houseFields}
+              values={customValues}
+              isAdmin={isAdmin}
+              onChange={(id, v) => setCustomValues((prev) => ({ ...prev, [id]: v }))}
+            />
+            {editing && <CustomFieldsView record={editing} definitions={fieldDefinitions} mode="retired" />}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>

@@ -10,6 +10,8 @@ import { Upload, X, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import DictationButton from "@/components/shared/DictationButton";
+import CustomFieldsForm from "@/components/customfields/CustomFieldsForm";
+import { splitAnswers, valuesFromRecord, missingRequired, withRetiredAnswers, activeFields } from "@/lib/customFields";
 
 const categories = ["Abuse", "Neglect", "Exploitation", "Behavioral", "Medical", "Fall", "Elopement", "Property Damage", "Medication Error", "Injury", "Other"];
 const locations = ["Day Program", "Community Outing", "Residence", "Vocational Site", "Telehealth", "Other"];
@@ -26,7 +28,7 @@ function DictField({ label, value, onChange, rows = 3, placeholder, required }) 
   );
 }
 
-export default function IncidentForm({ open, onClose, onSave, editing, clients, houses, user, saving }) {
+export default function IncidentForm({ open, onClose, onSave, editing, clients, houses, user, saving, fieldDefinitions = [], isAdmin }) {
   const isEdit = !!editing;
   const [form, setForm] = useState(() => editing || {
     client_id: "", client_name: "", date: format(new Date(), "yyyy-MM-dd"), time: format(new Date(), "HH:mm"),
@@ -36,6 +38,7 @@ export default function IncidentForm({ open, onClose, onSave, editing, clients, 
     reported_by: user?.id || "", reported_by_name: user?.full_name || "", status: "Open",
   });
   const [sigChecked, setSigChecked] = useState(!!editing?.signature_timestamp);
+  const [customValues, setCustomValues] = useState(() => valuesFromRecord(editing));
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
 
@@ -68,10 +71,14 @@ export default function IncidentForm({ open, onClose, onSave, editing, clients, 
       data.signature_timestamp = `Submitted by ${data.reported_by_name || "Staff"} on ${format(new Date(), "MM/dd/yyyy")} at ${format(new Date(), "h:mm aa")}`;
       data.status = "Under Review";
     }
-    onSave(data);
+    const activeDefs = activeFields(fieldDefinitions);
+    const { custom_fields, restricted } = splitAnswers(activeDefs, customValues);
+    data.custom_fields = withRetiredAnswers(editing?.custom_fields, activeDefs, custom_fields);
+    onSave(data, restricted);
   };
 
-  const valid = form.client_id && form.date && form.type && form.severity && form.description && (isEdit || sigChecked);
+  const missingCustom = missingRequired(fieldDefinitions, customValues, { isAdmin, isNew: !isEdit });
+  const valid = form.client_id && form.date && form.type && form.severity && form.description && (isEdit || sigChecked) && missingCustom.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -143,6 +150,12 @@ export default function IncidentForm({ open, onClose, onSave, editing, clients, 
           </div>
           <div className="sm:col-span-2"><DictField label="Immediate Actions Taken" value={form.actions_taken} onChange={(v) => set("actions_taken", v)} rows={2} placeholder="What immediate actions were taken?" /></div>
           <div><Label>Reported By</Label><Input value={form.reported_by_name || ""} onChange={(e) => set("reported_by_name", e.target.value)} /></div>
+          <CustomFieldsForm
+            definitions={fieldDefinitions}
+            values={customValues}
+            isAdmin={isAdmin}
+            onChange={(id, v) => setCustomValues((prev) => ({ ...prev, [id]: v }))}
+          />
         </div>
 
         {!isEdit && (

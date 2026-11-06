@@ -201,6 +201,10 @@
     },
     "escalated_at": {
       "type": "string"
+    },
+    "custom_fields": {
+      "type": "object",
+      "description": "Answers to admin-defined custom fields, keyed by FormFieldDefinition id. Each value holds the answer plus the field label at the time it was entered. Admin-only answers are stored in RestrictedFieldValue instead."
     }
   },
   "required": [

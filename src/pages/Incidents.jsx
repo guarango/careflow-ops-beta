@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, Plus, Search, Lock, BarChart3 } from "lucide-react";
+import { AlertTriangle, Plus, Search, Lock, BarChart3, Download } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import { useAuth } from "@/lib/AuthContext";
@@ -17,9 +17,11 @@ import IncidentForm from "@/components/incidents/IncidentForm";
 import IncidentDetailDialog from "@/components/incidents/IncidentDetailDialog";
 import IncidentTrends from "@/components/incidents/IncidentTrends";
 import { logAudit } from "@/lib/auditLog";
+import { useFormFields } from "@/hooks/useFormFields";
+import { saveRestrictedValues, activeFields, downloadCsv } from "@/lib/customFields";
 
 export default function Incidents() {
-  const { can, isDSP } = useRole();
+  const { can, isDSP, isAdmin } = useRole();
   const { isDSPMode, assignedClientIds } = useAssignedClients();
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
@@ -44,6 +46,8 @@ export default function Incidents() {
     queryFn: () => base44.entities.House.list(),
   });
 
+  const { data: fieldDefinitions = [] } = useFormFields("incident_report");
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.IncidentReport.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["incidents"] }); setShowForm(false); setEditing(null); },
@@ -63,9 +67,29 @@ export default function Incidents() {
   const openDetail = (i) => setSelected(i);
   const openEdit = () => { setEditing(selected); setShowForm(true); };
 
-  const handleSave = (data) => {
-    if (editing) updateMutation.mutate({ id: editing.id, data });
-    else createMutation.mutate(data);
+  const handleSave = async (data, restricted = []) => {
+    if (editing) {
+      await updateMutation.mutateAsync({ id: editing.id, data });
+      if (isAdmin) await saveRestrictedValues("IncidentReport", editing.id, restricted);
+    } else {
+      const created = await createMutation.mutateAsync(data);
+      if (isAdmin && created?.id) await saveRestrictedValues("IncidentReport", created.id, restricted);
+    }
+  };
+
+  const exportCsv = () => {
+    const customDefs = activeFields(fieldDefinitions).filter((d) => isAdmin || !d.admin_only);
+    const headers = [
+      "Client", "Category", "Severity", "Status", "Date", "Time", "Location",
+      "Description", "Staff involved", "Witnesses", "Actions taken", "Reported by",
+      ...customDefs.map((d) => d.label),
+    ];
+    const rows = filtered.map((i) => [
+      i.client_name, i.type, i.severity, i.status, i.date, i.time, i.location,
+      i.description, i.staff_involved, i.witnesses, i.actions_taken, i.reported_by_name,
+      ...customDefs.map((d) => i.custom_fields?.[d.id]?.value ?? ""),
+    ]);
+    downloadCsv(`incidents-${filtered.length ? filtered[0].date || "export" : "export"}.csv`, [headers, ...rows]);
   };
 
   const handleDetailUpdate = (data) => {
@@ -104,6 +128,7 @@ export default function Incidents() {
         subtitle={isDSP ? "Your submitted reports" : `${incidents.length} reports`}
         action={
           <div className="flex gap-2">
+            <Button variant="outline" onClick={exportCsv}><Download className="w-4 h-4 mr-2" />Export CSV</Button>
             <Button variant="outline" onClick={() => setShowTrends(!showTrends)}><BarChart3 className="w-4 h-4 mr-2" />Trends</Button>
             {can("createIncident") && (
               <Button onClick={openNew} className="bg-destructive hover:bg-destructive/90"><Plus className="w-4 h-4 mr-2" />Report Incident</Button>
@@ -175,6 +200,8 @@ export default function Incidents() {
           houses={houses}
           user={user}
           saving={createMutation.isPending || updateMutation.isPending}
+          fieldDefinitions={fieldDefinitions}
+          isAdmin={isAdmin}
         />
       )}
 
@@ -187,6 +214,8 @@ export default function Incidents() {
           onUpdate={handleDetailUpdate}
           canReview={canReview}
           reviewerName={user?.full_name || user?.email || "Manager"}
+          fieldDefinitions={fieldDefinitions}
+          isAdmin={isAdmin}
         />
       )}
     </div>
