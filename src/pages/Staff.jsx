@@ -17,7 +17,13 @@ import { useRole } from "@/hooks/useRole";
 import { useViewMode } from "@/hooks/useViewMode";
 import EntityCard from "@/components/shared/EntityCard";
 import ViewToggle from "@/components/shared/ViewToggle";
-import { DEFAULT_STATUS_TAB, peopleInTab, matchesSearch, personStatus } from "@/lib/staffFilters";
+import { DEFAULT_STATUS_TAB, peopleInTab, matchesSearch, personStatus, onboardingState } from "@/lib/staffFilters";
+
+function onboardingClass(state) {
+  if (state === "Complete") return "border-accent/30 bg-accent/10 text-accent text-[10px]";
+  if (state === "In progress") return "border-chart-4/30 bg-chart-4/10 text-chart-4 text-[10px]";
+  return "border-border bg-muted text-muted-foreground text-[10px]";
+}
 
 function complianceAlerts(s) {
   const alerts = [];
@@ -35,6 +41,7 @@ function complianceAlerts(s) {
 export default function Staff() {
   const { can } = useRole();
   const canViewHR = can("viewStaffHRFiles");
+  const canSeeOnboarding = can("viewAllStaff");
   const canEditHR = can("editStaff");
   const canEditStaff = canEditHR || can("editStaffDirectory");
   const queryClient = useQueryClient();
@@ -134,6 +141,9 @@ export default function Staff() {
                         <AlertTriangle className="w-3 h-3" />{alerts.length}
                       </span>
                     )}
+                    {canSeeOnboarding && onboardingState(s) !== "Complete" && (
+                      <span className="text-[10px] text-muted-foreground">{onboardingState(s)}</span>
+                    )}
                   </>
                 }
               />
@@ -151,6 +161,7 @@ export default function Staff() {
                   <TableHead className="hidden md:table-cell">Contact</TableHead>
                   <TableHead className="hidden md:table-cell">Type</TableHead>
                   {canViewHR && <TableHead className="hidden md:table-cell">Compliance</TableHead>}
+                  {canSeeOnboarding && <TableHead className="hidden md:table-cell">Onboarding</TableHead>}
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -184,6 +195,13 @@ export default function Staff() {
                           ) : (
                             <span className="text-xs text-accent">✓ Complete</span>
                           )}
+                        </TableCell>
+                      )}
+                      {canSeeOnboarding && (
+                        <TableCell className="hidden md:table-cell">
+                          <Badge variant="outline" className={onboardingClass(onboardingState(s))}>
+                            {onboardingState(s)}
+                          </Badge>
                         </TableCell>
                       )}
                       <TableCell><StatusBadge status={personStatus(s)} /></TableCell>

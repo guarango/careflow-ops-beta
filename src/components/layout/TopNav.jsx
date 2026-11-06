@@ -10,10 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { LogOut, UserCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function TopNav() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -46,6 +48,10 @@ export default function TopNav() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuLabel className="truncate">{user.full_name}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/my-profile")}>
+                    <UserCircle className="w-4 h-4 mr-2" />
+                    My Profile
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive cursor-pointer"
                     onClick={() => logout()}

@@ -8,6 +8,10 @@
     "last_name": {
       "type": "string"
     },
+    "preferred_name": {
+      "type": "string",
+      "description": "Name the person goes by \u2014 editable by the staff member themselves"
+    },
     "email": {
       "type": "string",
       "format": "email",
@@ -68,6 +72,10 @@
     "emergency_contact_relation": {
       "type": "string"
     },
+    "availability": {
+      "type": "string",
+      "description": "The person's own availability notes (days/times) \u2014 editable by the staff member"
+    },
     "role": {
       "type": "string",
       "enum": [
@@ -116,6 +124,15 @@
     "activated_at": {
       "type": "string",
       "description": "When the person first signed in"
+    },
+    "onboarding_step": {
+      "type": "number",
+      "default": 0,
+      "description": "Index of the first-login onboarding step the person is on. Saved after each step so they resume where they left off."
+    },
+    "onboarding_completed_at": {
+      "type": "string",
+      "description": "When the first-login onboarding wizard was finished"
     },
     "deactivated_at": {
       "type": "string"
@@ -282,6 +299,35 @@
               "Expiring Soon",
               "Expired"
             ]
+          },
+          "doc_url": {
+            "type": "string",
+            "description": "Evidence file URI"
+          },
+          "doc_name": {
+            "type": "string"
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "Pending verification",
+              "Verified",
+              "Rejected"
+            ],
+            "description": "Set to Pending verification for evidence uploaded by the staff member themselves; HR or their Manager verifies."
+          },
+          "submitted_by_staff": {
+            "type": "boolean",
+            "default": false
+          },
+          "submitted_at": {
+            "type": "string"
+          },
+          "verified_by": {
+            "type": "string"
+          },
+          "verified_at": {
+            "type": "string"
           }
         }
       }

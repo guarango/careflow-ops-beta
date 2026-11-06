@@ -17,7 +17,8 @@
         "training_assigned",
         "note_returned",
         "quarterly_due",
-        "incident_deadline"
+        "incident_deadline",
+        "profile_change_request"
       ]
     },
     "event_key": {
@@ -119,7 +120,7 @@
     },
     "trigger_stage": {
       "type": "string",
-      "description": "pre_window | at_time | missed | goal_clock_out | goal_escalation | forgot_clockout_15min | forgot_clockout_1hr | compliance_60day | compliance_30day | compliance_7day | compliance_today | note_clockout | note_eod | note_next_morning | quarterly_7day | quarterly_2day | quarterly_overdue | incident_deadline"
+      "description": "pre_window | at_time | missed | goal_clock_out | goal_escalation | forgot_clockout_15min | forgot_clockout_1hr | compliance_60day | compliance_30day | compliance_7day | compliance_today | note_clockout | note_eod | note_next_morning | quarterly_7day | quarterly_2day | quarterly_overdue | incident_deadline | profile_change_request"
     },
     "reminder_rule": {
       "type": "string",

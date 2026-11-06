@@ -122,14 +122,15 @@ export default async function (req) {
     // Caseload, houses and team lists must be on the User before the first page loads.
     const sync = await syncStaffAssignments(base44, [staff.id]);
 
-    // Staff onboarding wizard lands in Prompt 6; until it exists, dashboard.
+    // First sign-in lands on the required onboarding wizard (StaffOnboardingGuard
+    // also enforces this for logins that never passed through here).
     return Response.json({
       applied: wasPending,
       status: 'Active',
       staff_id: staff.id,
       user_id: user.id,
       sync: sync[0] || null,
-      next: '/dashboard',
+      next: wasPending ? '/my-onboarding' : '/dashboard',
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

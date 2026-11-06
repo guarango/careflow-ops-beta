@@ -51,6 +51,9 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccountAccessGuard from './components/shared/AccountAccessGuard';
+import StaffOnboardingGuard from './components/shared/StaffOnboardingGuard';
+import MyProfile from './pages/MyProfile';
+import MyOnboarding from './pages/MyOnboarding';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, isAuthenticated } = useAuth();
@@ -88,6 +91,7 @@ const AuthenticatedApp = () => {
       {/* Every app route requires a session */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AccountAccessGuard />}>
+        <Route element={<StaffOnboardingGuard />}>
         <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/staff" element={<RouteGuard path="/staff"><Staff /></RouteGuard>} />
@@ -119,8 +123,11 @@ const AuthenticatedApp = () => {
         <Route path="/summaries/quarterly" element={<RouteGuard path="/summaries/quarterly"><QuarterlySummaries /></RouteGuard>} />
         <Route path="/summaries/quarterly/:id" element={<RouteGuard path="/summaries/quarterly"><QuarterlySummaryDetail /></RouteGuard>} />
         <Route path="/recognition" element={<RouteGuard path="/recognition"><Recognition /></RouteGuard>} />
+        <Route path="/my-profile" element={<RouteGuard path="/my-profile"><MyProfile /></RouteGuard>} />
+        </Route>
         </Route>
         {/* Standalone routes — no sidebar layout */}
+        <Route path="/my-onboarding" element={<MyOnboarding />} />
         <Route path="/super-admin" element={<SuperAdmin />} />
         <Route path="/onboarding" element={<RouteGuard path="/onboarding"><OnboardingWizard /></RouteGuard>} />
         <Route path="/sign/:requestId" element={<SignDocument />} />

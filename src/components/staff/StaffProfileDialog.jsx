@@ -8,10 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { User, Briefcase, Shield, Award, Plus, Trash2, Paperclip, ExternalLink, Loader2, Users } from "lucide-react";
+import { User, Briefcase, Shield, Award, Plus, Trash2, Paperclip, Loader2, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import AssignedClientsTab from "./AssignedClientsTab";
-import SensitiveValue from "@/components/shared/SensitiveValue";
+import PrivateFileLink from "@/components/shared/PrivateFileLink";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { ACCESS_LABELS } from "@/lib/staffFilters";
 
@@ -53,8 +53,8 @@ export default function StaffProfileDialog({ staff, onSave, onClose, canAssign =
 
   const handleCertUpload = async (i, file) => {
     setUploadingIndex(i);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    updateCert(i, "doc_url", file_url);
+    const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
+    updateCert(i, "doc_url", file_uri);
     setUploadingIndex(null);
   };
   const updateCert = (i, field, val) => {
@@ -105,14 +105,12 @@ export default function StaffProfileDialog({ staff, onSave, onClose, canAssign =
                 <div><Label>First Name *</Label><Input value={form.first_name || ""} onChange={e => set("first_name", e.target.value)} /></div>
                 <div><Label>Last Name *</Label><Input value={form.last_name || ""} onChange={e => set("last_name", e.target.value)} /></div>
                 <div><Label>Date of Birth</Label><Input type="date" value={form.date_of_birth || ""} onChange={e => set("date_of_birth", e.target.value)} /></div>
-                <div>
-                  <Label>SSN (Last 4 digits)</Label>
-                  {canEditHR ? (
+                {canEditHR && (
+                  <div>
+                    <Label>SSN (Last 4 digits)</Label>
                     <Input value={form.ssn_last4 || ""} maxLength={4} placeholder="####" onChange={e => set("ssn_last4", e.target.value.replace(/\D/g, ""))} />
-                  ) : (
-                    <div className="mt-1"><SensitiveValue value={form.ssn_last4} field="staff SSN" subject={{ type: "StaffMember", id: staff?.id, name: `${form.first_name || ""} ${form.last_name || ""}`.trim() }} canReveal={false} /></div>
-                  )}
-                </div>
+                  </div>
+                )}
                 <div>
                   <Label>Gender</Label>
                   <Select value={form.gender || ""} onValueChange={v => set("gender", v)}>
@@ -250,7 +248,9 @@ export default function StaffProfileDialog({ staff, onSave, onClose, canAssign =
                 )}
               </div>
 
-              <div><Label>Notes</Label><Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} rows={3} /></div>
+              {canEditHR && (
+                <div><Label>Internal HR notes</Label><Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} rows={3} /></div>
+              )}
             </TabsContent>
 
             {/* COMPLIANCE TAB — HR files need the HR bundle view code */}
@@ -288,14 +288,25 @@ export default function StaffProfileDialog({ staff, onSave, onClose, canAssign =
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="col-span-2 flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Verification</span>
+                      {canEditHR ? (
+                        <Select value={cert.verification_status || "Verified"} onValueChange={v => updateCert(i, "verification_status", v)}>
+                          <SelectTrigger className="h-7 w-48 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {["Pending verification", "Verified", "Rejected"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px]">{cert.verification_status || "Verified"}</Badge>
+                      )}
+                    </div>
                     <div className="col-span-2 flex items-center gap-3">
                       <div className="flex-1">
                         <Label className="text-xs">Document</Label>
                         {cert.doc_url ? (
                           <div className="flex items-center gap-2 mt-1">
-                            <a href={cert.doc_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary flex items-center gap-1 hover:underline">
-                              <Paperclip className="w-3 h-3" />View Document<ExternalLink className="w-3 h-3" />
-                            </a>
+                            <PrivateFileLink fileUri={cert.doc_url} label="View document" className="flex items-center gap-1" />
                             <Button variant="ghost" size="sm" className="h-6 text-xs text-muted-foreground px-1" onClick={() => updateCert(i, "doc_url", "")}>Remove</Button>
                           </div>
                         ) : (

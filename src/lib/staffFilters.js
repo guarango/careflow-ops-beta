@@ -17,6 +17,13 @@ export function personStatus(person) {
   return person?.status || "Pending";
 }
 
+// First-login onboarding progress, as shown to Admins on the Staff page.
+export function onboardingState(person) {
+  if (!person) return "Not started";
+  if (person.onboarding_completed_at) return "Complete";
+  return Number(person.onboarding_step || 0) > 0 ? "In progress" : "Not started";
+}
+
 export function peopleInTab(people, tabKey) {
   const tab = STATUS_TABS.find((t) => t.key === tabKey) || STATUS_TABS[0];
   return (people || []).filter((p) => tab.statuses.includes(personStatus(p)));
