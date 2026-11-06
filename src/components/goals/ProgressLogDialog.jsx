@@ -42,8 +42,8 @@ export default function ProgressLogDialog({ goal, onClose, onSave }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md grid-cols-[minmax(0,1fr)] overflow-hidden">
+        <DialogHeader className="min-w-0 pr-6">
           <DialogTitle className="text-sm">Log Progress</DialogTitle>
           <p className="text-xs text-muted-foreground truncate">{goal?.goal_title}</p>
         </DialogHeader>
@@ -57,11 +57,11 @@ export default function ProgressLogDialog({ goal, onClose, onSave }) {
 
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className="min-w-0">
               <Label className="text-xs">Date *</Label>
-              <Input type="date" value={e.date} onChange={el => set("date", el.target.value)} className="h-8 text-sm" />
+              <Input type="date" value={e.date} onChange={el => set("date", el.target.value)} className="h-8 text-sm w-full min-w-0" />
             </div>
-            <div>
+            <div className="min-w-0">
               <Label className="text-xs">Setting / Location</Label>
               <Input value={e.setting} onChange={el => set("setting", el.target.value)} placeholder="e.g. Kitchen, Community" className="h-8 text-sm" />
             </div>
@@ -71,9 +71,9 @@ export default function ProgressLogDialog({ goal, onClose, onSave }) {
             <div>
               <Label className="text-xs">Trials</Label>
               <div className="flex items-center gap-2">
-                <Input type="number" min={0} value={e.trials_correct} onChange={el => set("trials_correct", el.target.value)} placeholder="Correct" className="h-8 text-sm" />
+                <Input type="number" min={0} value={e.trials_correct} onChange={el => set("trials_correct", el.target.value)} placeholder="Correct" className="h-8 text-sm flex-1 min-w-0" />
                 <span className="text-muted-foreground text-sm">/</span>
-                <Input type="number" min={0} value={e.trials_total} onChange={el => set("trials_total", el.target.value)} placeholder="Total" className="h-8 text-sm" />
+                <Input type="number" min={0} value={e.trials_total} onChange={el => set("trials_total", el.target.value)} placeholder="Total" className="h-8 text-sm flex-1 min-w-0" />
               </div>
               {e.trials_correct !== "" && e.trials_total !== "" && Number(e.trials_total) > 0 && (
                 <p className="text-xs text-primary mt-1">= {Math.round((Number(e.trials_correct) / Number(e.trials_total)) * 100)}%</p>
