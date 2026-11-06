@@ -65,42 +65,78 @@
   ],
   "rls": {
     "read": {
-      "$or": [
+      "$and": [
         {
-          "id": {
-            "$in": "{{user.data.assigned_house_ids}}"
-          }
+          "$or": [
+            {
+              "id": {
+                "$in": "{{user.data.assigned_house_ids}}"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]
     },
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "update": {
-      "$or": [
+      "$and": [
         {
-          "id": {
-            "$in": "{{user.data.assigned_house_ids}}"
+          "user_condition": {
+            "role": "admin"
           }
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
+          }
+        }
+      ]
+    },
+    "update": {
+      "$and": [
+        {
+          "$or": [
+            {
+              "id": {
+                "$in": "{{user.data.assigned_house_ids}}"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
           }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$and": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     }
   }
 }
