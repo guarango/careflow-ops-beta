@@ -38,51 +38,87 @@
     "document_name"
   ],
   "rls": {
-    "create": {
-      "$or": [
+    "read": {
+      "$and": [
         {
-          "data.staff_id": "{{user.data.staff_member_id}}"
+          "$or": [
+            {
+              "data.staff_id": "{{user.data.staff_member_id}}"
+            },
+            {
+              "data.staff_id": {
+                "$in": "{{user.data.team_staff_ids}}"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]
     },
-    "read": {
-      "$or": [
+    "create": {
+      "$and": [
         {
-          "data.staff_id": "{{user.data.staff_member_id}}"
-        },
-        {
-          "data.staff_id": {
-            "$in": "{{user.data.team_staff_ids}}"
-          }
+          "$or": [
+            {
+              "data.staff_id": "{{user.data.staff_member_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]
     },
     "update": {
-      "$or": [
+      "$and": [
         {
-          "data.staff_id": "{{user.data.staff_member_id}}"
+          "$or": [
+            {
+              "data.staff_id": "{{user.data.staff_member_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$and": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     }
   }
 }

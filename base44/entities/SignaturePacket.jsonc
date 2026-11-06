@@ -57,7 +57,30 @@
   ],
   "rls": {
     "read": {
-      "$or": [
+      "$and": [
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            }
+          ]
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
+    },
+    "create": {
+      "$and": [
         {
           "user_condition": {
             "role": "admin"
@@ -65,25 +88,38 @@
         },
         {
           "user_condition": {
-            "role": "manager"
+            "is_deactivated": false
           }
         }
       ]
     },
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$and": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$and": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     }
   }
 }

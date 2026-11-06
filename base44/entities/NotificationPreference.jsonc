@@ -41,16 +41,52 @@
   ],
   "rls": {
     "read": {
-      "data.user_id": "{{user.id}}"
+      "$and": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     },
     "create": {
-      "data.user_id": "{{user.id}}"
+      "$and": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     },
     "update": {
-      "data.user_id": "{{user.id}}"
+      "$and": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     },
     "delete": {
-      "data.user_id": "{{user.id}}"
+      "$and": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     }
   }
 }
