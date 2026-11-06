@@ -105,12 +105,7 @@
   ],
   "rls": {
     "read": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "create": {
-      "$or": [
+      "$and": [
         {
           "user_condition": {
             "role": "admin"
@@ -118,7 +113,30 @@
         },
         {
           "user_condition": {
-            "role": "manager"
+            "is_deactivated": false
+          }
+        }
+      ]
+    },
+    "create": {
+      "$and": [
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            }
+          ]
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
           }
         }
       ]
