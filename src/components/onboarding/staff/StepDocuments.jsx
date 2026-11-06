@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, FileSignature, ExternalLink, RefreshCw, CheckCircle2 } from "lucide-react";
 
 /** Step 4 — sign the documents that came with the invite. */
-export default function StepDocuments({ requests = [], saving, refreshing, onRefresh, onFinish }) {
+export default function StepDocuments({ requests = [], saving, refreshing, onRefresh, onFinish, onBack }) {
   const pending = requests.filter((r) => r.status !== "Signed" && r.status !== "Voided");
   const allSigned = pending.length === 0;
 
@@ -48,10 +48,15 @@ export default function StepDocuments({ requests = [], saving, refreshing, onRef
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <Button variant="ghost" size="sm" onClick={onRefresh} disabled={refreshing}>
-          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
-          Refresh status
-        </Button>
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <Button variant="ghost" size="sm" onClick={onBack} disabled={saving}>Back</Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={onRefresh} disabled={refreshing}>
+            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh status
+          </Button>
+        </div>
         <Button onClick={onFinish} disabled={saving || !allSigned}>
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
           {allSigned ? "Finish onboarding" : "Sign all documents to finish"}

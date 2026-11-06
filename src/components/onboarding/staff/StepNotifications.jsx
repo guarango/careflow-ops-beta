@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight } from "lucide-react";
 
 /** Step 3 — notification channels and text-message consent. */
-export default function StepNotifications({ staff, saving, onNext, isLast }) {
+export default function StepNotifications({ staff, saving, onNext, isLast, onBack }) {
   const [email, setEmail] = useState(staff?.email_notifications !== false);
   const [push, setPush] = useState(staff?.push_notifications !== false);
   const [sms, setSms] = useState(staff?.sms_opted_in === true);
@@ -52,7 +52,10 @@ export default function StepNotifications({ staff, saving, onNext, isLast }) {
         </div>
       )}
       {error && <p className="text-xs text-destructive">{error}</p>}
-      <div className="flex justify-end pt-2">
+      <div className="flex items-center justify-between gap-3 pt-2">
+        {onBack ? (
+          <Button variant="ghost" onClick={onBack} disabled={saving}>Back</Button>
+        ) : <span />}
         <Button onClick={submit} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
           {isLast ? "Finish" : "Continue"} <ArrowRight className="w-4 h-4 ml-1" />

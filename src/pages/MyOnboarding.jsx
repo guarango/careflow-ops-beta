@@ -89,6 +89,9 @@ export default function MyOnboarding() {
     }
   };
 
+  // Going back keeps what is already saved — edits are stored when they Continue again.
+  const handleBack = () => setStepIndex(Math.max(0, currentIndex - 1));
+
   const handleFinish = async () => {
     try {
       await saveProgress({}, steps.length, true);
@@ -163,9 +166,16 @@ export default function MyOnboarding() {
                 refreshing={loadingDocs}
                 onRefresh={() => refetch()}
                 onFinish={handleFinish}
+                onBack={currentIndex > 0 ? handleBack : null}
               />
             ) : (
-              <StepComponent staff={staff} saving={saving} onNext={handleNext} isLast={isLastStep} />
+              <StepComponent
+                staff={staff}
+                saving={saving}
+                onNext={handleNext}
+                isLast={isLastStep}
+                onBack={currentIndex > 0 ? handleBack : null}
+              />
             )}
           </CardContent>
         </Card>
