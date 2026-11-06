@@ -122,6 +122,21 @@
           }
         }
       }
+    },
+    "shift_client_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Client IDs on the user's currently active shift. Used only by entity access rules; written by the service role, never by the user.",
+      "default": [],
+      "rls": {
+        "update": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
     }
   },
   "required": []

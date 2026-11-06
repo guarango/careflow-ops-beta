@@ -42,15 +42,17 @@ export default async function (req) {
 
     const svc = base44.asServiceRole.entities;
 
-    // Resolve the login: by the id the auth trigger passes, then by email, then the caller itself.
+    // Resolve the login from the VERIFIED email only. A client-supplied user_id would let
+    // any caller rebind their staff record (and mirrored role/caseload) onto another
+    // person's login, so it is never trusted.
     let user = null;
-    if (body.user_id) user = await svc.User.get(body.user_id).catch(() => null);
-    if (!user) {
-      const found = await svc.User.filter({ email }).catch(() => null);
-      user = normalize(found)[0] || null;
-    }
+    const found = await svc.User.filter({ email }).catch(() => null);
+    user = normalize(found).find((u) => (u.email || '').toLowerCase() === email) || null;
     if (!user && (caller.email || '').toLowerCase() === email) user = caller;
     if (!user) return Response.json({ applied: false, reason: 'user account not found' });
+    if ((user.email || '').toLowerCase() !== email) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const staffList = normalize(await svc.StaffMember.list());
     if (user.is_super_admin) {

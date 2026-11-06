@@ -114,7 +114,10 @@ export const EVV_CSV_HEADERS = [
  */
 export function generateEvvCsv(records, agency, credentials) {
   const escapeCsv = (val) => {
-    const s = String(val ?? "");
+    let s = String(val ?? "");
+    // Neutralize spreadsheet formula injection: a leading =, +, - or @ is treated
+    // as a formula by Excel/LibreOffice, so prefix it with an apostrophe.
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
     if (s.includes(",") || s.includes('"') || s.includes("\n")) {
       return `"${s.replace(/"/g, '""')}"`;
     }
@@ -150,26 +153,31 @@ export function generateEvvCsv(records, agency, credentials) {
  * This builds the envelope structure; the signing step is added when
  * the certificate is configured.
  */
+export function escapeXml(val) {
+  return String(val ?? "").replace(/[&<>"']/g, (c) =>
+    c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : c === '"' ? "&quot;" : "&apos;");
+}
+
 export function buildSoapEnvelope(records, agency, credentials) {
-  const submissionId = `EVV-${agency?.id}-${Date.now()}`;
-  const providerNpi = agency?.npi || "";
-  const providerId = credentials?.provider_id || agency?.medicaid_provider_id || "";
-  const certThumbprint = credentials?.certificate_thumbprint || "";
+  const submissionId = escapeXml(`EVV-${agency?.id}-${Date.now()}`);
+  const providerNpi = escapeXml(agency?.npi || "");
+  const providerId = escapeXml(credentials?.provider_id || agency?.medicaid_provider_id || "");
+  const certThumbprint = escapeXml(credentials?.certificate_thumbprint || "");
 
   const recordElements = records.map((r, i) => {
     return `        <evv:EVVRecord>
           <evv:RecordSequence>${i + 1}</evv:RecordSequence>
           <evv:ServiceProviderNPI>${providerNpi}</evv:ServiceProviderNPI>
           <evv:ServiceProviderID>${providerId}</evv:ServiceProviderID>
-          <evv:RecipientMedicaidID>${r.recipient_id || ""}</evv:RecipientMedicaidID>
-          <evv:ServiceTypeCode>${r.service_type || ""}</evv:ServiceTypeCode>
-          <evv:ServiceDate>${r.service_date || ""}</evv:ServiceDate>
-          <evv:ServiceStartTime>${r.service_start_time || ""}</evv:ServiceStartTime>
-          <evv:ServiceEndTime>${r.service_end_time || ""}</evv:ServiceEndTime>
-          <evv:ServiceLocation>${r.service_location || ""}</evv:ServiceLocation>
-          <evv:ProviderNPI>${r.provider_id || ""}</evv:ProviderNPI>
-          <evv:CaregiverID>${r.staff_id || ""}</evv:CaregiverID>
-          <evv:RecordCreationDate>${r.record_creation_date || ""}</evv:RecordCreationDate>
+          <evv:RecipientMedicaidID>${escapeXml(r.recipient_id || "")}</evv:RecipientMedicaidID>
+          <evv:ServiceTypeCode>${escapeXml(r.service_type || "")}</evv:ServiceTypeCode>
+          <evv:ServiceDate>${escapeXml(r.service_date || "")}</evv:ServiceDate>
+          <evv:ServiceStartTime>${escapeXml(r.service_start_time || "")}</evv:ServiceStartTime>
+          <evv:ServiceEndTime>${escapeXml(r.service_end_time || "")}</evv:ServiceEndTime>
+          <evv:ServiceLocation>${escapeXml(r.service_location || "")}</evv:ServiceLocation>
+          <evv:ProviderNPI>${escapeXml(r.provider_id || "")}</evv:ProviderNPI>
+          <evv:CaregiverID>${escapeXml(r.staff_id || "")}</evv:CaregiverID>
+          <evv:RecordCreationDate>${escapeXml(r.record_creation_date || "")}</evv:RecordCreationDate>
         </evv:EVVRecord>`;
   }).join("\n");
 
