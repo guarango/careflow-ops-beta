@@ -25,21 +25,52 @@
     "matrix_key"
   ],
   "rls": {
-    "read": {},
-    "create": {
+    "read": {
       "user_condition": {
-        "role": "admin"
+        "is_deactivated": false
       }
+    },
+    "create": {
+      "$and": [
+        {
+          "user_condition": {
+            "is_super_admin": true
+          }
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$and": [
+        {
+          "user_condition": {
+            "is_super_admin": true
+          }
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$and": [
+        {
+          "user_condition": {
+            "is_super_admin": true
+          }
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     }
   }
 }
