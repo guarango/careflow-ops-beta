@@ -103,6 +103,16 @@ export default function SessionNotes() {
     for (const k of Object.keys(cleaned)) {
       if (cleaned[k] === "") cleaned[k] = null;
     }
+    // Trial counts must be numbers (or null) — empty inputs arrive as strings
+    if (Array.isArray(cleaned.goal_data)) {
+      const num = (v) => (v === "" || v === null || v === undefined || Number.isNaN(Number(v)) ? null : Number(v));
+      cleaned.goal_data = cleaned.goal_data.map(g => ({
+        ...g,
+        trials_total: num(g.trials_total),
+        trials_correct: num(g.trials_correct),
+        percentage: num(g.percentage),
+      }));
+    }
     return cleaned;
   };
 

@@ -114,10 +114,10 @@ export default function GoalDataCard({ goalEntry, onChange, clientName, priority
                   type="number" min={0}
                   value={g.trials_correct ?? ""}
                   onChange={e => {
-                    const correct = Number(e.target.value);
-                    const total = g.trials_total || 0;
-                    set("trials_correct", correct);
-                    if (total > 0) onChange({ ...g, trials_correct: correct, percentage: Math.round((correct / total) * 100) });
+                    const correct = e.target.value === "" ? "" : Number(e.target.value);
+                    const total = Number(g.trials_total) || 0;
+                    if (total > 0 && correct !== "") onChange({ ...g, trials_correct: correct, percentage: Math.round((correct / total) * 100) });
+                    else onChange({ ...g, trials_correct: correct, percentage: null });
                   }}
                   className="text-center text-lg font-bold h-12 text-emerald-700"
                   placeholder="0"
@@ -130,9 +130,13 @@ export default function GoalDataCard({ goalEntry, onChange, clientName, priority
                   type="number" min={0}
                   value={g.trials_total ?? ""}
                   onChange={e => {
-                    const total = Number(e.target.value);
-                    const correct = g.trials_correct || 0;
-                    onChange({ ...g, trials_total: total, percentage: total > 0 ? Math.round((correct / total) * 100) : null });
+                    const total = e.target.value === "" ? "" : Number(e.target.value);
+                    const correct = Number(g.trials_correct);
+                    onChange({
+                      ...g,
+                      trials_total: total,
+                      percentage: total !== "" && total > 0 && g.trials_correct !== "" ? Math.round((correct / total) * 100) : null,
+                    });
                   }}
                   className="text-center text-lg font-bold h-12"
                   placeholder="0"
