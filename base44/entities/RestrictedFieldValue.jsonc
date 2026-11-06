@@ -1,0 +1,58 @@
+{
+  "name": "RestrictedFieldValue",
+  "type": "object",
+  "properties": {
+    "agency_id": {
+      "type": "string"
+    },
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "IncidentReport",
+        "House",
+        "SessionNote"
+      ]
+    },
+    "record_id": {
+      "type": "string"
+    },
+    "field_id": {
+      "type": "string",
+      "description": "FormFieldDefinition id"
+    },
+    "label": {
+      "type": "string",
+      "description": "Field label at the time the answer was entered"
+    },
+    "value": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "record_type",
+    "record_id",
+    "field_id"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

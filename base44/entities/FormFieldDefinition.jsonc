@@ -1,0 +1,115 @@
+{
+  "name": "FormFieldDefinition",
+  "type": "object",
+  "properties": {
+    "agency_id": {
+      "type": "string"
+    },
+    "form_type": {
+      "type": "string",
+      "enum": [
+        "incident_report",
+        "house",
+        "session_note"
+      ],
+      "description": "Which form this custom field belongs to"
+    },
+    "label": {
+      "type": "string"
+    },
+    "help_text": {
+      "type": "string"
+    },
+    "field_type": {
+      "type": "string",
+      "enum": [
+        "short_text",
+        "long_text",
+        "yes_no",
+        "dropdown",
+        "date",
+        "number"
+      ]
+    },
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Choices for a dropdown field"
+    },
+    "required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Blocks saving NEW records and edits to drafts only"
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Retired fields keep their answers on existing records but disappear from new forms"
+    },
+    "admin_only": {
+      "type": "boolean",
+      "default": false,
+      "description": "Answers are stored in RestrictedFieldValue and only visible to Admins"
+    },
+    "applies_to_service_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Session note fields only (not used yet)"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "form_type",
+    "label",
+    "field_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "dsp"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
