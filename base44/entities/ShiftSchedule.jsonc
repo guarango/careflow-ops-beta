@@ -108,53 +108,89 @@
     "start_time"
   ],
   "rls": {
-    "create": {
-      "$or": [
+    "read": {
+      "$and": [
         {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
-          }
+          "$or": [
+            {
+              "data.client_id": {
+                "$in": "{{user.data.assigned_client_ids}}"
+              }
+            },
+            {
+              "data.staff_id": "{{user.data.staff_member_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]
     },
-    "read": {
-      "$or": [
+    "create": {
+      "$and": [
         {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
-          }
-        },
-        {
-          "data.staff_id": "{{user.data.staff_member_id}}"
+          "$or": [
+            {
+              "data.client_id": {
+                "$in": "{{user.data.assigned_client_ids}}"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]
     },
     "update": {
-      "$or": [
+      "$and": [
         {
-          "data.staff_id": "{{user.data.staff_member_id}}"
+          "$or": [
+            {
+              "data.staff_id": "{{user.data.staff_member_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$and": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     }
   }
 }
