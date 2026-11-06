@@ -16,6 +16,7 @@ import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import IncidentForm from "@/components/incidents/IncidentForm";
 import IncidentDetailDialog from "@/components/incidents/IncidentDetailDialog";
 import IncidentTrends from "@/components/incidents/IncidentTrends";
+import { logAudit } from "@/lib/auditLog";
 
 export default function Incidents() {
   const { can, isDSP } = useRole();
@@ -69,6 +70,18 @@ export default function Incidents() {
 
   const handleDetailUpdate = (data) => {
     updateMutation.mutate({ id: selected.id, data });
+    if (data.status && data.status !== selected.status) {
+      logAudit({
+        action: data.status === "Closed" ? "incident_approved" : "incident_status_changed",
+        target_type: "IncidentReport",
+        target_id: selected.id,
+        target_name: `${selected.client_name || "Client"} — ${selected.type || "Incident"}`,
+        field: "Status",
+        old_value: selected.status || "",
+        new_value: data.status,
+        details: `Incident ${selected.status || ""} → ${data.status}`,
+      });
+    }
     setSelected({ ...selected, ...data });
   };
 

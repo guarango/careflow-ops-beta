@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, FileText, Download, AlertTriangle, CheckCircle2, Clock, Pen, Heart, Shield, Users } from "lucide-react";
+import { ArrowLeft, Edit, AlertTriangle, CheckCircle2, Pen, Heart } from "lucide-react";
 import ISPGoalsSummary from "./ISPGoalsSummary";
 import ISPSignaturePanel from "./ISPSignaturePanel";
 import ISPPDFExport from "./ISPPDFExport";
@@ -173,7 +173,7 @@ export default function ISPDetailView({ plan, onEdit, onBack, onUpdate, updating
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SectionBlock title="Plan Identity">
               <KV label="Client" value={plan.client_name} />
-              <KV label="Medicaid ID" value={<SensitiveValue value={plan.medicaid_id} field="client Medicaid ID" subject={{ type: "ISP", id: plan.id, name: plan.client_name }} canReveal={can("viewSensitiveIdentifiers")} />} />
+              <KV label="Medicaid ID" value={<SensitiveValue value={plan.medicaid_id} field="Client Medicaid ID" subject={{ type: "client", id: plan.client_id || plan.id, name: plan.client_name }} canReveal={can("revealClientIdentifiers")} />} />
               <KV label="Plan Type" value={plan.plan_type} />
               <KV label="Waiver Type" value={plan.waiver_type} />
               <KV label="Funding Source" value={plan.funding_source} />

@@ -147,12 +147,24 @@ export async function applyStaffAccess(base44, opts) {
     mirrored = true;
   }
 
+  const label = (a) =>
+    `${a.app_access}${a.hr_bundle ? ' +HR' : ''}${a.billing_bundle ? ' +Billing' : ''} (${a.status})`;
+
   await svc.AuditLog.create({
     ...actor,
     action: action === 'set_access' ? 'staff_access_changed' : `staff_${action}`,
     target_type: 'StaffMember',
     target_id: staffId,
     target_name: `${staff.first_name || ''} ${staff.last_name || ''}`.trim() || staff.email,
+    field: action === 'set_access' ? 'Access & bundles' : 'Status',
+    old_value: label(old),
+    new_value: label({
+      app_access: access.app_access,
+      hr_bundle: access.hr_bundle,
+      billing_bundle: access.billing_bundle,
+      status,
+    }),
+    reason: (reason || '').trim(),
     details: JSON.stringify({
       old,
       new: {

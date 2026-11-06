@@ -32,6 +32,10 @@
       "type": "string",
       "description": "Utah Medicaid member ID (EVV Member ID / billing recipient ID). Numeric, up to 10 digits \u2014 leading zeros are significant."
     },
+    "ssn_last4": {
+      "type": "string",
+      "description": "Last 4 digits of the client's SSN. Masked by default; revealing is logged."
+    },
     "house_id": {
       "type": "string",
       "description": "House/Location ID this client belongs to"

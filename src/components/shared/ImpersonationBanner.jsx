@@ -19,7 +19,8 @@ export default function ImpersonationBanner() {
       <div className="flex items-center gap-2 min-w-0">
         <Lock className="w-3.5 h-3.5 shrink-0" />
         <span className="text-xs font-medium truncate">
-          Viewing as {name} ({getRoleLabel(role)}) — Read-only mode
+          CareFlow support session — viewing as {name} ({getRoleLabel(role)}) · read-only, ends
+          automatically after 60 minutes
         </span>
       </div>
       <Button

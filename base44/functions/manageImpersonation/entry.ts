@@ -104,7 +104,7 @@ export default async function(req) {
         target_id: targetUserId || '',
         session_id: sessionId || '',
         session_end: now,
-        details: `Super Admin ${user.email} ended viewing session${timedOut ? ' (auto-timed out after 30 minutes)' : ''}`,
+        details: `Super Admin ${user.email} ended viewing session${timedOut ? ' (auto-timed out after 60 minutes)' : ''}`,
         timestamp: now,
       });
 

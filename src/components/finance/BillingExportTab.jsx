@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Download, FileDown, History } from "lucide-react";
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
 import toast from "react-hot-toast";
+import { useRole } from "@/hooks/useRole";
+import { maskValue } from "@/lib/sensitive";
 
 function downloadCSV(csv, filename) {
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -25,6 +27,11 @@ function downloadCSV(csv, filename) {
 
 export default function BillingExportTab() {
   const { user } = useAuth();
+  const { can } = useRole();
+  const canRevealIdentifiers = can("revealClientIdentifiers");
+  // Medicaid IDs stay masked in the on-screen table and in the CSV unless the
+  // viewer is allowed to reveal that field.
+  const displayId = (value) => (canRevealIdentifiers ? value || "—" : maskValue(value) || "—");
   const queryClient = useQueryClient();
   const [dateFrom, setDateFrom] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
   const [dateTo, setDateTo] = useState(format(endOfMonth(new Date()), "yyyy-MM-dd"));
@@ -51,7 +58,7 @@ export default function BillingExportTab() {
       const headers = ["Client", "Medicaid ID", "Service Code", "Date", "Units", "Staff"];
       const rows = billableRecords.map(r => [
         r.client_name || "",
-        r.medicaid_id || "",
+        canRevealIdentifiers ? r.medicaid_id || "" : maskValue(r.medicaid_id),
         r.service_code || "",
         r.date || "",
         r.units || 0,
@@ -131,7 +138,7 @@ export default function BillingExportTab() {
                 {billableRecords.map(r => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium text-sm">{r.client_name}</TableCell>
-                    <TableCell className="text-sm font-mono">{r.medicaid_id || "—"}</TableCell>
+                    <TableCell className="text-sm font-mono">{displayId(r.medicaid_id)}</TableCell>
                     <TableCell className="font-mono text-xs">{r.service_code}</TableCell>
                     <TableCell className="text-sm">{r.date}</TableCell>
                     <TableCell className="text-right text-sm">{r.units}</TableCell>

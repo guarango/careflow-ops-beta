@@ -7,10 +7,9 @@ import EmptyState from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Plus, Search, ClipboardCheck, AlertTriangle, Clock } from "lucide-react";
+import { FileText, Plus, Search, AlertTriangle, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import { useRole } from "@/hooks/useRole";
@@ -21,6 +20,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
 import { buildNoteVersionEntry, initialNoteVersion, isNoteLocked } from "@/lib/noteVersioning";
 import { todayISO } from "@/lib/dateUtils";
+import { logAudit } from "@/lib/auditLog";
 
 // ── Late note check ──
 function checkIsLate(note) {
@@ -158,6 +158,13 @@ export default function SessionNotes() {
   const handleAddendum = ({ id, addenda, version, version_history }) => {
     updateMutation.mutate({ id, data: { addenda, version, version_history } });
     queryClient.invalidateQueries({ queryKey: ["session-notes"] });
+    logAudit({
+      action: "session_note_addended",
+      target_type: "SessionNote",
+      target_id: id,
+      target_name: `Session note ${id}`,
+      details: "Addendum added to a session note",
+    });
   };
 
   const handleSupervisorAction = (note, action, comment) => {
@@ -190,6 +197,21 @@ export default function SessionNotes() {
       },
     ];
     updateMutation.mutate({ id: note.id, data: updates });
+    logAudit({
+      action:
+        action === "Approved"
+          ? "session_note_approved"
+          : action === "Returned"
+            ? "session_note_returned"
+            : "session_note_flagged",
+      target_type: "SessionNote",
+      target_id: note.id,
+      target_name: `${note.client_name || "Client"} — ${note.date || ""}`.trim(),
+      field: "Status",
+      old_value: note.status || "",
+      new_value: updates.status,
+      details: `Session note ${action.toLowerCase()}${comment ? `: ${comment}` : ""}`,
+    });
   };
 
   if (isDSPMode && assignedClientIds.length === 0) return <NoDSPClientsState />;

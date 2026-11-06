@@ -12,11 +12,16 @@
       "type": "string"
     },
     "actor_email": {
-      "type": "string"
+      "type": "string",
+      "description": "Email of the person who performed the action"
+    },
+    "actor_role": {
+      "type": "string",
+      "description": "App role of the actor at the time of the action"
     },
     "action": {
       "type": "string",
-      "description": "e.g. impersonate_session_start, impersonate_page_view, impersonate_session_end, login_as, api_call, sensitive_field_view"
+      "description": "e.g. User invited, set_access, deactivate, permission_matrix_change, sensitive_field_view, session_note_approved, impersonate_session_start"
     },
     "event_type": {
       "type": "string",
@@ -26,7 +31,25 @@
         "session_end",
         "generic"
       ],
-      "default": "generic"
+      "default": "generic",
+      "enumColors": [
+        "green",
+        "blue",
+        "orange",
+        "gray"
+      ]
+    },
+    "field": {
+      "type": "string",
+      "description": "The sensitive field that was revealed or changed"
+    },
+    "old_value": {
+      "type": "string",
+      "description": "Value before the change (access level, bundle, permission level, record status)"
+    },
+    "new_value": {
+      "type": "string",
+      "description": "Value after the change"
     },
     "target_type": {
       "type": "string"
@@ -39,11 +62,11 @@
     },
     "session_id": {
       "type": "string",
-      "description": "Groups all events in one impersonation session"
+      "description": "Groups all events in one Login As session"
     },
     "reason": {
       "type": "string",
-      "description": "Stated reason for the impersonation session"
+      "description": "Stated reason for the Login As session"
     },
     "session_start": {
       "type": "string",
@@ -55,7 +78,7 @@
     },
     "viewed_path": {
       "type": "string",
-      "description": "Route path viewed during impersonation"
+      "description": "Route path viewed during Login As"
     },
     "viewed_record_id": {
       "type": "string"
@@ -102,13 +125,9 @@
     },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "role": "audit_immutable"
       }
     },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "delete": false
   }
 }

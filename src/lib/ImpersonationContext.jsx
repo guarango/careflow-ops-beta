@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, useCallback, useRef, useEff
 import { base44 } from "@/api/base44Client";
 import { toast } from "@/components/ui/use-toast";
 
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
 
 const ImpersonationContext = createContext({
   impersonation: null,
@@ -57,12 +57,12 @@ export function ImpersonationProvider({ children }) {
     const data = res.data;
     setImpersonation(data);
 
-    // Start 30-minute auto-timeout
+    // Start 60-minute auto-timeout
     clearTimeout();
     timeoutRef.current = setTimeout(async () => {
       toast({
         title: "Session timed out",
-        description: "Your 30-minute viewing session has ended. Returning to your account.",
+        description: "Your 60-minute viewing session has ended. Returning to your account.",
         variant: "destructive",
       });
       await endSession(data.sessionId, data.targetUser?.id, true);

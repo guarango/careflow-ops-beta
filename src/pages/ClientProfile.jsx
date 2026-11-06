@@ -2,10 +2,10 @@ import React, { useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { format } from "date-fns";
 import PageHeader from "@/components/shared/PageHeader";
 import StatusBadge from "@/components/shared/StatusBadge";
 import SensitiveValue from "@/components/shared/SensitiveValue";
+import { canRevealClientIdentifier } from "@/lib/sensitive";
 import EmptyState from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,8 +28,16 @@ function Field({ label, children }) {
 export default function ClientProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { can } = useRole();
+  const { can, isAdmin, effectiveUser } = useRole();
   const canEdit = can("editClients");
+  // Managers only ever read clients in their own caseload, so a visible client
+  // with the permission may be revealed; admins may reveal any client.
+  const canRevealIdentifiers = canRevealClientIdentifier({
+    can,
+    isAdmin,
+    assignedClientIds: effectiveUser?.assigned_client_ids || [],
+    clientId: id,
+  });
 
   const { data: client, isLoading } = useQuery({
     queryKey: ["client", id],
@@ -142,7 +150,15 @@ export default function ClientProfile() {
                 value={client.medicaid_id}
                 field="Client Medicaid ID"
                 subject={{ type: "client", id: client.id, name: fullName }}
-                canReveal={can("viewSensitiveIdentifiers")}
+                canReveal={canRevealIdentifiers}
+              />
+            </Field>
+            <Field label="SSN (last 4)">
+              <SensitiveValue
+                value={client.ssn_last4}
+                field="Client SSN"
+                subject={{ type: "client", id: client.id, name: fullName }}
+                canReveal={canRevealIdentifiers}
               />
             </Field>
             <Field label="Insurance">{client.insurance_provider || "—"}</Field>

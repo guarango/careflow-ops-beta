@@ -289,6 +289,21 @@ export default async function (req) {
         return Response.json({ error: 'A valid email is required' }, { status: 400 });
       }
       await base44.auth.resetPasswordRequest(email);
+      const resetUserPage = await svc.User.filter({ email: email.toLowerCase() }).catch(() => null);
+      const resetUser = resetUserPage?.items?.[0] || resetUserPage?.[0] || null;
+      await svc.AuditLog.create({
+        action: 'password_reset_sent',
+        actor_id: user.id,
+        actor_name: user.full_name || user.email,
+        actor_email: user.email,
+        actor_role: user.role || '',
+        target_type: 'User',
+        target_id: resetUser?.id || '',
+        target_name: email,
+        field: 'Password',
+        details: `Password reset email sent to ${email} by ${user.email}`,
+        timestamp: new Date().toISOString(),
+      });
       return Response.json({ success: true, message: 'Password reset email sent' });
     }
 

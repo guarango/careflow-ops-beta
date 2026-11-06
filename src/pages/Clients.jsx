@@ -35,7 +35,7 @@ const emptyClient = {
   first_name: "", middle_initial: "", last_name: "", date_of_birth: "", gender: "",
   diagnosis: "", guardian_name: "", guardian_phone: "", address: "",
   address_city: "", address_state: "UT", address_zip: "",
-  medicaid_id: "", insurance_id: "", insurance_provider: "",
+  medicaid_id: "", ssn_last4: "", insurance_id: "", insurance_provider: "",
   house_id: "",
   service_enrollments: [],
   status: "Active", notes: ""
@@ -292,6 +292,17 @@ export default function Clients() {
                   disabled={!canEditClients}
                 />
                 <p className="text-[11px] text-muted-foreground mt-1">Required for Utah EVV and Medicaid billing. Keep leading zeros.</p>
+              </div>
+              <div>
+                <Label>SSN (Last 4)</Label>
+                <Input
+                  maxLength={4}
+                  value={form.ssn_last4 || ""}
+                  onChange={(e) => setForm({ ...form, ssn_last4: e.target.value.replace(/\D/g, "").slice(0, 4) })}
+                  placeholder="####"
+                  disabled={!canEditClients}
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">Masked everywhere except to those allowed to reveal it.</p>
               </div>
               <div>
                 <Label>Status</Label>

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Clock, Plus, Search, CheckCircle, XCircle, MapPin, AlertCircle, Lock, Unlock, AlertTriangle } from "lucide-react";
+import { Clock, Plus, Search, CheckCircle, XCircle, AlertCircle, Lock, Unlock, AlertTriangle } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/lib/AuthContext";
 import EVVCapturePanel from "@/components/evv/EVVCapturePanel";
@@ -24,6 +24,7 @@ import CorrectionReviewDialog from "@/components/timecards/CorrectionReviewDialo
 import { computeOvertimeMap, filterByPeriod } from "@/lib/overtimeUtils";
 import { exportCSV, exportPDF } from "@/components/timecards/payrollExportUtils";
 import { useToast } from "@/components/ui/use-toast";
+import { logAudit } from "@/lib/auditLog";
 
 
 const emptyTC = {
@@ -236,6 +237,16 @@ export default function Timecards() {
     updateMutation.mutate({
       id: approveTarget.id,
       data: { status: "Approved", approval_timestamp: approveSigTimestamp }
+    });
+    logAudit({
+      action: "timecard_approved",
+      target_type: "Timecard",
+      target_id: approveTarget.id,
+      target_name: `${approveTarget.staff_name || "Staff"} — ${approveTarget.date || ""}`.trim(),
+      field: "Status",
+      old_value: approveTarget.status || "",
+      new_value: "Approved",
+      details: `Timecard approved for ${approveTarget.staff_name || "staff"}`,
     });
     setApproveConfirmOpen(false);
     setApproveTarget(null);

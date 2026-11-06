@@ -89,6 +89,7 @@ export const CAN = {
   staffFilesView:         ["hr_bundle"],
   viewStaffHRFiles:       ["hr_bundle"],
   viewSensitiveIdentifiers: ["hr_bundle"],
+  revealClientIdentifiers: ["manager", "admin"],
   viewSensitiveHRDetails: ["hr_bundle"],
   viewSensitiveRates:     ["billing_bundle"],
   viewClientCompliance:   ["manager", "admin"],
@@ -197,7 +198,8 @@ export const FEATURE_SECTIONS = [
         { code: "viewSensitiveHRDetails", level: "View", label: "See HR details (background, I-9, pay)" },
       ] },
       { key: "sensitiveIdentifiers", label: "Sensitive identifiers", paths: [], hideView: true, actions: [
-        { code: "viewSensitiveIdentifiers", level: "View", label: "Reveal sensitive identifiers" },
+        { code: "viewSensitiveIdentifiers", level: "View", label: "Reveal staff SSN, background check & pay" },
+        { code: "revealClientIdentifiers", level: "View", label: "Reveal client Medicaid ID & SSN" },
         { code: "viewSensitiveRates", level: "View", label: "See client rates" },
       ] },
       { key: "notificationCenter", label: "Notification center", paths: ["/notifications"], actions: [
