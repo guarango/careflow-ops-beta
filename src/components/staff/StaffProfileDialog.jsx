@@ -97,7 +97,8 @@ export default function StaffProfileDialog({ staff, onSave, onClose, canAssign =
             {canAssign && <TabsTrigger value="assigned"><Users className="w-3.5 h-3.5 mr-1.5" />Assigned</TabsTrigger>}
           </TabsList>
 
-          <div className="flex-1 overflow-y-auto mt-4 pr-1">
+          {/* Read-only viewers (e.g. a Manager) can't change anything in the form. */}
+          <fieldset disabled={readOnly} className="flex-1 overflow-y-auto mt-4 pr-1 border-0 p-0 m-0 min-w-0">
 
             {/* PERSONAL TAB */}
             <TabsContent value="personal" className="mt-0 space-y-4">
@@ -341,7 +342,7 @@ export default function StaffProfileDialog({ staff, onSave, onClose, canAssign =
                 )}
               </TabsContent>
             )}
-          </div>
+          </fieldset>
         </Tabs>
 
         <DialogFooter className="flex-shrink-0 border-t pt-4 mt-2">

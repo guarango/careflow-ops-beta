@@ -18,7 +18,10 @@ export async function fetchMyStaffRecord(user) {
   const email = (user.email || "").toLowerCase();
   if (!email) return null;
   const byEmail = await base44.entities.StaffMember.filter({ email: user.email }).catch(() => []);
-  return byEmail?.[0] || null;
+  if (byEmail?.[0]) return byEmail[0];
+  // Case-insensitive last resort (RLS already limits the list to records this login may read).
+  const readable = await base44.entities.StaffMember.list().catch(() => []);
+  return readable.find((s) => (s.email || "").toLowerCase() === email) || null;
 }
 
 export function useMyStaffRecord() {

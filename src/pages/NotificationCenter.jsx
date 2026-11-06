@@ -30,6 +30,7 @@ const TYPE_LABELS = {
   note_returned: { label: "Note Returned", color: "bg-amber-100 text-amber-700" },
   quarterly_due: { label: "Quarterly Due", color: "bg-red-100 text-red-700" },
   incident_deadline: { label: "Incident Deadline", color: "bg-red-100 text-red-700" },
+  profile_change_request: { label: "Profile Change", color: "bg-blue-100 text-blue-700" },
 };
 
 const STATUS_COLORS = {

@@ -16,6 +16,7 @@ const TYPE_CONFIG = {
   emar_reminder: { icon: Pill, color: "text-blue-500", bg: "bg-blue-50" },
   emar_missed: { icon: AlertTriangle, color: "text-red-500", bg: "bg-red-50" },
   goal_missed: { icon: Target, color: "text-amber-500", bg: "bg-amber-50" },
+  profile_change_request: { icon: Info, color: "text-blue-500", bg: "bg-blue-50" },
 };
 
 const ROUTE_MAP = {
