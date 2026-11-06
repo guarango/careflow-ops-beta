@@ -171,52 +171,88 @@
     "assessment_date"
   ],
   "rls": {
-    "create": {
-      "$or": [
+    "read": {
+      "$and": [
         {
-          "created_by_id": "{{user.id}}"
+          "$or": [
+            {
+              "data.client_id": {
+                "$in": "{{user.data.assigned_client_ids}}"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]
     },
-    "read": {
-      "$or": [
+    "create": {
+      "$and": [
         {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
-          }
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]
     },
     "update": {
-      "$or": [
+      "$and": [
         {
-          "created_by_id": "{{user.id}}"
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]
     },
     "delete": {
-      "$or": [
+      "$and": [
         {
-          "created_by_id": "{{user.id}}"
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
+            "is_deactivated": false
           }
         }
       ]

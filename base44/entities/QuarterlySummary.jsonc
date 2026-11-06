@@ -162,41 +162,81 @@
   ],
   "rls": {
     "read": {
-      "$or": [
+      "$and": [
         {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
-          },
-          "data.status": "Sent to SC"
+          "$or": [
+            {
+              "data.client_id": {
+                "$in": "{{user.data.assigned_client_ids}}"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "manager"
+            "is_deactivated": false
           }
         }
       ]
     },
     "create": {
-      "$or": [
+      "$and": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "manager"
+            "is_deactivated": false
           }
         }
       ]
     },
     "update": {
-      "$or": [
+      "$and": [
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            }
+          ]
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$and": [
         {
           "user_condition": {
             "role": "admin"
@@ -204,15 +244,10 @@
         },
         {
           "user_condition": {
-            "role": "manager"
+            "is_deactivated": false
           }
         }
       ]
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
     }
   }
 }

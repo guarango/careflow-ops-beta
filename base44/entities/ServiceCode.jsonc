@@ -88,22 +88,35 @@
   ],
   "rls": {
     "read": {
-      "$or": [
+      "$and": [
         {
-          "data.funding_source": "Medicaid Waiver"
+          "$or": [
+            {
+              "user_condition": {
+                "role": "dsp"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
         },
         {
-          "data.funding_source": "Medicaid"
-        },
-        {
-          "data.funding_source": "State"
-        },
-        {
-          "data.funding_source": "Private"
-        },
-        {
-          "data.funding_source": "Other"
-        },
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
+    },
+    "create": {
+      "$and": [
         {
           "user_condition": {
             "role": "admin"
@@ -111,25 +124,38 @@
         },
         {
           "user_condition": {
-            "role": "manager"
+            "is_deactivated": false
           }
         }
       ]
     },
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$and": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$and": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "is_deactivated": false
+          }
+        }
+      ]
     }
   }
 }

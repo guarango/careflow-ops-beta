@@ -152,82 +152,118 @@
     "training_category"
   ],
   "rls": {
-    "create": {
-      "$or": [
+    "read": {
+      "$and": [
         {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.staff_id": "{{user.data.staff_member_id}}"
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "data.staff_id": "{{user.data.staff_member_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "manager"
+            "is_deactivated": false
           }
         }
       ]
     },
-    "read": {
-      "$or": [
+    "create": {
+      "$and": [
         {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.staff_id": "{{user.data.staff_member_id}}"
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "data.staff_id": "{{user.data.staff_member_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "manager"
+            "is_deactivated": false
           }
         }
       ]
     },
     "update": {
-      "$or": [
+      "$and": [
         {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.staff_id": "{{user.data.staff_member_id}}"
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "data.staff_id": "{{user.data.staff_member_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "manager"
+            "is_deactivated": false
           }
         }
       ]
     },
     "delete": {
-      "$or": [
+      "$and": [
         {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.staff_id": "{{user.data.staff_member_id}}"
+          "$or": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "data.staff_id": "{{user.data.staff_member_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            }
+          ]
         },
         {
           "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "manager"
+            "is_deactivated": false
           }
         }
       ]
