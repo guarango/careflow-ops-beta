@@ -153,91 +153,11 @@
     "status"
   ],
   "rls": {
-    "read": {
-      "$and": [
-        {
-          "$or": [
-            {
-              "data.staff_id": "{{user.data.staff_member_id}}"
-            },
-            {
-              "data.staff_id": {
-                "$in": "{{user.data.team_staff_ids}}"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            }
-          ]
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
-    },
     "create": {
-      "$and": [
+      "$or": [
         {
-          "$or": [
-            {
-              "data.staff_id": "{{user.data.staff_member_id}}"
-            },
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            }
-          ]
+          "data.staff_id": "{{user.data.staff_member_id}}"
         },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
-    },
-    "update": {
-      "$and": [
-        {
-          "$or": [
-            {
-              "data.staff_id": "{{user.data.staff_member_id}}"
-            },
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            }
-          ]
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$and": [
         {
           "user_condition": {
             "role": "admin"
@@ -245,10 +165,54 @@
         },
         {
           "user_condition": {
-            "is_deactivated": false
+            "role": "manager"
           }
         }
       ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "data.staff_id": {
+            "$in": "{{user.data.team_staff_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

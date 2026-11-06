@@ -60,31 +60,13 @@
     "survey_date"
   ],
   "rls": {
-    "read": {
-      "$and": [
-        {
-          "$or": [
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            }
-          ]
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
-    },
     "create": {
-      "$and": [
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
         {
           "user_condition": {
             "role": "admin"
@@ -92,38 +74,20 @@
         },
         {
           "user_condition": {
-            "is_deactivated": false
+            "role": "manager"
           }
         }
       ]
     },
     "update": {
-      "$and": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
-      "$and": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

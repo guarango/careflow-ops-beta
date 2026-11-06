@@ -32,36 +32,13 @@
     "point_cost"
   ],
   "rls": {
-    "read": {
-      "$and": [
-        {
-          "$or": [
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "dsp"
-              }
-            }
-          ]
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
-    },
     "create": {
-      "$and": [
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
         {
           "user_condition": {
             "role": "admin"
@@ -69,38 +46,25 @@
         },
         {
           "user_condition": {
-            "is_deactivated": false
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "dsp"
           }
         }
       ]
     },
     "update": {
-      "$and": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
-      "$and": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

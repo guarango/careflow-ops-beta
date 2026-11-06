@@ -126,84 +126,43 @@
     "last_name"
   ],
   "rls": {
-    "read": {
-      "$and": [
-        {
-          "$or": [
-            {
-              "id": {
-                "$in": "{{user.data.assigned_client_ids}}"
-              }
-            },
-            {
-              "id": {
-                "$in": "{{user.data.shift_client_ids}}"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            }
-          ]
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
-    },
     "create": {
-      "$and": [
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "id": {
+            "$in": "{{user.data.assigned_client_ids}}"
+          }
+        },
         {
           "user_condition": {
             "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
           }
         }
       ]
     },
     "update": {
-      "$and": [
+      "$or": [
         {
-          "$or": [
-            {
-              "id": {
-                "$in": "{{user.data.assigned_client_ids}}"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            }
-          ]
+          "id": {
+            "$in": "{{user.data.assigned_client_ids}}"
+          }
         },
         {
           "user_condition": {
-            "is_deactivated": false
+            "role": "admin"
           }
         }
       ]
     },
     "delete": {
-      "$and": [
-        {
-          "user_condition": {
-            "is_super_admin": true
-          }
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

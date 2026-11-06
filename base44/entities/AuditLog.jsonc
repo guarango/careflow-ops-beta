@@ -104,8 +104,8 @@
     "actor_name"
   ],
   "rls": {
-    "read": {
-      "$and": [
+    "create": {
+      "$or": [
         {
           "user_condition": {
             "role": "admin"
@@ -113,39 +113,25 @@
         },
         {
           "user_condition": {
-            "is_deactivated": false
+            "role": "manager"
           }
         }
       ]
     },
-    "create": {
-      "$and": [
-        {
-          "$or": [
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            }
-          ]
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "update": {
       "user_condition": {
-        "role": "audit_immutable"
+        "role": "admin"
       }
     },
-    "delete": false
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
   }
 }

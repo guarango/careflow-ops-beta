@@ -30,34 +30,16 @@
     "staff_id"
   ],
   "rls": {
-    "read": {
-      "$and": [
-        {
-          "$or": [
-            {
-              "data.staff_id": "{{user.data.staff_member_id}}"
-            },
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            }
-          ]
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
-    },
     "create": {
-      "$and": [
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
         {
           "user_condition": {
             "role": "admin"
@@ -65,39 +47,16 @@
         },
         {
           "user_condition": {
-            "is_deactivated": false
+            "role": "manager"
           }
         }
       ]
     },
     "update": {
-      "$and": [
+      "$or": [
         {
-          "$or": [
-            {
-              "data.staff_id": "{{user.data.staff_member_id}}"
-            },
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            }
-          ]
+          "data.staff_id": "{{user.data.staff_member_id}}"
         },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$and": [
         {
           "user_condition": {
             "role": "admin"
@@ -105,10 +64,15 @@
         },
         {
           "user_condition": {
-            "is_deactivated": false
+            "role": "manager"
           }
         }
       ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

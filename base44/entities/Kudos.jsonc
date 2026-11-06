@@ -45,85 +45,49 @@
     "date"
   ],
   "rls": {
-    "read": {
-      "$and": [
+    "create": {
+      "$or": [
         {
-          "$or": [
-            {
-              "data.to_staff_id": "{{user.data.staff_member_id}}"
-            },
-            {
-              "data.from_user_id": "{{user.id}}"
-            },
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            }
-          ]
+          "user_condition": {
+            "role": "admin"
+          }
         },
         {
           "user_condition": {
-            "is_deactivated": false
+            "role": "manager"
           }
         }
       ]
     },
-    "create": {
-      "$and": [
+    "read": {
+      "$or": [
         {
-          "$or": [
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            }
-          ]
+          "data.to_staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "data.from_user_id": "{{user.id}}"
         },
         {
           "user_condition": {
-            "is_deactivated": false
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
           }
         }
       ]
     },
     "update": {
-      "$and": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
-      "$and": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

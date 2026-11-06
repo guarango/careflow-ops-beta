@@ -86,37 +86,19 @@
     "training_title"
   ],
   "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "read": {
-      "$and": [
+      "$or": [
         {
-          "$or": [
-            {
-              "data.staff_id": "{{user.data.staff_member_id}}"
-            },
-            {
-              "data.supervisor_id": "{{user.data.staff_member_id}}"
-            },
-            {
-              "user_condition": {
-                "role": "admin"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            }
-          ]
+          "data.staff_id": "{{user.data.staff_member_id}}"
         },
         {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
-    },
-    "create": {
-      "$and": [
+          "data.supervisor_id": "{{user.data.staff_member_id}}"
+        },
         {
           "user_condition": {
             "role": "admin"
@@ -124,38 +106,20 @@
         },
         {
           "user_condition": {
-            "is_deactivated": false
+            "role": "manager"
           }
         }
       ]
     },
     "update": {
-      "$and": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
-      "$and": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "is_deactivated": false
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }
