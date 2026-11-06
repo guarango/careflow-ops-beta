@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight } from "lucide-react";
 
 /** Step 2 — emergency contact. */
-export default function StepEmergencyContact({ staff, saving, onNext }) {
+export default function StepEmergencyContact({ staff, saving, onNext, isLast }) {
   const [form, setForm] = useState({
     emergency_contact_name: staff?.emergency_contact_name || "",
     emergency_contact_relation: staff?.emergency_contact_relation || "",
@@ -33,7 +33,7 @@ export default function StepEmergencyContact({ staff, saving, onNext }) {
         <p className="text-xs text-muted-foreground">Who should we contact in an emergency?</p>
         <Button onClick={() => onNext(form)} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-          Continue <ArrowRight className="w-4 h-4 ml-1" />
+          {isLast ? "Finish" : "Continue"} <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
       </div>
     </div>

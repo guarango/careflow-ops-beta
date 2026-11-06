@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight } from "lucide-react";
 
 /** Step 1 — confirm preferred name, phone and mailing address. */
-export default function StepConfirmInfo({ staff, saving, onNext }) {
+export default function StepConfirmInfo({ staff, saving, onNext, isLast }) {
   const [form, setForm] = useState({
     preferred_name: staff?.preferred_name || "",
     phone: staff?.phone || "",
@@ -49,7 +49,7 @@ export default function StepConfirmInfo({ staff, saving, onNext }) {
       <div className="flex justify-end pt-2">
         <Button onClick={() => onNext(form)} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-          Continue <ArrowRight className="w-4 h-4 ml-1" />
+          {isLast ? "Finish" : "Continue"} <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
       </div>
     </div>

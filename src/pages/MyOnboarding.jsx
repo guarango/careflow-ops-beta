@@ -78,9 +78,12 @@ export default function MyOnboarding() {
 
   const handleNext = async (payload) => {
     const next = stepIndex + 1;
+    // The last step finishes onboarding instead of advancing past the end.
+    const isLast = next >= steps.length;
     try {
-      await saveProgress(payload, next);
-      setStepIndex(next);
+      await saveProgress(payload || {}, next, isLast);
+      if (isLast) navigate("/", { replace: true });
+      else setStepIndex(next);
     } catch {
       /* toast already shown */
     }
@@ -120,9 +123,12 @@ export default function MyOnboarding() {
     );
   }
 
-  const step = steps[stepIndex];
+  // Guard against a saved step from an older run of the wizard.
+  const currentIndex = Math.min(stepIndex, steps.length - 1);
+  const step = steps[currentIndex];
   const StepComponent = step.Comp;
-  const progress = ((stepIndex) / steps.length) * 100;
+  const isLastStep = currentIndex === steps.length - 1;
+  const progress = (currentIndex / steps.length) * 100;
 
   return (
     <div className="min-h-screen bg-background px-4 py-10">
@@ -135,7 +141,7 @@ export default function MyOnboarding() {
 
         <div className="mb-4">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-            <span>Step {stepIndex + 1} of {steps.length}</span>
+            <span>Step {currentIndex + 1} of {steps.length}</span>
             <span>{step.title}</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
@@ -159,7 +165,7 @@ export default function MyOnboarding() {
                 onFinish={handleFinish}
               />
             ) : (
-              <StepComponent staff={staff} saving={saving} onNext={handleNext} />
+              <StepComponent staff={staff} saving={saving} onNext={handleNext} isLast={isLastStep} />
             )}
           </CardContent>
         </Card>
