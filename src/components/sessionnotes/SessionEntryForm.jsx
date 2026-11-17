@@ -30,6 +30,10 @@ import {
   noteMinutes,
 } from "@/lib/serviceNote";
 import { goalsForService, hasMeasurement, validateEntry } from "@/lib/goalData";
+import { SL_CODES, supportedLivingWarnings } from "@/lib/supportedLivingValidations";
+import SupportedLivingChecks from "./SupportedLivingChecks";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { addDays, format, parseISO } from "date-fns";
 import toast from "react-hot-toast";
 
@@ -90,6 +94,9 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
     start_time: existingNote?.start_time || now,
     end_time: existingNote?.end_time || "",
     end_date: existingNote?.end_date || "",
+    caregiver_relationship: existingNote?.caregiver_relationship || "",
+    asleep_minutes: existingNote?.asleep_minutes ?? "",
+    documented_need: existingNote?.documented_need || "",
     setting: existingNote?.setting || "",
     location: existingNote?.location || "",
     location_other: existingNote?.location_other || "",
@@ -132,6 +139,23 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
   const overlapList = overlapWarnings(form, siblingNotes, selectedCode);
   const isDsi = String(selectedCode?.code || "").toUpperCase() === "DSI";
   const noteLengthMinutes = noteMinutes(form);
+
+  // ── Supported Living (SOW Article 35) ──
+  const isSlCode = SL_CODES.includes(String(selectedCode?.code || "").toUpperCase());
+  const { data: staffTraining = [] } = useQuery({
+    queryKey: ["staff-training-records", form.staff_id],
+    queryFn: () => base44.entities.TrainingRecord.filter({ staff_id: form.staff_id }),
+    enabled: !!form.staff_id,
+  });
+  const slWarnings = useMemo(
+    () => supportedLivingWarnings({
+      note: { ...form, service_code: selectedCode?.code || form.service_code },
+      client,
+      siblingNotes,
+      staffTraining,
+    }),
+    [form, selectedCode, client, siblingNotes, staffTraining]
+  );
 
   // Goal data must be internally valid before the note can be submitted.
   const goalDataErrors = useMemo(() => {
@@ -454,6 +478,18 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
             </p>
           )}
         </div>
+
+        {/* Supported Living checks (SOW Article 35) */}
+        {isSlCode && (
+          <SupportedLivingChecks
+            form={form}
+            setForm={setForm}
+            client={client}
+            isLocked={isLocked}
+            code={selectedCode?.code || form.service_code}
+            warnings={slWarnings}
+          />
+        )}
 
         {/* Section 2: Summary */}
         <div className="bg-white border border-border rounded-xl p-4">

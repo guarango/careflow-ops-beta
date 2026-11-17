@@ -48,6 +48,25 @@
       "format": "date",
       "description": "Set only when the service ends on a different day than it started (overnight)"
     },
+    "caregiver_relationship": {
+      "type": "string",
+      "enum": [
+        "Parent",
+        "Step-parent",
+        "Legal Guardian",
+        "Spouse",
+        "Not a family member"
+      ],
+      "description": "How the staff member is related to the Person \u2014 drives SLN/CMP/CMS selection (DHHS91172 SOW \u00a735.6)"
+    },
+    "asleep_minutes": {
+      "type": "number",
+      "description": "Minutes in this session the Person was asleep \u2014 not billable (DHHS91172 SOW \u00a735.4)"
+    },
+    "documented_need": {
+      "type": "string",
+      "description": "The need that exceeds what a parent, step-parent, guardian or spouse would typically do for a person without a disability of the same age (SOW \u00a735.4(5))"
+    },
     "setting": {
       "type": "string",
       "enum": [

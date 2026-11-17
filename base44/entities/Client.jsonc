@@ -59,6 +59,11 @@
       "format": "date",
       "description": "Date of the prior written DSPD director approval allowing TFB to be billed alongside RHS (DHHS91172 SOW \u00a721.4)"
     },
+    "dcfs_client": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the Person is a DCFS client \u2014 Supported Living services are not billable for DCFS clients (DHHS91172 SOW \u00a735.4)"
+    },
     "guardian_name": {
       "type": "string"
     },

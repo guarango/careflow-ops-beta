@@ -283,6 +283,19 @@ export default function Clients() {
                 <Input type="date" value={form.dspd_director_approval_date || ""} onChange={(e) => setForm({...form, dspd_director_approval_date: e.target.value})} disabled={!canEditClients} />
                 <p className="text-[11px] text-muted-foreground mt-1">Prior written approval for TFB billed alongside RHS (§21.4).</p>
               </div>
+              <div className="col-span-2 flex items-start gap-2 rounded-lg border border-border bg-muted/20 p-3">
+                <input
+                  type="checkbox"
+                  checked={!!form.dcfs_client}
+                  onChange={(e) => setForm({ ...form, dcfs_client: e.target.checked })}
+                  disabled={!canEditClients}
+                  className="w-4 h-4 accent-primary mt-0.5"
+                />
+                <div>
+                  <p className="text-sm font-medium leading-tight">DCFS client</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Supported Living services are not billable for DCFS clients (§35.4).</p>
+                </div>
+              </div>
               <div className="col-span-2"><Label>Street Address</Label><Input value={form.address} onChange={(e) => setForm({...form, address: e.target.value})} disabled={!canEditClients} /></div>
               <div><Label>City</Label><Input value={form.address_city || ""} onChange={(e) => setForm({...form, address_city: e.target.value})} disabled={!canEditClients} /></div>
               <div className="grid grid-cols-2 gap-3">
