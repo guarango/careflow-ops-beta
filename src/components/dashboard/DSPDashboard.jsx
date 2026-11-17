@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { scopeNotificationsToViewer } from "@/lib/notificationScope";
+import DSPNoteCards from "@/components/dashboard/DSPNoteCards";
 
 
 function StatusPill({ color, label }) {
@@ -274,6 +275,14 @@ export default function DSPDashboard({ user }) {
           </CardContent>
         </Card>
       )}
+
+      {/* Service notes for each person on shift */}
+      <DSPNoteCards
+        user={user}
+        staffRecord={staffRecord}
+        myShifts={myShifts}
+        clients={allClients}
+      />
 
       {/* My Clients Today */}
       {myClients.length > 0 && (

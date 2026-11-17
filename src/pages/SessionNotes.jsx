@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import PageHeader from "@/components/shared/PageHeader";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Plus, Search, AlertTriangle, Clock } from "lucide-react";
+import { FileText, Plus, Search, AlertTriangle, Clock, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import { useRole } from "@/hooks/useRole";
@@ -21,14 +21,19 @@ import { cn } from "@/lib/utils";
 import { buildNoteVersionEntry, initialNoteVersion, isNoteLocked } from "@/lib/noteVersioning";
 import { todayISO } from "@/lib/dateUtils";
 import { logAudit } from "@/lib/auditLog";
+import {
+  DEFAULT_LATE_HOURS,
+  DEFAULT_EVV_TOLERANCE_MINUTES,
+  activePcsp,
+  isLateNote,
+  planRequiresDailyNote,
+} from "@/lib/serviceNote";
 
-// ── Late note check ──
-function checkIsLate(note) {
-  if (!note || note.status === "Approved" || note.status === "Submitted") return false;
-  if (!note.date) return false;
-  // Default deadline: end of the same day (23:59)
-  const deadline = new Date(note.date + "T23:59:59");
-  return new Date() > deadline;
+// ── Late note check: past the agency's window after the service ended ──
+function checkIsLate(note, lateHours = DEFAULT_LATE_HOURS) {
+  if (!note) return false;
+  if (note.status === "Approved" || note.status === "Submitted") return false;
+  return isLateNote(note, lateHours);
 }
 
 export default function SessionNotes() {
@@ -66,6 +71,21 @@ export default function SessionNotes() {
     queryKey: ["shifts"],
     queryFn: () => base44.entities.ShiftSchedule.list("-date"),
   });
+  const { data: plans = [] } = useQuery({
+    queryKey: ["isp-plans"],
+    queryFn: () => base44.entities.ISPlan.list(),
+  });
+  const { data: evvLogs = [] } = useQuery({
+    queryKey: ["evv-logs"],
+    queryFn: () => base44.entities.EVVLog.list("-date"),
+  });
+  const { data: agencies = [] } = useQuery({
+    queryKey: ["agency-settings"],
+    queryFn: () => base44.entities.Agency.list(),
+  });
+  const agency = agencies[0];
+  const lateHours = agency?.service_note_late_hours ?? DEFAULT_LATE_HOURS;
+  const evvTolerance = agency?.evv_note_tolerance_minutes ?? DEFAULT_EVV_TOLERANCE_MINUTES;
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.SessionNote.create(data),
@@ -89,8 +109,32 @@ export default function SessionNotes() {
   // Notes pending manager review
   const pendingReview = notes.filter(n => n.status === "Submitted" || n.status === "Flagged for Review" || n.status === "Returned");
 
-  // Late notes (Draft or Returned past deadline)
-  const lateNotes = visibleNotes.filter(n => checkIsLate(n));
+  // Late notes (Draft or Returned past the agency window)
+  const lateNotes = visibleNotes.filter(n => checkIsLate(n, lateHours));
+  const lateFlag = (note) => note.late_entry ?? note.is_late ?? checkIsLate(note, lateHours);
+
+  // Deep link from the DSP shift screen: ?client=<id>&note=<id>
+  const paramsApplied = useRef(false);
+  useEffect(() => {
+    if (paramsApplied.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const clientId = params.get("client");
+    if (!clientId) { paramsApplied.current = true; return; }
+    if (!clients.length) return;
+    const client = clients.find(c => c.id === clientId);
+    if (!client) { paramsApplied.current = true; return; }
+    const noteId = params.get("note");
+    const note = noteId ? notes.find(n => n.id === noteId) : null;
+    if (noteId && !note) return;
+    paramsApplied.current = true;
+    setSelectedClient(client);
+    setEditingNote(note || null);
+    setView("entry");
+  }, [clients, notes]);
+
+  const clearDeepLink = () => {
+    if (window.location.search) window.history.replaceState({}, "", window.location.pathname);
+  };
 
   const handleStartEntry = (client, existing = null) => {
     setSelectedClient(client);
@@ -117,7 +161,16 @@ export default function SessionNotes() {
   };
 
   const handleSave = async (formData) => {
-    const data = sanitizeDates({ ...formData, is_late: checkIsLate(formData) });
+    const late = isLateNote(
+      { ...formData, status: formData.status, submitted_at: formData.submitted_at },
+      lateHours
+    );
+    const data = sanitizeDates({
+      ...formData,
+      summary_note: formData.summary_note || formData.summary || "",
+      late_entry: late,
+      is_late: late,
+    });
     console.log("[SessionNote Submit] Payload:", {
       id: editingNote?.id,
       status: data.status,
@@ -138,6 +191,7 @@ export default function SessionNotes() {
     const sdkCall = editingNote?.id
       ? base44.entities.SessionNote.update(editingNote.id, payload)
       : base44.entities.SessionNote.create(payload);
+    let savedId = editingNote?.id;
     try {
       const result = await Promise.race([
         sdkCall,
@@ -146,6 +200,7 @@ export default function SessionNotes() {
           15000
         )),
       ]);
+      savedId = result?.id || savedId;
       console.log("[SessionNote Submit] SDK call resolved successfully", result?.id);
     } catch (e) {
       console.error("[SessionNote Submit] SDK call FAILED:", e?.status, e?.message, e?.data, e);
@@ -153,6 +208,30 @@ export default function SessionNotes() {
       throw e;
     }
     queryClient.invalidateQueries({ queryKey: ["session-notes"] });
+    const targetName = `${data.client_name || "Client"} — ${data.date || ""}`.trim();
+    const timing = `Service ${data.service_code || "—"} · ${data.start_time || "?"}–${data.end_time || "?"}`;
+    if (!editingNote?.id) {
+      logAudit({
+        action: "session_note_created",
+        target_type: "SessionNote",
+        target_id: savedId,
+        target_name: targetName,
+        details: timing,
+      });
+    }
+    if (data.status === "Submitted") {
+      logAudit({
+        action: editingNote?.status === "Returned" ? "session_note_resubmitted" : "session_note_submitted",
+        target_type: "SessionNote",
+        target_id: savedId,
+        target_name: targetName,
+        field: "Status",
+        old_value: editingNote?.status || "",
+        new_value: "Submitted",
+        details: `${timing}${late ? " · Late entry" : ""}`,
+      });
+    }
+    clearDeepLink();
     setView("list"); setSelectedClient(null); setEditingNote(null);
   };
 
@@ -165,16 +244,20 @@ export default function SessionNotes() {
     updateMutation.mutate({ id: editingNote.id, data });
   };
 
-  const handleAddendum = ({ id, addenda, version, version_history }) => {
-    updateMutation.mutate({ id, data: { addenda, version, version_history } });
-    queryClient.invalidateQueries({ queryKey: ["session-notes"] });
-    logAudit({
-      action: "session_note_addended",
-      target_type: "SessionNote",
-      target_id: id,
-      target_name: `Session note ${id}`,
-      details: "Addendum added to a session note",
-    });
+  // A submitted note is locked: corrections are addenda appended by the backend,
+  // never an overwrite of the original text.
+  const handleAddendum = async ({ id, text, reason }) => {
+    try {
+      const res = await base44.functions.invoke("addSessionNoteAddendum", { noteId: id, text, reason });
+      if (res.data?.error) throw new Error(res.data.error);
+      queryClient.invalidateQueries({ queryKey: ["session-notes"] });
+      toast.success("Addendum saved — the original note is unchanged.");
+      return res.data?.note;
+    } catch (e) {
+      const msg = e?.response?.data?.error || e?.message || "Could not save the addendum.";
+      toast.error(msg);
+      throw e;
+    }
   };
 
   const handleSupervisorAction = (note, action, comment) => {
@@ -187,6 +270,8 @@ export default function SessionNotes() {
     };
     if (action === "Approved") {
       updates.status = "Approved";
+      updates.approved_by = user?.full_name || "Manager";
+      updates.approved_at = now;
     } else if (action === "Returned") {
       updates.status = "Returned";
       updates.returned_comment = comment || "";
@@ -229,19 +314,45 @@ export default function SessionNotes() {
   // ── SESSION ENTRY FORM ────────────────────────────────────────────────────
   if (view === "entry" && selectedClient) {
     const clientGoals = goals.filter(g => g.client_id === selectedClient.id);
+    const noteOwner = !editingNote?.created_by_id || editingNote.created_by_id === user?.id;
+    const clientPcsp = activePcsp(plans, selectedClient.id);
+    if (clientPcsp && !planRequiresDailyNote(clientPcsp, serviceCodes)) {
+      return (
+        <div className="max-w-2xl mx-auto">
+          <button
+            type="button"
+            onClick={() => { clearDeepLink(); setView("list"); setSelectedClient(null); setEditingNote(null); }}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />Back
+          </button>
+          <div className="bg-muted/40 border border-border rounded-xl p-4">
+            <p className="text-sm font-semibold text-foreground mb-1">No daily note is required</p>
+            <p className="text-sm text-muted-foreground">
+              {selectedClient.first_name}'s active PCSP only authorizes services documented by milestone or summary, not a daily service note.
+            </p>
+          </div>
+        </div>
+      );
+    }
     return (
       <SessionEntryForm
         client={selectedClient}
         goals={clientGoals}
         serviceCodes={serviceCodes}
         shifts={shifts}
+        pcsp={activePcsp(plans, selectedClient.id)}
+        evvLogs={evvLogs}
+        siblingNotes={visibleNotes}
+        evvTolerance={evvTolerance}
         existingNote={editingNote}
+        staffId={user?.id || ""}
         staffName={user?.full_name || ""}
-        canAddAddendum={canAddAddendum}
+        canAddAddendum={canAddAddendum || noteOwner}
         onSave={handleSave}
         onAutosave={handleAutosave}
         onAddendum={handleAddendum}
-        onCancel={() => { setView("list"); setSelectedClient(null); setEditingNote(null); }}
+        onCancel={() => { clearDeepLink(); setView("list"); setSelectedClient(null); setEditingNote(null); }}
         saving={createMutation.isPending || updateMutation.isPending}
       />
     );
@@ -306,7 +417,7 @@ export default function SessionNotes() {
                   <TableBody>
                     {filtered.map(n => {
                       const hasFlags = Object.values(n.health_safety_flags || {}).some(v => v === true);
-                      const isLate = checkIsLate(n);
+                      const isLate = lateFlag(n);
                       const client = clients.find(c => c.id === n.client_id);
                       return (
                         <TableRow key={n.id} className="cursor-pointer hover:bg-muted/50" onClick={() => client && handleStartEntry(client, n)}>

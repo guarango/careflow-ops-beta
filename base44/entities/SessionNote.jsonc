@@ -18,9 +18,13 @@
       "type": "string",
       "description": "Linked ShiftSchedule record"
     },
+    "evv_log_id": {
+      "type": "string",
+      "description": "Linked EVVLog record when the service code requires EVV"
+    },
     "service_code_id": {
       "type": "string",
-      "description": "Service code for this session"
+      "description": "Service code for this session \u2014 limited to services on the active PCSP"
     },
     "service_code": {
       "type": "string",
@@ -28,13 +32,32 @@
     },
     "date": {
       "type": "string",
-      "format": "date"
+      "format": "date",
+      "description": "Date of service (SOW 1.10(7)(B))"
     },
     "start_time": {
-      "type": "string"
+      "type": "string",
+      "description": "Start of delivered service (SOW 1.10(7)(C))"
     },
     "end_time": {
-      "type": "string"
+      "type": "string",
+      "description": "End of delivered service (SOW 1.10(7)(C))"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Set only when the service ends on a different day than it started (overnight)"
+    },
+    "setting": {
+      "type": "string",
+      "enum": [
+        "Residence",
+        "Site-based day program",
+        "Community",
+        "Worksite",
+        "Other"
+      ],
+      "description": "Where the service happened \u2014 required for DSG, DSP, DSI"
     },
     "location": {
       "type": "string",
@@ -50,9 +73,13 @@
     "location_other": {
       "type": "string"
     },
+    "summary_note": {
+      "type": "string",
+      "description": "Written summary of substantive service activities, consistent with the service code's description \u2014 minimum 25 words (SOW 1.10(7)(F))"
+    },
     "summary": {
       "type": "string",
-      "description": "Written summary of what was done during the session"
+      "description": "Written summary of what was done during the session (kept in sync with summary_note)"
     },
     "original_summary": {
       "type": "string",
@@ -79,6 +106,17 @@
     "submitted_at": {
       "type": "string"
     },
+    "approved_by": {
+      "type": "string"
+    },
+    "approved_at": {
+      "type": "string"
+    },
+    "late_entry": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when submitted more than the agency's window (default 24 hours) after end_time"
+    },
     "returned_comment": {
       "type": "string",
       "description": "Comment left by manager when returning a note"
@@ -92,11 +130,11 @@
     "is_late": {
       "type": "boolean",
       "default": false,
-      "description": "True if not submitted by the agency deadline"
+      "description": "Mirrors late_entry for existing screens"
     },
     "goal_data": {
       "type": "array",
-      "description": "Per-goal data entries for this session",
+      "description": "Per-goal data entries for this session \u2014 always hang data off a note",
       "items": {
         "type": "object",
         "properties": {
@@ -224,7 +262,7 @@
     },
     "addenda": {
       "type": "array",
-      "description": "Admin addenda \u2014 never overwrite the original note",
+      "description": "Addenda \u2014 never overwrite the original note",
       "items": {
         "type": "object",
         "properties": {

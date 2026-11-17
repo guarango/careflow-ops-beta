@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, CheckCircle2, Save, Wifi, WifiOff, Heart, Lock, Clock, History } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Save, Wifi, WifiOff, Heart, Lock, Clock, History, AlertTriangle } from "lucide-react";
 import HealthSafetyFlags, { FLAGS } from "./HealthSafetyFlags";
 import GoalDataCard from "./GoalDataCard";
 import AddendumDialog from "./AddendumDialog";
@@ -14,12 +14,24 @@ import { cn } from "@/lib/utils";
 import { isNoteLocked } from "@/lib/noteVersioning";
 import { useOffline } from "@/hooks/useOffline";
 import { todayISO } from "@/lib/dateUtils";
-import { format } from "date-fns";
+import {
+  MIN_SUMMARY_WORDS,
+  SETTING_OPTIONS,
+  DEFAULT_EVV_TOLERANCE_MINUTES,
+  countWords,
+  missingElements,
+  timeOrderError,
+  planServiceCodes,
+  requiresSetting,
+  isGroupCode,
+  overlapWarnings,
+  findEvvLog,
+  evvMismatch,
+} from "@/lib/serviceNote";
+import { addDays, format, parseISO } from "date-fns";
 import toast from "react-hot-toast";
 
-const LOCATIONS = ["Day Program", "Community Outing", "Residence", "Vocational Site", "Telehealth", "Other"];
-
-export default function SessionEntryForm({ client, goals, existingNote, staffName, serviceCodes = [], shifts = [], onSave, onAutosave, onCancel, saving, canAddAddendum = false, onAddendum }) {
+export default function SessionEntryForm({ client, goals, existingNote, staffId, staffName, serviceCodes = [], shifts = [], pcsp = null, evvLogs = [], siblingNotes = [], evvTolerance = DEFAULT_EVV_TOLERANCE_MINUTES, onSave, onAutosave, onCancel, saving, canAddAddendum = false, onAddendum }) {
   const { isOnline } = useOffline();
   const [sigChecked, setSigChecked] = useState(false);
   const [sigTimestamp, setSigTimestamp] = useState("");
@@ -57,16 +69,21 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
   const [form, setForm] = useState({
     client_id: client.id,
     client_name: `${client.first_name} ${client.last_name}`,
+    staff_id: existingNote?.staff_id || staffId || "",
     staff_name: existingNote?.staff_name || staffName || "",
     shift_id: existingNote?.shift_id || "",
+    evv_log_id: existingNote?.evv_log_id || "",
     service_code_id: existingNote?.service_code_id || "",
     service_code: existingNote?.service_code || "",
     date: existingNote?.date || today,
     start_time: existingNote?.start_time || now,
     end_time: existingNote?.end_time || "",
+    end_date: existingNote?.end_date || "",
+    setting: existingNote?.setting || "",
     location: existingNote?.location || "",
     location_other: existingNote?.location_other || "",
-    summary: existingNote?.summary || "",
+    summary: existingNote?.summary_note || existingNote?.summary || "",
+    late_entry: existingNote?.late_entry || false,
     original_summary: existingNote?.original_summary || "",
     ai_cleaned_summary: existingNote?.ai_cleaned_summary || "",
     ai_cleaned_at: existingNote?.ai_cleaned_at || "",
@@ -84,6 +101,24 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
   // A submitted note is locked — only Draft and Returned notes stay editable
   const isLocked = isNoteLocked(form.status);
   const canEdit = !isLocked;
+
+  // Service codes come from the active PCSP; codes with no daily note are skipped.
+  const eligibleCodes = useMemo(
+    () => (pcsp
+      ? planServiceCodes(pcsp, serviceCodes, form.date)
+      : serviceCodes.filter(c => c.active !== false && c.daily_note_required !== false)),
+    [pcsp, serviceCodes, form.date]
+  );
+  const selectedCode = eligibleCodes.find(c => c.id === form.service_code_id)
+    || serviceCodes.find(c => c.id === form.service_code_id)
+    || null;
+  const codeOffPlan = !!(form.service_code_id && selectedCode && pcsp && !eligibleCodes.some(c => c.id === form.service_code_id));
+  const summaryWords = countWords(form.summary);
+  const missing = missingElements({ ...form, summary_note: form.summary }, { code: selectedCode });
+  const orderError = timeOrderError(form);
+  const evvLog = findEvvLog(form, evvLogs);
+  const evvWarning = evvMismatch(form, evvLog, evvTolerance);
+  const overlapList = overlapWarnings(form, siblingNotes, selectedCode);
 
   const setGoalData = (i, updated) => {
     const newGoalData = [...form.goal_data];
@@ -151,13 +186,25 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
       setSubmitError("Please fill in all required health & safety details before submitting.");
       return;
     }
+    if (orderError) {
+      setSubmitError(orderError);
+      return;
+    }
+    if (codeOffPlan) {
+      setSubmitError("That service code is not authorized on the active PCSP for this date. Choose an authorized code.");
+      return;
+    }
+    if (missing.length > 0) {
+      setSubmitError(`Required before submitting: ${missing.map(m => m.label).join(", ")}.`);
+      return;
+    }
     setSubmitError(null);
     setSubmitting(true);
     submittingRef.current = true;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     try {
       console.log("[SessionNote] handleSubmit — calling onSave");
-      await onSave({ ...form, status: "Submitted", submitted_at: new Date().toISOString() });
+      await onSave({ ...form, summary_note: form.summary, status: "Submitted", submitted_at: new Date().toISOString() });
       console.log("[SessionNote] handleSubmit — onSave resolved");
     } catch (e) {
       console.error("[SessionNote] handleSubmit — caught error:", e?.status, e?.message, e?.data, e);
@@ -176,7 +223,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     try {
       console.log("[SessionNote] handleDraft — calling onSave");
-      await onSave({ ...form, status: "Draft", submitted_at: null });
+      await onSave({ ...form, summary_note: form.summary, status: "Draft", submitted_at: null });
       console.log("[SessionNote] handleDraft — onSave resolved");
     } catch (e) {
       console.error("[SessionNote] handleDraft — caught error:", e?.status, e?.message, e?.data, e);
@@ -189,27 +236,16 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
     }
   };
 
-  const handleAddendum = ({ text, reason }) => {
-    if (onAddendum) {
-      const newAddendum = {
-        text,
-        added_by: staffName || "Admin",
-        added_at: new Date().toISOString(),
-        reason,
-      };
-      const newVersion = (form.version || 1) + 1;
-      const newHistory = [...(form.version_history || []), {
-        version: newVersion,
-        saved_at: new Date().toISOString(),
-        saved_by: staffName || "Admin",
-        summary_of_changes: `Addendum: ${reason}`,
-      }];
-      onAddendum({
-        id: existingNote?.id,
-        addenda: [...(form.addenda || []), newAddendum],
-        version: newVersion,
-        version_history: newHistory,
-      });
+  const handleAddendum = async ({ text, reason }) => {
+    if (!onAddendum) return;
+    const saved = await onAddendum({ id: existingNote?.id, text, reason });
+    if (saved?.addenda) {
+      setForm(f => ({
+        ...f,
+        addenda: saved.addenda,
+        version: saved.version,
+        version_history: saved.version_history || f.version_history,
+      }));
     }
     setShowAddendum(false);
   };
@@ -290,29 +326,46 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
           <p className="text-xs font-bold uppercase tracking-wider text-primary mb-3">Session Details</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <Label className="text-xs">Your Name *</Label>
-              <Input value={form.staff_name} disabled={isLocked} onChange={e => setForm(f => ({ ...f, staff_name: e.target.value }))} placeholder="Your name" className="h-9" />
+              <Label className="text-xs">Staff Name *</Label>
+              <Input value={form.staff_name} readOnly disabled className="h-9 bg-muted/50" />
+              <p className="text-[11px] text-muted-foreground mt-1">Taken from your login — only a manager can change it.</p>
             </div>
             <div className="col-span-2">
               <Label className="text-xs">Service Code *</Label>
-              <Select value={form.service_code_id} disabled={isLocked} onValueChange={v => {
-                const sc = serviceCodes.find(s => s.id === v);
+              <Select value={form.service_code_id} disabled={isLocked || eligibleCodes.length === 0} onValueChange={v => {
+                const sc = eligibleCodes.find(s => s.id === v) || serviceCodes.find(s => s.id === v);
                 setForm(f => ({ ...f, service_code_id: v, service_code: sc?.code || "" }));
               }}>
-                <SelectTrigger className="h-9"><SelectValue placeholder="Select service code" /></SelectTrigger>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder={eligibleCodes.length ? "Select service code" : "No service authorized for this date"} />
+                </SelectTrigger>
                 <SelectContent>
-                  {serviceCodes.map(s => <SelectItem key={s.id} value={s.id}>{s.code} — {s.description}</SelectItem>)}
-                  {form.service_code_id && !serviceCodes.find(s => s.id === form.service_code_id) && (
+                  {eligibleCodes.map(s => <SelectItem key={s.id} value={s.id}>{s.code} — {s.description}</SelectItem>)}
+                  {form.service_code_id && !eligibleCodes.some(s => s.id === form.service_code_id) && (
                     <SelectItem value={form.service_code_id} disabled>
-                      {form.service_code || "Unknown"} (no longer available — choose another)
+                      {form.service_code || "Unknown"} (not authorized on the active PCSP for this date)
                     </SelectItem>
                   )}
                 </SelectContent>
               </Select>
+              {!pcsp ? (
+                <p className="text-[11px] text-amber-700 mt-1">
+                  No active PCSP on file for {client.first_name} — service codes are not verified against a plan.
+                </p>
+              ) : eligibleCodes.length === 0 ? (
+                <p className="text-[11px] text-red-600 mt-1">
+                  The active PCSP has no service authorizing this date that requires a daily note. Check the authorization dates or the code's daily-note setting.
+                </p>
+              ) : codeOffPlan ? (
+                <p className="text-[11px] text-red-600 mt-1">This code is not on the active PCSP.</p>
+              ) : null}
             </div>
             <div className="col-span-2">
               <Label className="text-xs">Linked Shift (optional)</Label>
-              <Select value={form.shift_id} disabled={isLocked} onValueChange={v => setForm(f => ({ ...f, shift_id: v }))}>
+              <Select value={form.shift_id} disabled={isLocked} onValueChange={v => {
+                const log = evvLogs.find(l => l.shift_id === v);
+                setForm(f => ({ ...f, shift_id: v, evv_log_id: log?.id || "" }));
+              }}>
                 <SelectTrigger className="h-9"><SelectValue placeholder="Link to a scheduled shift" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={null}>None</SelectItem>
@@ -323,15 +376,20 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Date</Label>
+              <Label className="text-xs">Date of Service *</Label>
               <Input type="date" value={form.date} disabled={isLocked} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} className="h-9" />
             </div>
             <div>
-              <Label className="text-xs">Location</Label>
-              <Select value={form.location} disabled={isLocked} onValueChange={v => setForm(f => ({ ...f, location: v }))}>
-                <SelectTrigger className="h-9"><SelectValue placeholder="Where?" /></SelectTrigger>
-                <SelectContent>{LOCATIONS.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+              <Label className="text-xs">
+                Setting {requiresSetting(selectedCode) ? "*" : <span className="text-muted-foreground">(optional)</span>}
+              </Label>
+              <Select value={form.setting} disabled={isLocked} onValueChange={v => setForm(f => ({ ...f, setting: v }))}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Where was the service delivered?" /></SelectTrigger>
+                <SelectContent>{SETTING_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
+              {requiresSetting(selectedCode) && (
+                <p className="text-[11px] text-muted-foreground mt-1">Required for {selectedCode?.code}.</p>
+              )}
             </div>
             <div>
               <Label className="text-xs">Start Time *</Label>
@@ -340,8 +398,28 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
             <div>
               <Label className="text-xs">End Time *</Label>
               <Input type="time" value={form.end_time} disabled={isLocked} onChange={e => setForm(f => ({ ...f, end_time: e.target.value }))} className="h-9" />
+              {form.start_time && form.end_time && form.end_time <= form.start_time && (
+                <label className="flex items-center gap-2 text-[11px] text-muted-foreground mt-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!form.end_date}
+                    disabled={isLocked}
+                    onChange={e => setForm(f => ({
+                      ...f,
+                      end_date: e.target.checked ? format(addDays(parseISO(f.date || today), 1), "yyyy-MM-dd") : "",
+                    }))}
+                    className="w-3.5 h-3.5 accent-primary"
+                  />
+                  Ends the next day (overnight)
+                </label>
+              )}
             </div>
           </div>
+          {orderError && (
+            <p className="text-[11px] text-red-600 font-medium mt-2 flex items-center gap-1">
+              <AlertTriangle className="w-3.5 h-3.5" />{orderError}
+            </p>
+          )}
         </div>
 
         {/* Section 2: Summary */}
@@ -356,14 +434,23 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
               />
             )}
           </div>
-          <p className="text-xs text-muted-foreground mb-2">A written summary of what was done during this session.</p>
+          <p className="text-xs text-muted-foreground mb-2">
+            Required: at least {MIN_SUMMARY_WORDS} words about the substantive service activities delivered. Write to the service, not just that the visit happened.
+          </p>
+          {selectedCode?.description && (
+            <p className="text-xs bg-primary/5 border border-primary/15 rounded-lg px-2.5 py-2 mb-2 leading-relaxed">
+              <span className="font-semibold">{selectedCode.code}:</span> {selectedCode.description}
+            </p>
+          )}
           <div className="relative">
             <Textarea
               value={form.summary}
               onChange={e => handleSummaryChange(e.target.value)}
               disabled={isLocked}
-              rows={4}
-              placeholder="Describe what you did during this session..."
+              rows={5}
+              placeholder={selectedCode?.description
+                ? `Describe how you delivered ${selectedCode.code}: ${selectedCode.description}`
+                : "Describe what you did during this session..."}
               className="text-sm resize-none pr-12"
             />
             {canEdit && (
@@ -372,9 +459,14 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
               </div>
             )}
           </div>
-          {form.ai_cleaned_summary && form.original_summary && (
-            <p className="text-[10px] text-violet-600 mt-1">✓ AI-cleaned version saved</p>
-          )}
+          <div className="flex items-center justify-between mt-1.5 gap-2">
+            <span className={cn("text-[11px] font-medium", summaryWords < MIN_SUMMARY_WORDS ? "text-red-600" : "text-emerald-600")}>
+              {summaryWords}/{MIN_SUMMARY_WORDS} words
+            </span>
+            {form.ai_cleaned_summary && form.original_summary && (
+              <span className="text-[10px] text-violet-600">✓ AI-cleaned version saved</span>
+            )}
+          </div>
         </div>
 
         {/* Section 3: Health & Safety */}
@@ -555,6 +647,50 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
             )}
           </div>
         )}
+        {canEdit && (overlapList.length > 0 || evvWarning || (selectedCode?.is_evv_required && !evvLog)) && (
+          <div className="space-y-2">
+            {selectedCode?.is_evv_required && !evvLog && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2">
+                <Clock className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                <p className="text-xs text-blue-800">
+                  <strong>{selectedCode.code} requires EVV.</strong> Clock in and out on the shift so the visit links to this note.
+                </p>
+              </div>
+            )}
+            {overlapList.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-800">
+                  <strong>Overlapping time</strong> with {overlapList.join(", ")}. Two people can't be documented at once unless this is a group code (DSG, DSP, SED) — check your times.
+                </p>
+              </div>
+            )}
+            {evvWarning && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-800">
+                  <strong>Time doesn't match EVV.</strong> This note is {evvWarning.note} minutes; the EVV visit is {evvWarning.evv} minutes ({evvWarning.diff} apart, agency tolerance {evvTolerance}).
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {canEdit && missing.length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+            <p className="text-xs font-bold text-red-700 mb-1.5 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-500" />
+              Missing required elements ({missing.length})
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {missing.map(m => (
+                <span key={m.key} className="text-[11px] bg-white border border-red-200 text-red-700 rounded-full px-2 py-0.5">
+                  {m.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sticky bottom actions */}
@@ -577,7 +713,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffNam
               <Button variant="outline" size="sm" onClick={handleDraft} disabled={submitting || saving} className="gap-1.5">
                 <Save className="w-4 h-4" />Save Draft
               </Button>
-              <Button size="sm" onClick={handleSubmit} disabled={submitting || saving || !form.client_id || !form.date || !form.staff_name || !form.service_code_id || !form.start_time || !form.end_time || !form.summary || !sigChecked} className="gap-1.5">
+              <Button size="sm" onClick={handleSubmit} disabled={submitting || saving || missing.length > 0 || !!orderError || codeOffPlan || !sigChecked} className="gap-1.5">
                 <CheckCircle2 className="w-4 h-4" />
                 {submitting || saving ? "Submitting..." : form.status === "Returned" ? "Resubmit Note" : "Submit Session Note"}
               </Button>

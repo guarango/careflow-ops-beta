@@ -320,6 +320,16 @@
       "description": "Deadline time (HH:mm) for same-day session note submission. Notes not submitted by this time are flagged Late.",
       "default": "23:59"
     },
+    "service_note_late_hours": {
+      "type": "number",
+      "default": 24,
+      "description": "Hours after a service ends before a session note counts as a late entry (SOW 1.10(7))"
+    },
+    "evv_note_tolerance_minutes": {
+      "type": "number",
+      "default": 15,
+      "description": "Warn when documented note minutes differ from EVV minutes by more than this"
+    },
     "notes": {
       "type": "string",
       "rls": {

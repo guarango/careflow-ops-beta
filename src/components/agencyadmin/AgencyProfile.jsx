@@ -65,6 +65,34 @@ export default function AgencyProfile({ agency, onSave, saving }) {
         </div>
       </div>
 
+      <div className="bg-card border border-border rounded-xl p-6">
+        <h2 className="font-semibold text-foreground mb-1">Charting & EVV</h2>
+        <p className="text-xs text-muted-foreground mb-4">
+          Service notes must be submitted within this window after the service ends; after that a note is marked a late entry.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs text-muted-foreground">Late entry window (hours)</label>
+            <Input
+              type="number"
+              min="1"
+              value={form.service_note_late_hours ?? 24}
+              onChange={e => setForm(p => ({ ...p, service_note_late_hours: e.target.value === "" ? "" : Number(e.target.value) }))}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">EVV time tolerance (minutes)</label>
+            <Input
+              type="number"
+              min="0"
+              value={form.evv_note_tolerance_minutes ?? 15}
+              onChange={e => setForm(p => ({ ...p, evv_note_tolerance_minutes: e.target.value === "" ? "" : Number(e.target.value) }))}
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">Warn the DSP when note minutes differ from the EVV visit by more than this.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex justify-end">
         <Button onClick={() => onSave(form)} disabled={saving} className="gap-2">
           <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Agency Profile"}

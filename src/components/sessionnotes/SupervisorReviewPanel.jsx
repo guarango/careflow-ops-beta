@@ -42,7 +42,29 @@ function NoteReviewCard({ note, onAction, loading }) {
               {note.date} · {note.staff_name || "Unknown"} · {note.service_code || "No code"} · {note.location || "—"} · {completedGoals}/{goalData.length} goals
             </p>
           </div>
-          {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {note.status === "Submitted" && (
+              <>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={(e) => { e.stopPropagation(); onAction(note, "Approved", ""); }}
+                  className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={(e) => { e.stopPropagation(); setExpanded(true); setAction("Returned"); }}
+                  className="px-2.5 py-1 rounded-md text-[11px] font-semibold border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50"
+                >
+                  Return
+                </button>
+              </>
+            )}
+            {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+          </div>
         </div>
       </div>
 
