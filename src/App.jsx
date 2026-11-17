@@ -29,6 +29,7 @@ import AgencyAdmin from './pages/AgencyAdmin';
 import OnboardingWizard from './pages/OnboardingWizard';
 import APIDocs from './pages/APIDocs';
 import Reports from './pages/Reports';
+import AnnualReport from './pages/AnnualReport';
 import BSP from './pages/BSP';
 import ISP from './pages/ISP';
 import NotificationCenter from './pages/NotificationCenter';
@@ -111,6 +112,7 @@ const AuthenticatedApp = () => {
         <Route path="/hr" element={<RouteGuard path="/hr"><HRCompliance /></RouteGuard>} />
         <Route path="/agency-admin" element={<RouteGuard path="/agency-admin"><AgencyAdmin /></RouteGuard>} />
         <Route path="/reports" element={<RouteGuard path="/reports"><Reports /></RouteGuard>} />
+        <Route path="/reports/annual" element={<RouteGuard path="/reports"><AnnualReport /></RouteGuard>} />
         <Route path="/bsp" element={<RouteGuard path="/bsp"><BSP /></RouteGuard>} />
         <Route path="/isp" element={<RouteGuard path="/isp"><ISP /></RouteGuard>} />
         <Route path="/notifications" element={<RouteGuard path="/notifications"><NotificationCenter /></RouteGuard>} />

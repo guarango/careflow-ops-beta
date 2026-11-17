@@ -1,0 +1,44 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "annual_dspd_report_reminders",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_annual_reminders": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkAnnualReportReminders"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Annual report reminder check",
+            "description": "Notifies Admins on July 1 and August 15; stops once the submission date is recorded"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Daily check for the DHHS91172 fiscal-year annual report: reminds Admins on July 1 and August 15 and stops once the Google Form submission date is recorded",
+  "name": "Annual DSPD Report Reminders",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * *",
+      "one_time_date": null,
+      "timezone": "America/Denver",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

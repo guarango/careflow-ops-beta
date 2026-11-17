@@ -1,0 +1,86 @@
+{
+  "name": "AnnualReportTemplate",
+  "type": "object",
+  "properties": {
+    "service_code_id": {
+      "type": "string"
+    },
+    "code": {
+      "type": "string"
+    },
+    "code_label": {
+      "type": "string"
+    },
+    "columns": {
+      "type": "array",
+      "description": "Column set used for this code when the state form's questions are known \u2014 default metrics with renamed labels plus added manual columns",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string",
+            "enum": [
+              "persons_served",
+              "units",
+              "hours",
+              "sessions",
+              "sessions_site_based",
+              "sessions_community",
+              "staff_count",
+              "incidents_count",
+              "goals_mastered",
+              "manual"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "metric"
+        ]
+      }
+    },
+    "updated_by": {
+      "type": "string"
+    },
+    "updated_by_name": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "service_code_id",
+    "code",
+    "columns"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

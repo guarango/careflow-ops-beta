@@ -3,6 +3,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   BarChart3, Users, DollarSign, Shield, Globe, Activity, TrendingUp
 } from "lucide-react";
+import { useRole } from "@/hooks/useRole";
+import AnnualReportCard from "@/components/reports/AnnualReportCard";
 import ExecutiveDashboard from "@/components/reports/ExecutiveDashboard";
 import ClinicalOutcomesReport from "@/components/reports/ClinicalOutcomesReport";
 import WorkforceAnalyticsReport from "@/components/reports/WorkforceAnalyticsReport";
@@ -12,6 +14,7 @@ import FunderReportBuilder from "@/components/reports/FunderReportBuilder";
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState("executive");
+  const { isAdmin } = useRole();
 
   return (
     <div>
@@ -21,6 +24,8 @@ export default function Reports() {
           Comprehensive performance visibility across clinical, workforce, financial, and compliance dimensions.
         </p>
       </div>
+
+      {isAdmin && <AnnualReportCard />}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6 flex-wrap h-auto gap-1">

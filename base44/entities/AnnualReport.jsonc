@@ -1,0 +1,165 @@
+{
+  "name": "AnnualReport",
+  "type": "object",
+  "properties": {
+    "fiscal_year_end_year": {
+      "type": "number",
+      "description": "Year the state fiscal year ends (June 30) \u2014 2027 = July 1 2026 to June 30 2027"
+    },
+    "fiscal_year_label": {
+      "type": "string"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "August 30 after the fiscal year ends (state Google Form submission)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Not run",
+        "Run",
+        "Submitted"
+      ],
+      "default": "Not run",
+      "enumColors": [
+        "gray",
+        "blue",
+        "green"
+      ]
+    },
+    "rows": {
+      "type": "array",
+      "description": "One row per code where ServiceCode.annual_report_required is true",
+      "items": {
+        "type": "object",
+        "properties": {
+          "service_code_id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "code_label": {
+            "type": "string"
+          },
+          "persons_served": {
+            "type": "number"
+          },
+          "units": {
+            "type": "number"
+          },
+          "hours": {
+            "type": "number"
+          },
+          "sessions": {
+            "type": "number"
+          },
+          "sessions_site_based": {
+            "type": "number"
+          },
+          "sessions_community": {
+            "type": "number"
+          },
+          "staff_count": {
+            "type": "number"
+          },
+          "incidents_count": {
+            "type": "number"
+          },
+          "goals_mastered": {
+            "type": "number"
+          },
+          "custom_values": {
+            "type": "object",
+            "description": "Admin-entered answers for columns the code's template added"
+          }
+        }
+      }
+    },
+    "source_summary": {
+      "type": "object",
+      "properties": {
+        "approved_notes": {
+          "type": "number"
+        },
+        "incidents": {
+          "type": "number"
+        },
+        "goals_mastered_agency": {
+          "type": "number"
+        }
+      }
+    },
+    "last_run_at": {
+      "type": "string"
+    },
+    "last_run_by": {
+      "type": "string"
+    },
+    "last_run_by_name": {
+      "type": "string"
+    },
+    "submission_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "submitted_by": {
+      "type": "string"
+    },
+    "submitted_by_name": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string"
+    },
+    "confirmation_number": {
+      "type": "string"
+    },
+    "submission_notes": {
+      "type": "string"
+    },
+    "reminder_jul1_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "reminder_aug15_sent": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "fiscal_year_end_year",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
