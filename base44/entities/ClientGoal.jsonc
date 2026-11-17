@@ -12,6 +12,61 @@
       "type": "string",
       "description": "Observable, measurable goal in SMART format"
     },
+    "pcsp_id": {
+      "type": "string",
+      "description": "ISPlan record this Support Strategy serves \u2014 the active PCSP when the strategy was written"
+    },
+    "pcsp_goal_id": {
+      "type": "string",
+      "description": "Which PCSP goal this strategy serves (the PCSP goal's linked goal_id, or text:<goal as written>)"
+    },
+    "service_code_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Responsible service codes \u2014 limited to the services authorized on the linked PCSP"
+    },
+    "strategy_status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Ready",
+        "Submitted to SC",
+        "Revised"
+      ],
+      "default": "Draft",
+      "enumColors": [
+        "gray",
+        "blue",
+        "green",
+        "yellow"
+      ],
+      "description": "Support Strategy lifecycle: written \u2192 ready \u2192 submitted to the support coordinator \u2192 revised"
+    },
+    "submitted_to_sc_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the strategy was submitted to the support coordinator"
+    },
+    "submitted_by": {
+      "type": "string"
+    },
+    "submission_method": {
+      "type": "string",
+      "enum": [
+        "UPI",
+        "Email",
+        "Other"
+      ]
+    },
+    "submission_note": {
+      "type": "string"
+    },
+    "revision_reason": {
+      "type": "string",
+      "description": "Required when a submitted strategy is moved to Revised"
+    },
     "domain": {
       "type": "string",
       "enum": [

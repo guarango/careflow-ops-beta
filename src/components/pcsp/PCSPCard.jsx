@@ -12,6 +12,8 @@ import PrivateFileLink from "@/components/shared/PrivateFileLink";
 import PCSPGoalList from "./PCSPGoalList";
 import PCSPFormDialog from "./PCSPFormDialog";
 import PCSPVersionDrawer from "./PCSPVersionDrawer";
+import PCSPStrategySection from "./PCSPStrategySection";
+import { auditCoverage, isSupportStrategy } from "@/lib/supportStrategies";
 import {
   PCSP_STATUS_STYLES,
   activatePcsp,
@@ -65,12 +67,22 @@ export default function PCSPCard({ client }) {
     queryFn: () => base44.entities.ServiceCode.list(),
   });
 
+  const { data: clientGoals = [] } = useQuery({
+    queryKey: ["pcsp-strategies", client.id],
+    queryFn: () => base44.entities.ClientGoal.filter({ client_id: client.id }),
+    enabled: !!client.id,
+  });
+  const strategies = clientGoals.filter(isSupportStrategy);
+  const codesById = Object.fromEntries(codes.map((c) => [c.id, c]));
+
   const activateMutation = useMutation({
     mutationFn: (plan) => activatePcsp(plan),
-    onSuccess: () => {
+    onSuccess: async (activated) => {
       queryClient.invalidateQueries({ queryKey: ["pcsp-plans", client.id] });
       queryClient.invalidateQueries({ queryKey: ["isp-plans"] });
       toast({ title: "PCSP activated" });
+      // Coverage is checked the moment a PCSP is activated, so gaps are on the record.
+      await auditCoverage({ plan: activated, strategies, codesById });
     },
     onError: (e) =>
       toast({ title: "Could not activate PCSP", description: e?.message, variant: "destructive" }),
@@ -202,6 +214,14 @@ export default function PCSPCard({ client }) {
             </div>
 
             <PCSPGoalList goals={current.pcsp_goals || []} codes={codes} />
+
+            <PCSPStrategySection
+              client={client}
+              plan={current}
+              codes={codes}
+              strategies={strategies}
+              canEdit={canEdit}
+            />
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
               <div className="flex flex-wrap items-center gap-3">
