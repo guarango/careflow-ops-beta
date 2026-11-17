@@ -40,6 +40,25 @@
       "type": "string",
       "description": "House/Location ID this client belongs to"
     },
+    "lives_with": {
+      "type": "string",
+      "enum": [
+        "Immediate Relative",
+        "Legal Guardian",
+        "Other"
+      ],
+      "enumColors": [
+        "red",
+        "red",
+        "gray"
+      ],
+      "description": "Who the Person lives with (DHHS91172 SOW \u00a721.4). Leave blank when the Person lives in their own RHS setting \u2014 billing RHS for a day the Person lives with an Immediate Relative or legal guardian is warned against."
+    },
+    "dspd_director_approval_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the prior written DSPD director approval allowing TFB to be billed alongside RHS (DHHS91172 SOW \u00a721.4)"
+    },
     "guardian_name": {
       "type": "string"
     },

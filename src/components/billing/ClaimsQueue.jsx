@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, XCircle, AlertTriangle, Send, Download, Search, RefreshCw, FileText } from "lucide-react";
+import { warningsByClaimId } from "@/lib/rhsBillingWarnings";
 
 const STATUS_COLORS = {
   Draft: "bg-gray-100 text-gray-700 border-gray-200",
@@ -56,6 +57,21 @@ export default function ClaimsQueue() {
     queryKey: ["claims"],
     queryFn: () => base44.entities.Claim.list("-created_date"),
   });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: () => base44.entities.Client.list(),
+  });
+
+  const { data: shifts = [] } = useQuery({
+    queryKey: ["shifts-claim-warnings"],
+    queryFn: () => base44.entities.ShiftSchedule.list("-date", 1000),
+  });
+
+  const warningsById = useMemo(
+    () => warningsByClaimId(claims, { clients, shifts }),
+    [claims, clients, shifts]
+  );
 
   const updateClaim = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Claim.update(id, data),
@@ -192,16 +208,17 @@ export default function ClaimsQueue() {
                 <TableHead>Units</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>EVV</TableHead>
+                <TableHead>RHS</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
-                <TableRow><TableCell colSpan={9} className="text-center py-10 text-muted-foreground">Loading claims...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center py-10 text-muted-foreground">Loading claims...</TableCell></TableRow>
               )}
               {!isLoading && filtered.length === 0 && (
-                <TableRow><TableCell colSpan={9} className="text-center py-10 text-muted-foreground">No claims found. Claims are auto-generated from completed timecards.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center py-10 text-muted-foreground">No claims found. Claims are auto-generated from completed timecards.</TableCell></TableRow>
               )}
               {filtered.map(c => (
                 <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => { setSelected(c); setShowDetail(true); }}>
@@ -215,6 +232,18 @@ export default function ClaimsQueue() {
                     {c.evv_verified
                       ? <CheckCircle2 className="w-4 h-4 text-accent" />
                       : <XCircle className="w-4 h-4 text-destructive" />}
+                  </TableCell>
+                  <TableCell>
+                    {(warningsById[c.id] || []).length > 0 ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700"
+                        title={(warningsById[c.id] || []).map((w) => `${w.rule} (${w.citation})`).join("\n")}
+                      >
+                        <AlertTriangle className="w-3 h-3" />{(warningsById[c.id] || []).length}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_COLORS[c.status] || ""}`}>
@@ -264,6 +293,21 @@ export default function ClaimsQueue() {
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
                   <p className="text-sm font-semibold text-destructive flex items-center gap-1.5 mb-2"><AlertTriangle className="w-4 h-4" />Validation Errors</p>
                   {selected.validation_errors.map((e, i) => <p key={i} className="text-sm text-destructive/80">• {e}</p>)}
+                </div>
+              )}
+              {(warningsById[selected.id] || []).length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-sm font-semibold text-amber-800 flex items-center gap-1.5 mb-2">
+                    <AlertTriangle className="w-4 h-4" />RHS billing warnings
+                  </p>
+                  {(warningsById[selected.id] || []).map((w, i) => (
+                    <div key={i} className="mb-1.5 last:mb-0">
+                      <p className="text-sm text-amber-800">
+                        {w.rule} <span className="text-[11px] font-medium text-amber-600">{w.citation}</span>
+                      </p>
+                      <p className="text-xs text-amber-700">{w.description}</p>
+                    </div>
+                  ))}
                 </div>
               )}
               {selected.denial_reason && (

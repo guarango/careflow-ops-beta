@@ -37,6 +37,8 @@ const emptyClient = {
   address_city: "", address_state: "UT", address_zip: "",
   medicaid_id: "", ssn_last4: "", insurance_id: "", insurance_provider: "",
   house_id: "",
+  lives_with: "",
+  dspd_director_approval_date: "",
   service_enrollments: [],
   status: "Active", notes: ""
 };
@@ -266,6 +268,21 @@ export default function Clients() {
               <div className="col-span-2"><Label>Diagnosis</Label><Input value={form.diagnosis} onChange={(e) => setForm({...form, diagnosis: e.target.value})} disabled={!canEditClients} /></div>
               <div><Label>Guardian Name</Label><Input value={form.guardian_name} onChange={(e) => setForm({...form, guardian_name: e.target.value})} disabled={!canEditClients} /></div>
               <div><Label>Guardian Phone</Label><Input value={form.guardian_phone} onChange={(e) => setForm({...form, guardian_phone: e.target.value})} disabled={!canEditClients} /></div>
+              <div>
+                <Label>Lives with</Label>
+                <Select value={form.lives_with || "Not recorded"} onValueChange={(v) => setForm({...form, lives_with: v === "Not recorded" ? "" : v})} disabled={!canEditClients}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Not recorded", "Immediate Relative", "Legal Guardian", "Other"].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">RHS cannot be billed for a day the Person lives with an Immediate Relative or legal guardian (§21.4).</p>
+              </div>
+              <div>
+                <Label>DSPD director approval</Label>
+                <Input type="date" value={form.dspd_director_approval_date || ""} onChange={(e) => setForm({...form, dspd_director_approval_date: e.target.value})} disabled={!canEditClients} />
+                <p className="text-[11px] text-muted-foreground mt-1">Prior written approval for TFB billed alongside RHS (§21.4).</p>
+              </div>
               <div className="col-span-2"><Label>Street Address</Label><Input value={form.address} onChange={(e) => setForm({...form, address: e.target.value})} disabled={!canEditClients} /></div>
               <div><Label>City</Label><Input value={form.address_city || ""} onChange={(e) => setForm({...form, address_city: e.target.value})} disabled={!canEditClients} /></div>
               <div className="grid grid-cols-2 gap-3">
