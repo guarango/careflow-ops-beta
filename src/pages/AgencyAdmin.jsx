@@ -16,11 +16,12 @@ import AuditLogPage from "@/pages/AuditLogPage";
 import ESignatures from "@/pages/ESignatures";
 import ServiceCodesTab from "@/components/finance/ServiceCodesTab";
 import FormFieldsPanel from "@/components/customfields/FormFieldsPanel";
+import DataRetentionCard from "@/components/admin/DataRetentionCard";
 
 import AIFeatureManager from "@/components/ai/AIFeatureManager";
 import AgencyIntegrationHub from "@/components/integrations/AgencyIntegrationHub";
 import IntegrationHealthDashboard from "@/components/integrations/IntegrationHealthDashboard";
-import { Settings, Palette, Bell, Code, CreditCard, Sparkles, Plug, Activity, MapPin, ShieldCheck, UsersRound, ScrollText, FileSignature, Code2, ClipboardList } from "lucide-react";
+import { Settings, Palette, Bell, Code, CreditCard, Sparkles, Plug, Activity, MapPin, ShieldCheck, UsersRound, ScrollText, FileSignature, Code2, ClipboardList, Archive } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useRole } from "@/hooks/useRole";
 
@@ -51,6 +52,7 @@ export default function AgencyAdmin() {
     canSettings && { value: "integrations", label: "Integrations", icon: Plug },
     canSettings && { value: "int-health", label: "Integration Health", icon: Activity },
     canFormFields && { value: "form-fields", label: "Form Fields", icon: ClipboardList },
+    canSettings && { value: "retention", label: "Data retention", icon: Archive },
     canPermissions && { value: "permissions", label: "Roles & Permissions", icon: ShieldCheck },
     canUsers && { value: "users", label: "Users", icon: UsersRound },
     canServiceCodes && { value: "service-codes", label: "Service Codes", icon: Code2 },
@@ -149,6 +151,11 @@ export default function AgencyAdmin() {
         {shows("form-fields") && (
           <TabsContent value="form-fields">
             <FormFieldsPanel agencyId={agency?.id} />
+          </TabsContent>
+        )}
+        {shows("retention") && (
+          <TabsContent value="retention">
+            <DataRetentionCard />
           </TabsContent>
         )}
         {shows("permissions") && (

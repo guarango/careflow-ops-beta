@@ -16,6 +16,7 @@ import { useRole } from "@/hooks/useRole";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import SessionEntryForm from "@/components/sessionnotes/SessionEntryForm";
 import SupervisorReviewPanel from "@/components/sessionnotes/SupervisorReviewPanel";
+import ArchiveRecordButton from "@/components/archive/ArchiveRecordButton";
 import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
 import { buildNoteVersionEntry, initialNoteVersion, isNoteLocked } from "@/lib/noteVersioning";
@@ -425,7 +426,7 @@ export default function SessionNotes() {
                       <TableHead className="hidden md:table-cell">Service</TableHead>
                       <TableHead className="hidden md:table-cell">Staff</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="w-16"></TableHead>
+                      <TableHead className="w-40"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -462,9 +463,19 @@ export default function SessionNotes() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={e => { e.stopPropagation(); client && handleStartEntry(client, n); }}>
-                              {isNoteLocked(n.status) ? "View" : "Edit"}
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={e => { e.stopPropagation(); client && handleStartEntry(client, n); }}>
+                                {isNoteLocked(n.status) ? "View" : "Edit"}
+                              </Button>
+                              {canApproveNotes && (
+                                <ArchiveRecordButton
+                                  entityName="SessionNote"
+                                  recordId={n.id}
+                                  label={`${n.client_name || "Client"} — ${n.date || ""}`}
+                                  onArchived={() => queryClient.invalidateQueries({ queryKey: ["session-notes"] })}
+                                />
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       );

@@ -14,6 +14,7 @@ import { useRole } from "@/hooks/useRole";
 import ClientAuthorizations from "@/components/clients/ClientAuthorizations";
 import PCSPCard from "@/components/pcsp/PCSPCard";
 import RightsModificationSection from "@/components/rights/RightsModificationSection";
+import ClientRetentionActions from "@/components/clients/ClientRetentionActions";
 import { useRightsModifications } from "@/hooks/useRightsModifications";
 import {
   ArrowLeft, Pencil, User, Users, Pill, Target, ClipboardList, Heart, ShieldAlert,
@@ -284,6 +285,10 @@ export default function ClientProfile() {
         {/* Authorizations & units */}
         <div className="md:col-span-2">
           <ClientAuthorizations client={client} />
+        </div>
+
+        <div className="md:col-span-2">
+          <ClientRetentionActions client={client} />
         </div>
 
         {/* Recent notes */}

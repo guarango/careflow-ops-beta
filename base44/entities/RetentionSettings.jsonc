@@ -1,0 +1,80 @@
+{
+  "name": "RetentionSettings",
+  "type": "object",
+  "properties": {
+    "state": {
+      "type": "string",
+      "default": "UT",
+      "description": "State the rule set comes from"
+    },
+    "retention_years_adult": {
+      "type": "number",
+      "default": 6,
+      "description": "Years after the last date of service for adults"
+    },
+    "retention_minor_rule": {
+      "type": "string",
+      "enum": [
+        "Later of 6 years or age 22",
+        "Six years after last service",
+        "Until age 22"
+      ],
+      "default": "Later of 6 years or age 22"
+    },
+    "retention_basis": {
+      "type": "string",
+      "default": "Last date of service",
+      "description": "Date the retention period runs from"
+    },
+    "rule_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once the current DHHS91172 contract period has been verified"
+    },
+    "source": {
+      "type": "string",
+      "default": "Prior DHS contract template (DHS90548, 2011) \u2014 DHHS91172 period not yet confirmed",
+      "description": "Where the rule came from"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "updated_by": {
+      "type": "string"
+    },
+    "updated_by_name": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "retention_years_adult",
+    "retention_minor_rule",
+    "retention_basis",
+    "rule_confirmed"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

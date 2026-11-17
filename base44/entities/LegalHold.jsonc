@@ -1,0 +1,73 @@
+{
+  "name": "LegalHold",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "While true the person's records can never be purged"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "set_by": {
+      "type": "string"
+    },
+    "set_by_name": {
+      "type": "string"
+    },
+    "set_at": {
+      "type": "string"
+    },
+    "released_by": {
+      "type": "string"
+    },
+    "released_by_name": {
+      "type": "string"
+    },
+    "released_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "active"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

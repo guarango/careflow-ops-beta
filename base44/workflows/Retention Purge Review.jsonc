@@ -1,0 +1,44 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "retention_purge_review",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "scan_retention": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkRetentionPurge"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "List records past retention",
+            "description": "Marks archived records past retention for Admin review, excluding anyone on legal hold"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Nightly retention scan: lists archived records past their retention window for Admin confirmation; never purges and never includes a client on legal hold",
+  "name": "Retention Purge Review",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "30 5 * * *",
+      "one_time_date": null,
+      "timezone": "America/Denver",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

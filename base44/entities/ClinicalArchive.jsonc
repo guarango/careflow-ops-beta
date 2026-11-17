@@ -1,0 +1,98 @@
+{
+  "name": "ClinicalArchive",
+  "type": "object",
+  "properties": {
+    "entity_name": {
+      "type": "string",
+      "description": "Entity the record came from, e.g. SessionNote"
+    },
+    "record_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "record_label": {
+      "type": "string",
+      "description": "Human description of the archived record"
+    },
+    "last_service_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the retention period runs from"
+    },
+    "retention_until": {
+      "type": "string",
+      "format": "date"
+    },
+    "snapshot": {
+      "type": "object",
+      "description": "Full copy of the record as it stood when archived"
+    },
+    "archived_by": {
+      "type": "string"
+    },
+    "archived_by_name": {
+      "type": "string"
+    },
+    "archived_at": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "legal_hold_at_archive": {
+      "type": "boolean",
+      "default": false
+    },
+    "purge_eligible": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set by the nightly job once retention has passed and no legal hold applies"
+    },
+    "purged": {
+      "type": "boolean",
+      "default": false
+    },
+    "purged_at": {
+      "type": "string"
+    },
+    "purged_by": {
+      "type": "string"
+    },
+    "purge_note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "entity_name",
+    "record_id",
+    "client_id",
+    "retention_until"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
