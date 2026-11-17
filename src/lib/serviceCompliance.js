@@ -47,9 +47,9 @@ const NO_STRATEGY = new Set(["ELS", "MTP", "PBA", "PM1", "PM2", "RP2", "RP3", "R
 const BSP_CODES = new Set(["BC1", "BC2", "BC3"]);
 const MEDICAL_PLAN_CODES = new Set(["PN1", "PN2"]);
 const ANNUAL_REPORT_CODES = new Set(["COM", "DSG", "DSP", "DSI", "EPR", "HHS"]);
-const EVV_ON = new Set(["COM", "HSQ", "PAC", "RP2", "RP3", "SLH"]);
-const EVV_OFF = new Set(["RP4", "RP5", "RPS"]);
-const UNCONFIRMED = new Set(["SJP", "SJR", "TFB", "SLN", "CMP", "CMS"]);
+const EVV_ON = new Set(["COM", "HSQ", "PAC", "RP2", "RP3", "SLH", "SLN", "CMP", "CMS"]);
+const EVV_OFF = new Set(["RP4", "RP5", "RPS", "RHS"]);
+const UNCONFIRMED = new Set(["SJP", "SJR", "TFB", "SLN", "CMP", "CMS", "SLH"]);
 
 /** Verified RHS rules (DHHS91172 SOW, Article 21). Each rule is confirmed on its own. */
 export const RHS_SOURCE_REFERENCE =
