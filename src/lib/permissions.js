@@ -73,7 +73,7 @@ export const CAN = {
   deleteClient:           [],
   editGoals:              ["manager", "admin"],
   bspEdit:                ["manager", "admin"],
-  ispEdit:                ["admin"],
+  ispEdit:                ["manager", "admin"],
   approveSummaries:       ["manager", "admin"],
   createSessionNotes:     ["dsp", "manager", "admin"],
   approveSessionNotes:    ["manager", "admin"],
@@ -163,8 +163,8 @@ export const FEATURE_SECTIONS = [
       { key: "bsp", label: "Behavior support plans", paths: ["/bsp"], actions: [
         { code: "bspEdit", level: "Edit", label: "Edit behavior support plans" },
       ] },
-      { key: "isp", label: "ISP plans", paths: ["/isp"], actions: [
-        { code: "ispEdit", level: "Edit", label: "Edit ISP plans" },
+      { key: "isp", label: "PCSP", paths: ["/isp"], actions: [
+        { code: "ispEdit", level: "Edit", label: "Edit PCSP" },
       ] },
       { key: "summaries", label: "Monthly & quarterly summaries", paths: ["/summaries/monthly", "/summaries/quarterly"], actions: [
         { code: "approveSummaries", level: "Approve", label: "Approve summaries" },

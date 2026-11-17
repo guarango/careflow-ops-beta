@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/useRole";
 import ClientAuthorizations from "@/components/clients/ClientAuthorizations";
+import PCSPCard from "@/components/pcsp/PCSPCard";
 import {
   ArrowLeft, Pencil, User, Users, Pill, Target, ClipboardList, Heart,
 } from "lucide-react";
@@ -131,6 +132,11 @@ export default function ClientProfile() {
       />
 
       <div className="grid gap-4 md:grid-cols-2">
+        {/* Person-Centered Support Plan */}
+        <div className="md:col-span-2">
+          <PCSPCard client={client} />
+        </div>
+
         {/* Overview */}
         <Card>
           <CardHeader className="pb-3 flex flex-row items-center gap-3">

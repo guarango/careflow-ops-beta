@@ -12,13 +12,144 @@
       "type": "string",
       "enum": [
         "Draft",
+        "Active",
+        "Superseded",
+        "Closed",
         "In Review",
         "Pending Signatures",
-        "Active",
         "Archived",
         "Amended"
       ],
-      "default": "Draft"
+      "default": "Draft",
+      "enumColors": [
+        "gray",
+        "green",
+        "yellow",
+        "gray",
+        "blue",
+        "yellow",
+        "gray",
+        "purple"
+      ]
+    },
+    "activation_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the support coordinator activated the PCSP"
+    },
+    "received_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the agency received the PCSP from the support coordinator"
+    },
+    "support_strategy_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Computed: activation_date + 30 calendar days (DHHS91172 SOW 1.24(5))"
+    },
+    "renewal_meeting_due": {
+      "type": "string",
+      "format": "date",
+      "description": "Computed: plan_year_end. Team must meet at least every 12 months (R539-2-5(3)(a))"
+    },
+    "support_coordinator_name": {
+      "type": "string",
+      "description": "Support coordinator contact info \u2014 not an app user"
+    },
+    "support_coordinator_agency": {
+      "type": "string"
+    },
+    "support_coordinator_email": {
+      "type": "string"
+    },
+    "support_coordinator_phone": {
+      "type": "string"
+    },
+    "services_on_plan": {
+      "type": "array",
+      "description": "Services authorized on the PCSP",
+      "items": {
+        "type": "object",
+        "properties": {
+          "service_code_id": {
+            "type": "string"
+          },
+          "service_code": {
+            "type": "string"
+          },
+          "units_authorized": {
+            "type": "number"
+          },
+          "authorization_start": {
+            "type": "string",
+            "format": "date"
+          },
+          "authorization_end": {
+            "type": "string",
+            "format": "date"
+          },
+          "authorization_id": {
+            "type": "string",
+            "description": "Linked Authorization record when one exists"
+          }
+        }
+      }
+    },
+    "pcsp_goals": {
+      "type": "array",
+      "description": "Goals as written on the PCSP received from the support coordinator",
+      "items": {
+        "type": "object",
+        "properties": {
+          "goal_id": {
+            "type": "string",
+            "description": "Linked ClientGoal record"
+          },
+          "goal_text_as_written": {
+            "type": "string"
+          },
+          "persons_own_words": {
+            "type": "string"
+          },
+          "life_area": {
+            "type": "string"
+          },
+          "responsible_service_code_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Service codes the agency is responsible for supporting this goal"
+          }
+        }
+      }
+    },
+    "important_to": {
+      "type": "string",
+      "description": "What is important TO the person, from the PCSP"
+    },
+    "important_for": {
+      "type": "string",
+      "description": "What is important FOR the person (health and safety), from the PCSP"
+    },
+    "rights_modifications_present": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the PCSP documents rights modifications; detail records are handled separately"
+    },
+    "source_document": {
+      "type": "string",
+      "description": "Privately stored PCSP PDF file URI"
+    },
+    "source_document_name": {
+      "type": "string"
+    },
+    "superseded_at": {
+      "type": "string"
+    },
+    "superseded_by_id": {
+      "type": "string",
+      "description": "The PCSP record that replaced this one"
     },
     "plan_type": {
       "type": "string",
@@ -484,7 +615,8 @@
     },
     "version": {
       "type": "number",
-      "default": 1
+      "default": 1,
+      "description": "Version of the PCSP for this client \u2014 incremented per client, never overwritten once active"
     },
     "version_history": {
       "type": "array",
@@ -566,8 +698,8 @@
     "create": {
       "$or": [
         {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
+          "user_condition": {
+            "role": "manager"
           }
         },
         {
@@ -580,8 +712,20 @@
     "read": {
       "$or": [
         {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
+          "$and": [
+            {
+              "data.client_id": {
+                "$in": "{{user.data.assigned_client_ids}}"
+              }
+            },
+            {
+              "data.status": "Active"
+            }
+          ]
+        },
+        {
+          "user_condition": {
+            "role": "manager"
           }
         },
         {
@@ -594,8 +738,8 @@
     "update": {
       "$or": [
         {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
+          "user_condition": {
+            "role": "manager"
           }
         },
         {

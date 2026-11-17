@@ -11,7 +11,7 @@ import {
   Pill, Clock, ShieldCheck, DollarSign, Target, Calendar,
   UsersRound, ReceiptText, Briefcase, Settings, Home,
   Eye, ChevronDown, ChevronRight, Menu, X, FileText, Stethoscope, Brain, Bell,
-  ScrollText, UserSearch, FileSignature, GraduationCap, ClipboardCheck, BarChart3, Trophy
+  ScrollText, UserSearch, FileSignature, GraduationCap, ClipboardCheck, BarChart3, Trophy, FileBadge
 } from "lucide-react";
 import UserPickerDialog from "@/components/shared/UserPickerDialog";
 import { useImpersonation } from "@/lib/ImpersonationContext";
@@ -25,7 +25,7 @@ const ALL_NAV = [
       { path: "/goals", label: "Goals", icon: Target },
       { path: "/session-notes", label: "Session Notes", icon: ClipboardList },
       { path: "/bsp", label: "Behavior Support", icon: Brain },
-      { path: "/isp", label: "ISP Plans", icon: FileText },
+      { path: "/isp", label: "PCSP", icon: FileBadge },
       { path: "/summaries/monthly", label: "Summaries", icon: FileText },
     ],
   },

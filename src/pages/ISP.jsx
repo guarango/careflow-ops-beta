@@ -18,6 +18,8 @@ const STATUS_COLORS = {
   "In Review": "bg-blue-100 text-blue-700",
   "Pending Signatures": "bg-amber-100 text-amber-700",
   "Active": "bg-emerald-100 text-emerald-700",
+  "Superseded": "bg-amber-100 text-amber-800",
+  "Closed": "bg-slate-100 text-slate-500",
   "Archived": "bg-slate-100 text-slate-500",
   "Amended": "bg-purple-100 text-purple-700",
 };
@@ -92,17 +94,17 @@ export default function ISP() {
   return (
     <div>
       <PageHeader
-        title="ISP / Person-Centered Plan Builder"
-        subtitle={`${active.length} active plan${active.length !== 1 ? "s" : ""}`}
+        title="PCSP — Person-Centered Support Plan"
+        subtitle={`${active.length} active PCSP${active.length !== 1 ? "s" : ""}`}
         action={
           <Button onClick={() => { setSelectedPlan(null); setView("editor"); }} className="gap-1.5">
-            <Plus className="w-4 h-4" />New ISP
+            <Plus className="w-4 h-4" />New PCSP
           </Button>
         }
       />
 
       <div className="mb-5 bg-sky-50 border border-sky-200 rounded-xl px-4 py-3 text-xs text-sky-800 leading-relaxed">
-        <strong>Auto-Assembly</strong> pulls live data from goals, health records, session notes, and BSPs into a pre-filled draft — eliminating the 8–12 hour manual retyping process. The person's voice section always appears first.
+        The support coordinator's team writes the PCSP; the provider loads the plan it receives on the person's profile, then writes the <strong>Support Strategies</strong> for each goal it is responsible for within 30 days of activation.
       </div>
 
       {pendingSigs.length > 0 && (
@@ -128,9 +130,9 @@ export default function ISP() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="No Individual Support Plans"
-          description="Create an ISP to auto-assemble a person-centered plan from live system data."
-          action={<Button onClick={() => { setSelectedPlan(null); setView("editor"); }} size="sm"><Plus className="w-4 h-4 mr-1" />Create ISP</Button>}
+          title="No PCSPs on file"
+          description="Load the PCSP the agency received from the support coordinator, or open a person's profile to add one there."
+          action={<Button onClick={() => { setSelectedPlan(null); setView("editor"); }} size="sm"><Plus className="w-4 h-4 mr-1" />Create PCSP</Button>}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
