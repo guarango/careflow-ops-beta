@@ -38,10 +38,15 @@ const emptyCode = {
   state: "UT",
   rule_source: "DHHS91172 SOW 1.25",
   rule_confirmed: false,
+  source_reference: "",
+  compliance_rules: [],
   notes: "",
 };
 
-const normalize = (v) => (v === null || v === undefined ? "" : v);
+const normalize = (v) => {
+  if (v === null || v === undefined) return "";
+  return typeof v === "object" ? JSON.stringify(v) : v;
+};
 
 export default function ServiceCodeEditDialog({ code, open, onOpenChange, readOnly }) {
   const [form, setForm] = useState(emptyCode);

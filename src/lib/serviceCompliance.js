@@ -15,6 +15,8 @@ export const COMPLIANCE_FIELDS = [
   "state",
   "rule_source",
   "rule_confirmed",
+  "source_reference",
+  "compliance_rules",
 ];
 
 export const FIELD_LABELS = {
@@ -28,6 +30,8 @@ export const FIELD_LABELS = {
   state: "State",
   rule_source: "Rule source",
   rule_confirmed: "Rule confirmed",
+  source_reference: "Source reference",
+  compliance_rules: "State rules",
 };
 
 export const UTAH_DSPD_CODES = [
@@ -45,7 +49,31 @@ const MEDICAL_PLAN_CODES = new Set(["PN1", "PN2"]);
 const ANNUAL_REPORT_CODES = new Set(["COM", "DSG", "DSP", "DSI", "EPR", "HHS"]);
 const EVV_ON = new Set(["COM", "HSQ", "PAC", "RP2", "RP3", "SLH"]);
 const EVV_OFF = new Set(["RP4", "RP5", "RPS"]);
-const UNCONFIRMED = new Set(["RHS", "SJP", "SJR", "TFB", "SLN", "CMP", "CMS"]);
+const UNCONFIRMED = new Set(["SJP", "SJR", "TFB", "SLN", "CMP", "CMS"]);
+
+/** Verified RHS rules (DHHS91172 SOW, Article 21). Each rule is confirmed on its own. */
+export const RHS_SOURCE_REFERENCE =
+  "DHHS91172 SOW §1.25 (quarterly summary) and §21.3(6) (evacuation drills)";
+
+const RHS_RULES = [
+  {
+    key: "quarterly_summary",
+    label: "Quarterly summary",
+    cadence: "Quarterly",
+    detail:
+      "Due to the Person's Support Coordinator within 15 calendar days after quarter end. Must include progress toward each goal. RHS is not on the §1.25 exemption list.",
+    rule_confirmed: true,
+    source_reference: "DHHS91172 SOW §1.25 (quarterly summary)",
+  },
+  {
+    key: "quarterly_evacuation_drills",
+    label: "Quarterly evacuation drills",
+    cadence: "Quarterly",
+    detail: "One documented drill per quarter at each RHS site, with Persons and Staff.",
+    rule_confirmed: true,
+    source_reference: "DHHS91172 SOW §21.3(6) (evacuation drills)",
+  },
+];
 
 /** Utah DSPD defaults for one code. `undefined` values are left untouched on seed. */
 export function utahRulesFor(rawCode) {
@@ -75,6 +103,10 @@ export function utahRulesFor(rawCode) {
   };
   if (EVV_ON.has(code)) rules.is_evv_required = true;
   if (EVV_OFF.has(code)) rules.is_evv_required = false;
+  if (code === "RHS") {
+    rules.source_reference = RHS_SOURCE_REFERENCE;
+    rules.compliance_rules = RHS_RULES;
+  }
   return rules;
 }
 

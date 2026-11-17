@@ -20,6 +20,11 @@ function ToggleRow({ label, hint, checked, onChange }) {
 export default function ServiceCodeComplianceFields({ form, setForm }) {
   const set = (patch) => setForm((prev) => ({ ...prev, ...patch }));
   const strategyRequired = form.support_strategy_required !== false;
+  const rules = Array.isArray(form.compliance_rules) ? form.compliance_rules : [];
+  const toggleRule = (key, confirmed) =>
+    set({
+      compliance_rules: rules.map((r) => (r.key === key ? { ...r, rule_confirmed: confirmed } : r)),
+    });
 
   return (
     <div className="space-y-4">
@@ -101,6 +106,43 @@ export default function ServiceCodeComplianceFields({ form, setForm }) {
           />
         </div>
       </div>
+
+      <div>
+        <Label>Source reference</Label>
+        <Input
+          value={form.source_reference || ""}
+          onChange={(e) => set({ source_reference: e.target.value })}
+          placeholder="DHHS91172 SOW §1.25 (quarterly summary) and §21.3(6) (evacuation drills)"
+        />
+      </div>
+
+      {rules.length > 0 && (
+        <div>
+          <p className="text-sm font-medium leading-none text-foreground">State rules</p>
+          <p className="mt-1 text-xs text-muted-foreground">Each rule is confirmed on its own.</p>
+          <div className="mt-2 space-y-2">
+            {rules.map((rule) => (
+              <div key={rule.key} className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 p-3">
+                <Switch
+                  checked={!!rule.rule_confirmed}
+                  onCheckedChange={(v) => toggleRule(rule.key, v)}
+                  className="mt-0.5"
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium leading-tight text-foreground">
+                    {rule.label}
+                    {rule.cadence ? ` · ${rule.cadence}` : ""}
+                  </p>
+                  {rule.detail && <p className="mt-0.5 text-xs text-muted-foreground">{rule.detail}</p>}
+                  {rule.source_reference && (
+                    <p className="mt-1 text-xs font-medium text-muted-foreground">{rule.source_reference}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

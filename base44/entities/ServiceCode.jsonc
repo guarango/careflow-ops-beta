@@ -120,6 +120,47 @@
       "default": false,
       "description": "False when the state rule behind these settings has not been verified yet"
     },
+    "source_reference": {
+      "type": "string",
+      "description": "Full citation for this code's verified rule set, e.g. DHHS91172 SOW \u00a71.25 (quarterly summary) and \u00a721.3(6) (evacuation drills)"
+    },
+    "compliance_rules": {
+      "type": "array",
+      "description": "Individual state requirements for this code. Each rule carries its own confirmation \u2014 confirming one rule never confirms the others.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable identifier, e.g. quarterly_summary or quarterly_evacuation_drills"
+          },
+          "label": {
+            "type": "string"
+          },
+          "cadence": {
+            "type": "string",
+            "description": "How often the rule applies, e.g. Quarterly"
+          },
+          "detail": {
+            "type": "string",
+            "description": "What the rule requires"
+          },
+          "rule_confirmed": {
+            "type": "boolean",
+            "default": false,
+            "description": "True once this individual rule has been verified against the contract"
+          },
+          "source_reference": {
+            "type": "string",
+            "description": "Citation for this individual rule"
+          }
+        },
+        "required": [
+          "key",
+          "label"
+        ]
+      }
+    },
     "active": {
       "type": "boolean",
       "default": true
