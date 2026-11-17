@@ -123,8 +123,16 @@ export default function MonthlySummaryDetail() {
             <h1 className="text-2xl font-bold">{summary.client_name}</h1>
             <Badge className={STATUS_STYLES[summary.status]}>{summary.status}</Badge>
             {summary.ai_generated && <Badge variant="outline" className="gap-1"><Sparkles className="w-3 h-3" /> AI Drafted</Badge>}
+            <Badge variant="outline" className={summary.deliverable === false ? "border-slate-300 text-muted-foreground" : "border-primary/40 text-primary"}>
+              {summary.deliverable === false ? "Internal monthly note" : "Due to support coordinator"}
+            </Badge>
           </div>
           <p className="text-sm text-muted-foreground">{summary.month_year} · {summary.period_start} to {summary.period_end}</p>
+          {summary.deliverable !== false && summary.due_date && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Due {summary.due_date}{summary.service_codes?.length ? ` · ${summary.service_codes.join(", ")}` : ""}
+            </p>
+          )}
         </div>
         {isManager && (
           <div className="flex gap-2">

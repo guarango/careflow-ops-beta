@@ -3,26 +3,39 @@
     "document": {
       "dsl": "1.0.0",
       "name": "monthly_summary_generation",
-      "version": "1.0",
+      "version": "1.1",
       "namespace": "base44"
     },
     "do": [
       {
-        "generate": {
+        "generate_cadence_records": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "generateCadenceSummaries"
+          },
+          "then": "generate_ai_drafts",
+          "x-base44": {
+            "title": "Create summaries for the month by service cadence",
+            "description": "Deliverable monthly, internal note and quarterly records with due dates"
+          }
+        }
+      },
+      {
+        "generate_ai_drafts": {
           "call": "invoke_backend_function",
           "with": {
             "function_name": "generateMonthlySummaries"
           },
           "then": "end",
           "x-base44": {
-            "title": "Generate AI monthly summaries",
-            "description": "Drafts summaries for all active clients"
+            "title": "Draft the narrative content",
+            "description": "Fills the created records from session notes, goals, incidents and med logs"
           }
         }
       }
     ]
   },
-  "description": "On the 1st of each month, drafts AI monthly summaries for every active client from the previous month's session notes, goals, incidents, and med logs",
+  "description": "On the 1st of each month, creates the summaries each service code's cadence requires (deliverable monthly, internal monthly note, quarterly on quarter-end months) and then drafts their narrative content",
   "name": "Monthly Summary Generation",
   "trigger": {
     "condition": null,

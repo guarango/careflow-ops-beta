@@ -20,6 +20,51 @@
       "type": "string",
       "format": "date"
     },
+    "deliverable": {
+      "type": "boolean",
+      "default": true,
+      "description": "True when this summary is due to the support coordinator; false for the internal monthly progress note that feeds the quarterly (SOW 1.25)"
+    },
+    "service_code_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Service codes this summary covers"
+    },
+    "service_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Codes for display"
+    },
+    "summary_cadence": {
+      "type": "string",
+      "enum": [
+        "Monthly",
+        "Quarterly",
+        "Monthly Financial Statement"
+      ],
+      "description": "Cadence that produced this record"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Period end + the agency's due days (default 15) \u2014 state rule not yet confirmed"
+    },
+    "is_placeholder": {
+      "type": "boolean",
+      "default": false,
+      "description": "True for a monthly financial statement task \u2014 the template is not built yet"
+    },
+    "writer_name": {
+      "type": "string",
+      "description": "Manager who wrote or is assigned to write it"
+    },
+    "writer_id": {
+      "type": "string"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -90,6 +135,9 @@
         },
         "goals_charted_count": {
           "type": "number"
+        },
+        "goal_entries_flagged": {
+          "type": "number"
         }
       }
     },
@@ -148,11 +196,6 @@
     },
     "read": {
       "$or": [
-        {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
-          }
-        },
         {
           "user_condition": {
             "role": "admin"

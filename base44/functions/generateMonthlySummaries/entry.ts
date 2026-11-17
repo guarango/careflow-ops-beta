@@ -78,8 +78,11 @@ Deno.serve(async (req) => {
     const results = [];
 
     for (const client of targetClients) {
-      const existingSummary = existing.find(s => s.client_id === client.id);
-      if (existingSummary && !body.force_regenerate) {
+      // Cadence records (deliverable / internal) are created by generateCadenceSummaries
+      // and filled here — only a record that already holds AI content is skipped.
+      const targets = existing.filter(s => s.client_id === client.id && !s.is_placeholder);
+      const existingSummary = targets.find(s => s.deliverable !== false) || targets[0] || null;
+      if (existingSummary?.ai_generated && !body.force_regenerate) {
         results.push({ client_id: client.id, client_name: `${client.first_name} ${client.last_name}`, status: 'already_exists', summary_id: existingSummary.id });
         continue;
       }
@@ -178,11 +181,35 @@ Deno.serve(async (req) => {
         }
       };
 
+      const contentData = {
+        ...summaryData,
+        is_placeholder: false,
+        deliverable: existingSummary ? existingSummary.deliverable !== false : true,
+        service_code_ids: existingSummary?.service_code_ids || [],
+        service_codes: existingSummary?.service_codes || [],
+        summary_cadence: existingSummary?.summary_cadence || 'Quarterly',
+        due_date: existingSummary?.due_date || null,
+      };
+
       let summary;
-      if (existingSummary && body.force_regenerate) {
-        summary = await base44.asServiceRole.entities.MonthlySummary.update(existingSummary.id, summaryData);
+      if (existingSummary) {
+        summary = await base44.asServiceRole.entities.MonthlySummary.update(existingSummary.id, contentData);
       } else {
-        summary = await base44.asServiceRole.entities.MonthlySummary.create(summaryData);
+        summary = await base44.asServiceRole.entities.MonthlySummary.create(contentData);
+      }
+
+      // The internal monthly note carries the same narrative so it can feed the quarterly.
+      for (const sibling of targets.filter(t => t.id !== existingSummary?.id && t.status !== 'Signed')) {
+        await base44.asServiceRole.entities.MonthlySummary.update(sibling.id, {
+          how_month_went: summaryData.how_month_went,
+          goals_summary: summaryData.goals_summary,
+          notable_events: summaryData.notable_events,
+          source_note_ids: summaryData.source_note_ids,
+          source_data: summaryData.source_data,
+          ai_generated: true,
+          ai_generated_at: summaryData.ai_generated_at,
+          status: sibling.status === 'Draft' ? 'Pending Review' : sibling.status,
+        });
       }
 
       results.push({
