@@ -37,6 +37,7 @@ export const NAV_ACCESS = {
   "/emar":                  ["dsp", "manager", "admin"],
   "/incidents":             ["dsp", "manager", "admin"],
   "/schedule":              ["dsp", "manager", "admin"],
+  "/day-program":           ["dsp", "manager", "admin"],
   "/timecards":             ["dsp", "manager", "admin"],
   "/houses":                ["manager", "admin"],
   "/staff":                 ["manager", "admin", "hr_bundle"],

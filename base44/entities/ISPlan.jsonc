@@ -91,6 +91,15 @@
           "authorization_id": {
             "type": "string",
             "description": "Linked Authorization record when one exists"
+          },
+          "one_to_one_documented": {
+            "type": "boolean",
+            "default": false,
+            "description": "DHHS91172 SOW 7.3(2): DSG is one staff to up to six persons unless the PCSP documents the need for one-to-one support"
+          },
+          "one_to_one_note": {
+            "type": "string",
+            "description": "Where in the PCSP the one-to-one need is documented (page, section or quote)"
           }
         }
       }

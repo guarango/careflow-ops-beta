@@ -130,6 +130,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
   const evvLog = findEvvLog(form, evvLogs);
   const evvWarning = evvMismatch(form, evvLog, evvTolerance);
   const overlapList = overlapWarnings(form, siblingNotes, selectedCode);
+  const isDsi = String(selectedCode?.code || "").toUpperCase() === "DSI";
   const noteLengthMinutes = noteMinutes(form);
 
   // Goal data must be internally valid before the note can be submitted.
@@ -683,7 +684,15 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
                 </p>
               </div>
             )}
-            {overlapList.length > 0 && (
+            {overlapList.length > 0 && isDsi && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                <p className="text-xs text-red-800">
+                  <strong>DSI is at least one staff to one person.</strong> You documented {overlapList.join(", ")} at the same time. Only group codes (DSG, DSP, SED) may overlap (SOW 8.1).
+                </p>
+              </div>
+            )}
+            {overlapList.length > 0 && !isDsi && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                 <p className="text-xs text-amber-800">

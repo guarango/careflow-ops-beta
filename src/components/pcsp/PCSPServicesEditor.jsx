@@ -73,6 +73,30 @@ export default function PCSPServicesEditor({ rows = [], setRows, codes = [], aut
                 onChange={(e) => update(i, { authorization_end: e.target.value })}
               />
             </div>
+            {String(row.service_code || "").toUpperCase() === "DSG" && (
+              <div className="sm:col-span-2 rounded-lg bg-muted/40 border border-border px-2.5 py-2 space-y-1.5">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!row.one_to_one_documented}
+                    onChange={(e) => update(i, { one_to_one_documented: e.target.checked })}
+                    className="w-3.5 h-3.5 mt-0.5 accent-primary"
+                  />
+                  <span className="text-xs leading-snug">
+                    PCSP documents a one-to-one staffing need for DSG
+                    <span className="text-muted-foreground"> — otherwise DSG is one staff to six persons (SOW 7.3(2))</span>
+                  </span>
+                </label>
+                {row.one_to_one_documented && (
+                  <Input
+                    value={row.one_to_one_note || ""}
+                    onChange={(e) => update(i, { one_to_one_note: e.target.value })}
+                    placeholder="Where in the PCSP it is documented (page, section, quote)"
+                    className="h-8 text-sm"
+                  />
+                )}
+              </div>
+            )}
           </div>
           <div className="mt-2 flex items-center justify-between">
             {row.authorization_id ? (

@@ -1,0 +1,166 @@
+{
+  "name": "DayProgramSession",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the day program session"
+    },
+    "start_time": {
+      "type": "string"
+    },
+    "end_time": {
+      "type": "string"
+    },
+    "service_code": {
+      "type": "string",
+      "enum": [
+        "DSG",
+        "DSP"
+      ],
+      "default": "DSG",
+      "description": "DSG \u2014 group day service; DSP \u2014 day support"
+    },
+    "setting": {
+      "type": "string",
+      "enum": [
+        "Site-based",
+        "Community"
+      ],
+      "default": "Site-based",
+      "description": "SOW 7.3(1): DSG may be provided site-based or in the community"
+    },
+    "site_name": {
+      "type": "string",
+      "description": "Where the session was held (site, program room, or community location)"
+    },
+    "house_id": {
+      "type": "string",
+      "description": "Linked House record when the session is at a program site"
+    },
+    "staff_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Staff on duty for this session (StaffMember records)"
+    },
+    "staff_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "client_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Persons present \u2014 each person's own SessionNote links to this record"
+    },
+    "client_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ratio_override_reason": {
+      "type": "string",
+      "description": "Manager's stated reason for running a session above the 1:6 ratio (SOW 7.3(2))"
+    },
+    "ratio_override_by": {
+      "type": "string"
+    },
+    "ratio_override_at": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Scheduled",
+        "In Progress",
+        "Completed",
+        "Cancelled"
+      ],
+      "default": "Scheduled",
+      "enumColors": [
+        "blue",
+        "yellow",
+        "green",
+        "gray"
+      ]
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "date",
+    "service_code"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "dsp"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "dsp"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "dsp"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

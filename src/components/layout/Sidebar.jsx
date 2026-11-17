@@ -42,6 +42,7 @@ const ALL_NAV = [
       { path: "/staff", label: "Staff", icon: UserCheck },
       { path: "/houses", label: "Houses", icon: Home },
       { path: "/schedule", label: "Schedule & EVV", icon: Calendar },
+      { path: "/day-program", label: "Day Program", icon: UsersRound },
       { path: "/timecards", label: "Timecards", icon: Clock },
       { path: "/recognition", label: "Recognition", icon: Trophy },
       { path: "/hr", label: "HR & Compliance", icon: Briefcase },
