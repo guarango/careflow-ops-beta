@@ -184,9 +184,13 @@ Deno.serve(async (req) => {
 
     const codeById = new Map(codes.map((c) => [c.id, c]));
 
-    // Element 2 — services delivered, from the quarter's session notes
+    // Only approved session notes are inputs.
+    const approvedNotes = (quarterNotes || []).filter((n) => n.status === 'Approved');
+    const approvedById = new Map(approvedNotes.map((n) => [n.id, n]));
+
+    // Element 2 — services delivered, from the quarter's approved session notes
     const groups = new Map();
-    (quarterNotes || []).forEach((note) => {
+    approvedNotes.forEach((note) => {
       const code = codeById.get(note.service_code_id);
       const key = note.service_code_id || note.service_code || 'unspecified';
       const group = groups.get(key) || {
@@ -220,6 +224,7 @@ Deno.serve(async (req) => {
     const pcspGoals = activePlan?.pcsp_goals || [];
 
     const goalProgress = [];
+    const dataNeedingReview = [];
     for (const goal of allGoals || []) {
       if (goal.status === 'Discontinued') continue;
 
@@ -231,9 +236,38 @@ Deno.serve(async (req) => {
         responsibleCodes.every((c) => isExemptCode(c) || c.goal_progress_required_in_summary === false);
       if (allCodesExempt) continue;
 
-      const entries = (goal.progress_entries || [])
-        .filter((e) => e.date && e.date >= periodStart && e.date <= periodEnd && isCountedEntry(e))
+      const periodEntries = (goal.progress_entries || []).filter(
+        (e) => e.date && e.date >= periodStart && e.date <= periodEnd && !e.missed_reason
+      );
+      const entries = periodEntries
+        .filter((e) => isCountedEntry(e) && e.session_note_id && approvedById.has(e.session_note_id))
         .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+      // Flagged, excluded or uncited entries are review data, never progress.
+      periodEntries
+        .filter((e) => (e.status || 'Valid') !== 'Valid')
+        .forEach((e) => {
+          dataNeedingReview.push({
+            goal_title: goal.goal_title,
+            date: e.date,
+            recorded: e.score || (e.percentage != null ? `${e.percentage}%` : ''),
+            status: e.status,
+            reason: e.flagged_reason || e.exclusion_reason || 'Flagged by a manager',
+          });
+        });
+      periodEntries
+        .filter((e) => isCountedEntry(e) && (!e.session_note_id || !approvedById.has(e.session_note_id)))
+        .forEach((e) => {
+          dataNeedingReview.push({
+            goal_title: goal.goal_title,
+            date: e.date,
+            recorded: e.score || (e.percentage != null ? `${e.percentage}%` : ''),
+            status: e.session_note_id ? 'Awaiting note approval' : 'No session note linked',
+            reason: e.session_note_id
+              ? 'The session note for this entry is not approved'
+              : 'This entry is not linked to a session note, so it cannot be cited',
+          });
+        });
 
       const points = entries
         .map((e) => ({ date: e.date, value: entryValue(e, goal) }))
@@ -247,12 +281,17 @@ Deno.serve(async (req) => {
 
       const pcspGoal = pcspGoals.find((g) => g.goal_id === goal.id);
 
+      const sourceNoteIds = [...new Set(entries.map((e) => e.session_note_id))];
+      const sourceNoteDates = [...new Set(sourceNoteIds.map((id) => approvedById.get(id)?.date).filter(Boolean))].sort();
+
       const trend = computeTrend(values, goal);
       const prefillNarrative = points.length
         ? `${points.length} data point(s) recorded this quarter (${levelLabel(points[0].value, goal)} → ${levelLabel(points[points.length - 1].value, goal)}). ${
-            promptTrend(entries) ? `Prompting: ${promptTrend(entries)}.` : ''
-          }`.trim()
-        : '';
+            promptTrend(entries) ? `Prompting: ${promptTrend(entries)}. ` : ''
+          }Sources: ${sourceNoteDates.join(', ')}.`.trim()
+        : sourceNoteIds.length
+          ? ''
+          : 'No approved notes this period.';
 
       goalProgress.push({
         goal_id: goal.id,
@@ -267,6 +306,8 @@ Deno.serve(async (req) => {
         narrative: prefillNarrative,
         mastery_met: goal.status === 'Mastered',
         series: points,
+        source_note_ids: sourceNoteIds,
+        source_note_dates: sourceNoteDates,
       });
     }
 
@@ -277,7 +318,7 @@ Deno.serve(async (req) => {
         const detail = String(incident.description || '').replace(/\s+/g, ' ').slice(0, 180);
         return `${incident.date} — ${incident.type || 'Incident'} (${incident.severity || 'unspecified'})${incident.location ? ` at ${incident.location}` : ''}${detail ? `: ${detail}` : ''}`;
       });
-    const flaggedNoteLines = (quarterNotes || [])
+    const flaggedNoteLines = approvedNotes
       .filter((note) => {
         const flags = note.health_safety_flags || {};
         return Object.entries(flags).some(([key, value]) => key !== 'detail' && value === true);
@@ -339,6 +380,11 @@ Deno.serve(async (req) => {
       services_summary: current?.services_summary || '',
       status_and_response: current?.status_and_response || '',
       notable_events: notableEvents,
+      data_needing_review: dataNeedingReview,
+      sign_blocked_reason:
+        (goalProgress.length > 0 || dataNeedingReview.length > 0) && approvedNotes.length === 0
+          ? 'Goal data exists for this period but no session notes are approved. Approve the session notes before this summary can be signed.'
+          : '',
       goal_progress: mergedGoals,
       monthly_summary_ids: relatedMonthlies.map((m) => m.id),
       monthly_summary_dates: relatedMonthlies.map((m) => m.month_year),

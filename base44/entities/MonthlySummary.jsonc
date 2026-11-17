@@ -86,17 +86,73 @@
       "type": "string",
       "description": "Narrative summary of the month"
     },
-    "goals_summary": {
+    "citations": {
       "type": "array",
-      "description": "Per-goal progress with numbers and source note references",
+      "description": "Each narrative sentence with the approved session notes behind it \u2014 drives the hover source panel",
       "items": {
         "type": "object",
         "properties": {
+          "text": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "month",
+              "goal",
+              "events"
+            ],
+            "default": "month"
+          },
+          "source_note_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source_note_dates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "goals_summary": {
+      "type": "array",
+      "description": "Per-goal progress with code-computed numbers and source note references",
+      "items": {
+        "type": "object",
+        "properties": {
+          "goal_id": {
+            "type": "string"
+          },
           "goal_title": {
             "type": "string"
           },
           "sessions_charted": {
             "type": "number"
+          },
+          "data_points": {
+            "type": "number",
+            "description": "Valid, cited data points this period"
+          },
+          "average_score": {
+            "type": "number"
+          },
+          "first_score": {
+            "type": "number"
+          },
+          "last_score": {
+            "type": "number"
+          },
+          "prompt_trend": {
+            "type": "string"
+          },
+          "minutes": {
+            "type": "number",
+            "description": "Service minutes from the cited approved notes"
           },
           "progress_summary": {
             "type": "string"
@@ -106,6 +162,42 @@
             "items": {
               "type": "string"
             }
+          },
+          "source_note_dates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "data_needing_review": {
+      "type": "array",
+      "description": "Flagged or excluded goal entries \u2014 never reported as progress",
+      "items": {
+        "type": "object",
+        "properties": {
+          "goal_title": {
+            "type": "string"
+          },
+          "goal_id": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "recorded": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "staff_name": {
+            "type": "string"
           }
         }
       }
@@ -119,7 +211,7 @@
       "items": {
         "type": "string"
       },
-      "description": "All session notes referenced"
+      "description": "All approved session notes referenced"
     },
     "source_data": {
       "type": "object",
@@ -138,6 +230,100 @@
         },
         "goal_entries_flagged": {
           "type": "number"
+        }
+      }
+    },
+    "generation": {
+      "type": "object",
+      "description": "Provenance of the AI draft \u2014 model, every input record ID, and the output hash",
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "input_note_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "input_goal_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "input_incident_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "input_med_log_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "output_hash": {
+          "type": "string"
+        },
+        "generated_at": {
+          "type": "string"
+        },
+        "generated_by": {
+          "type": "string"
+        }
+      }
+    },
+    "sign_blocked_reason": {
+      "type": "string",
+      "description": "Set when the draft cannot be signed, e.g. goal data with no approved session notes"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "version_history": {
+      "type": "array",
+      "description": "Prior drafts and manual edits, newest first \u2014 regeneration never discards them",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "saved_at": {
+            "type": "string"
+          },
+          "saved_by": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "ai_draft",
+              "manual_edit",
+              "prior_draft"
+            ]
+          },
+          "how_month_went": {
+            "type": "string"
+          },
+          "goals_summary": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "notable_events": {
+            "type": "string"
+          },
+          "data_needing_review": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
         }
       }
     },

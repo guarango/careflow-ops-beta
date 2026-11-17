@@ -42,7 +42,7 @@
     },
     "services_provided": {
       "type": "array",
-      "description": "Element 2 \u2014 each service provided to the person this quarter",
+      "description": "Element 2 \u2014 each service provided to the person this quarter, from approved session notes",
       "items": {
         "type": "object",
         "properties": {
@@ -149,9 +149,50 @@
                 }
               }
             }
+          },
+          "source_note_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Approved session notes this goal's data drew on"
+          },
+          "source_note_dates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }
+    },
+    "data_needing_review": {
+      "type": "array",
+      "description": "Flagged or excluded goal entries \u2014 never reported as progress",
+      "items": {
+        "type": "object",
+        "properties": {
+          "goal_title": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "recorded": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "sign_blocked_reason": {
+      "type": "string",
+      "description": "Set when the draft cannot be signed, e.g. goal data with no approved session notes"
     },
     "monthly_summary_ids": {
       "type": "array",

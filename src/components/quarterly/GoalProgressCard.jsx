@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { TREND_STYLES, TRENDS } from "@/lib/quarterlySummary";
 import { cn } from "@/lib/utils";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Link2 } from "lucide-react";
 
 /** One goal's progress for the quarter, with the quarter's data line. */
 export default function GoalProgressCard({ row, editable, onChange, codesById }) {
@@ -110,6 +110,13 @@ export default function GoalProgressCard({ row, editable, onChange, codesById })
           Service(s): {row.service_code_ids.map(id => codesById[id]).filter(Boolean).join(", ")}
         </p>
       )}
+
+      <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+        <Link2 className="w-3 h-3" />
+        {(row.source_note_ids || []).length > 0
+          ? `${row.source_note_ids.length} source note(s): ${(row.source_note_dates || []).join(", ")}`
+          : "No approved notes this period"}
+      </p>
     </div>
   );
 }

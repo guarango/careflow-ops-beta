@@ -141,6 +141,7 @@ export function signingBlockers(summary) {
     );
   }
   if (!String(summary.client_name || "").trim()) blockers.push("Person's name is missing");
+  if (summary.sign_blocked_reason) blockers.push(summary.sign_blocked_reason);
   return blockers;
 }
 

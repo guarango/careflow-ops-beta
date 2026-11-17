@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import QuarterlySectionCard from "@/components/quarterly/QuarterlySectionCard";
 import GoalProgressCard from "@/components/quarterly/GoalProgressCard";
+import DataNeedingReview from "@/components/summaries/DataNeedingReview";
 import {
   STATUS_STYLES,
   SENT_METHODS,
@@ -339,6 +340,15 @@ export default function QuarterlySummaryDetail() {
         </Card>
       )}
 
+      {draft.sign_blocked_reason && status !== "Sent" && (
+        <Card className="mb-4 border-amber-200 bg-amber-50">
+          <CardContent className="p-3 flex items-start gap-2 text-sm text-amber-800">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>{draft.sign_blocked_reason}</span>
+          </CardContent>
+        </Card>
+      )}
+
       {isManager && blockers.length > 0 && editable && (
         <Card className="mb-4 border-amber-200 bg-amber-50">
           <CardContent className="p-3 text-sm text-amber-800">
@@ -521,6 +531,7 @@ export default function QuarterlySummaryDetail() {
               ))}
             </div>
           )}
+          <DataNeedingReview items={draft.data_needing_review || []} />
         </QuarterlySectionCard>
 
         {/* 6 — Writer */}
