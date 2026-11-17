@@ -1,0 +1,44 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "rights_modification_review_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "check_reviews": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkRightsModificationReviews"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Check rights modification reviews",
+            "description": "Flips overdue reviews to Under review, alerts managers 14 days ahead, syncs PCSP flags"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Nightly check of rights modification review dates (42 CFR 441.301(c)(4)(vi)(F), SOW 1.20-1.21)",
+  "name": "Rights Modification Review Check",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 * * *",
+      "one_time_date": null,
+      "timezone": "America/Denver",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

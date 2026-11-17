@@ -1,5 +1,5 @@
 import React from "react";
-import { Clock, FileWarning, CalendarClock, Users, FileBarChart } from "lucide-react";
+import { Clock, FileWarning, CalendarClock, Users, FileBarChart, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ICONS = {
@@ -8,6 +8,7 @@ const ICONS = {
   "calendar-due": CalendarClock,
   "users-group": Users,
   "file-chart": FileBarChart,
+  "shield-alert": ShieldAlert,
 };
 
 const TONE = {

@@ -13,8 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/useRole";
 import ClientAuthorizations from "@/components/clients/ClientAuthorizations";
 import PCSPCard from "@/components/pcsp/PCSPCard";
+import RightsModificationSection from "@/components/rights/RightsModificationSection";
+import { useRightsModifications } from "@/hooks/useRightsModifications";
 import {
-  ArrowLeft, Pencil, User, Users, Pill, Target, ClipboardList, Heart,
+  ArrowLeft, Pencil, User, Users, Pill, Target, ClipboardList, Heart, ShieldAlert,
 } from "lucide-react";
 
 function Field({ label, children }) {
@@ -73,6 +75,8 @@ export default function ClientProfile() {
     queryKey: ["houses-profile"],
     queryFn: () => base44.entities.House.list(),
   });
+
+  const { active: activeRights } = useRightsModifications(id);
 
   const notFound = !isLoading && !client;
 
@@ -137,6 +141,10 @@ export default function ClientProfile() {
           <PCSPCard client={client} />
         </div>
 
+        <div className="md:col-span-2">
+          <RightsModificationSection client={client} />
+        </div>
+
         {/* Overview */}
         <Card>
           <CardHeader className="pb-3 flex flex-row items-center gap-3">
@@ -145,7 +153,14 @@ export default function ClientProfile() {
             </div>
             <div className="flex-1 min-w-0">
               <CardTitle className="text-sm font-semibold truncate">{fullName}</CardTitle>
-              <div className="mt-1"><StatusBadge status={client.status || "Active"} /></div>
+              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                <StatusBadge status={client.status || "Active"} />
+                {activeRights && (
+                  <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-800 border-amber-300 gap-1">
+                    <ShieldAlert className="w-3 h-3" /> Rights modification active
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">

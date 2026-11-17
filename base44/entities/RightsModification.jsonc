@@ -1,0 +1,280 @@
+{
+  "name": "RightsModification",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "pcsp_id": {
+      "type": "string",
+      "description": "ISPlan record this modification is documented in"
+    },
+    "pcsp_label": {
+      "type": "string",
+      "description": "Display label of the PCSP version and plan year"
+    },
+    "right_affected": {
+      "type": "string",
+      "enum": [
+        "Access to food",
+        "Visitors",
+        "Privacy",
+        "Schedule",
+        "Possessions",
+        "Locks",
+        "Other"
+      ],
+      "enumColors": [
+        "red",
+        "purple",
+        "blue",
+        "amber",
+        "teal",
+        "gray",
+        "gray"
+      ]
+    },
+    "right_other_detail": {
+      "type": "string",
+      "description": "Which right is modified when 'Other' is chosen"
+    },
+    "assessed_need": {
+      "type": "string",
+      "description": "(1) The specific, individualized assessed need the modification answers"
+    },
+    "positive_interventions": {
+      "type": "string",
+      "description": "(2) Positive interventions and supports used before the modification"
+    },
+    "less_intrusive_methods": {
+      "type": "string",
+      "description": "(3) Less intrusive methods tried that did not work"
+    },
+    "condition_description": {
+      "type": "string",
+      "description": "(4) The condition, proportionate to the assessed need"
+    },
+    "data_collection_review": {
+      "type": "string",
+      "description": "(5) How data on the modification's effectiveness is collected and reviewed"
+    },
+    "review_time_limits": {
+      "type": "string",
+      "description": "(6) Time limits for periodic review of the modification"
+    },
+    "informed_consent": {
+      "type": "string",
+      "description": "(7) How the person (or guardian) gave informed consent"
+    },
+    "no_harm_assurance": {
+      "type": "string",
+      "description": "(8) Assurance the modification will cause no harm"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approval_body": {
+      "type": "string",
+      "description": "Approving body, e.g. Human Rights Committee"
+    },
+    "approval_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "consent_by": {
+      "type": "string",
+      "description": "Person or guardian who gave consent"
+    },
+    "consent_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "consent_document": {
+      "type": "string",
+      "description": "Privately stored consent document file URI"
+    },
+    "consent_document_name": {
+      "type": "string"
+    },
+    "data_method": {
+      "type": "string",
+      "description": "How effectiveness data is collected"
+    },
+    "data_frequency": {
+      "type": "string",
+      "description": "How often effectiveness data is collected"
+    },
+    "data_goal_id": {
+      "type": "string",
+      "description": "ClientGoal used to track the modification's effectiveness"
+    },
+    "data_goal_title": {
+      "type": "string"
+    },
+    "review_interval_days": {
+      "type": "number",
+      "default": 90,
+      "description": "Days between periodic reviews (element 6)"
+    },
+    "next_review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Computed: activation or last review plus the review interval"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "dsp_instruction": {
+      "type": "string",
+      "description": "Exactly how direct support staff carry the modification out"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Approved",
+        "Active",
+        "Under review",
+        "Ended"
+      ],
+      "default": "Draft",
+      "enumColors": [
+        "gray",
+        "blue",
+        "green",
+        "amber",
+        "gray"
+      ]
+    },
+    "end_reason": {
+      "type": "string"
+    },
+    "ended_at": {
+      "type": "string"
+    },
+    "ended_by": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "history": {
+      "type": "array",
+      "description": "Every status change, append only",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "changed_at": {
+            "type": "string"
+          },
+          "changed_by": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "reviews": {
+      "type": "array",
+      "description": "Each periodic review of the modification",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reviewed_at": {
+            "type": "string"
+          },
+          "reviewed_by": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "next_review_date": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "client_id",
+    "pcsp_id",
+    "right_affected",
+    "assessed_need",
+    "positive_interventions",
+    "less_intrusive_methods",
+    "condition_description",
+    "data_collection_review",
+    "review_time_limits",
+    "informed_consent",
+    "no_harm_assurance",
+    "review_interval_days",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.client_id": {
+            "$in": "{{user.data.assigned_client_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

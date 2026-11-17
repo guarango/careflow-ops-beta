@@ -96,6 +96,7 @@ export async function buildComplianceDeadlines(base44, user) {
     daySessions,
     serviceCodes,
     annualReports,
+    rightsMods,
   ] = await Promise.all([
     db.ISPlan.filter({ status: 'Active' }, { limit: 300 }).then((p) => p?.items || []).catch(() => []),
     fetchAll((cursor) => db.ClientGoal.list(cursor ? { limit: 500, cursor } : { limit: 500 })).catch(() => []),
@@ -113,6 +114,7 @@ export async function buildComplianceDeadlines(base44, user) {
     db.DayProgramSession.filter({ date: { $gte: weekStart, $lte: today } }, { limit: 300 }).then((p) => p?.items || []).catch(() => []),
     db.ServiceCode.list('-created_date', 300).catch(() => []),
     db.AnnualReport.list('-fiscal_year_end_year', 5).catch(() => []),
+    db.RightsModification.list('-created_date', 300).catch(() => []),
   ]);
 
   const codesById = new Map(serviceCodes.map((c) => [c.id, c]));
@@ -354,7 +356,29 @@ export async function buildComplianceDeadlines(base44, user) {
     });
   });
 
-  // ── 8. Annual report (July and August only) ────────────────────────────
+  // ── 8. Rights modification reviews (42 CFR 441.301(c)(4)(vi)(F), SOW 1.20–1.21) ──
+  const rmItems = [];
+  const scopedRights = rightsMods.filter(
+    (m) => inScope(m.client_id) && (m.status === 'Active' || m.status === 'Under review'),
+  );
+  scopedRights.forEach((m) => {
+    if (!m.next_review_date) return;
+    const days = daysBetween(today, m.next_review_date);
+    if (days > 14) return;
+    const passed = days < 0;
+    rmItems.push({
+      group: passed ? 'Review overdue' : 'Review due in 14 days',
+      id: `rights-${m.id}`,
+      label: `${m.client_name || 'Person'} · ${m.right_affected || 'Rights modification'}`,
+      sublabel: `Review due ${m.next_review_date}${m.status === 'Under review' ? ' · under review' : ''}`,
+      date: m.next_review_date,
+      days,
+      link: `/clients/${m.client_id}`,
+      severity: passed ? 'red' : 'amber',
+    });
+  });
+
+  // ── 9. Annual report (July and August only) ────────────────────────────
   const annualItems = [];
   const todayMonth = Number(today.slice(5, 7));
   let annualCard = null;
@@ -505,6 +529,23 @@ export async function buildComplianceDeadlines(base44, user) {
       ],
       items: dItems,
     },
+    {
+      key: 'rights_reviews',
+      title: 'Rights modification reviews',
+      citation: '42 CFR 441.301(c)(4)(vi)(F) · DHHS91172 SOW 1.20–1.21 — periodic review',
+      icon: 'shield-alert',
+      tone: toneFor({
+        red: rmItems.filter((i) => i.group === 'Review overdue').length,
+        amber: rmItems.filter((i) => i.group === 'Review due in 14 days').length,
+      }),
+      total: rmItems.length,
+      submetrics: [
+        { key: 'overdue', label: 'Review overdue', count: rmItems.filter((i) => i.group === 'Review overdue').length, tone: 'red' },
+        { key: 'due14', label: 'Due in 14 days', count: rmItems.filter((i) => i.group === 'Review due in 14 days').length, tone: 'amber' },
+        { key: 'active', label: 'Active modifications', count: scopedRights.length, tone: 'green' },
+      ],
+      items: rmItems,
+    },
   ];
   if (annualCard) cards.push(annualCard);
 
@@ -538,7 +579,7 @@ export function lateItems(deadlines) {
     for (const item of card.items || []) {
       const late =
         (typeof item.days === 'number' && item.days < 0) ||
-        ['Late', 'Past', 'Past due', 'Returned and not fixed', 'Shifts with no note', 'Scheduled goals missed without reason'].includes(item.group);
+        ['Late', 'Past', 'Past due', 'Returned and not fixed', 'Shifts with no note', 'Scheduled goals missed without reason', 'Review overdue'].includes(item.group);
       if (late) out.push({ card: card.key, cardTitle: card.title, ...item });
     }
   }
