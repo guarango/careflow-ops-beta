@@ -1,0 +1,44 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "compliance_deadline_digests",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_digests": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendComplianceDigests"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send compliance digests",
+            "description": "Manager daily digest, admin weekly digest, late alerts, returned-note push"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Daily 7am compliance digest: managers get items due within 7 days or late, admins get a Monday weekly digest plus immediate late alerts, DSPs are alerted when a note is returned",
+  "name": "Compliance Deadline Digests",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 7 * * *",
+      "one_time_date": null,
+      "timezone": "America/Denver",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

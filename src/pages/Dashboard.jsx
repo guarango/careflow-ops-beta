@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/AuthContext";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import HRDashboard from "@/components/dashboard/HRDashboard";
 import DSPDashboard from "@/components/dashboard/DSPDashboard";
+import ComplianceDeadlineSection from "@/components/dashboard/ComplianceDeadlineSection";
 
 export default function Dashboard() {
   const { role, effectiveUser } = useRole();
@@ -13,9 +14,19 @@ export default function Dashboard() {
   const viewer = effectiveUser || user;
 
   // Layout is chosen only on an exact role match — never defaulted to Admin.
-  if (role === "dsp") return <DSPDashboard user={viewer} />;
-  if (role === "manager" || role === "admin" || role === "super_admin") {
-    return <AdminDashboard user={viewer} />;
-  }
-  return null;
+  const panel =
+    role === "dsp" ? (
+      <DSPDashboard user={viewer} />
+    ) : role === "manager" || role === "admin" || role === "super_admin" ? (
+      <AdminDashboard user={viewer} />
+    ) : null;
+
+  if (!panel) return null;
+
+  return (
+    <div className="space-y-5 md:space-y-6">
+      <ComplianceDeadlineSection role={role} />
+      {panel}
+    </div>
+  );
 }
