@@ -27,7 +27,9 @@ import {
   overlapWarnings,
   findEvvLog,
   evvMismatch,
+  noteMinutes,
 } from "@/lib/serviceNote";
+import { goalsForService, hasMeasurement, validateEntry } from "@/lib/goalData";
 import { addDays, format, parseISO } from "date-fns";
 import toast from "react-hot-toast";
 
@@ -41,29 +43,38 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
   const now = new Date().toTimeString().slice(0, 5);
   const autosaveTimer = useRef(null);
 
+  const blankGoalEntry = (g) => ({
+    goal_id: g.id,
+    goal_title: g.goal_title,
+    skipped: false,
+    skip_reason: "",
+    trials_total: 0,
+    trials_correct: 0,
+    duration_minutes: "",
+    frequency_count: 0,
+    rating: "",
+    percentage: null,
+    prompt_level: g.prompt_level_baseline || "",
+    mastery_met: "",
+    narrative: "",
+    person_expressed_preference: null,
+    preference_detail: "",
+    person_communication: "",
+    session_highlight: "",
+    engagement: "",
+  });
+
+  // Only goals whose Support Strategy covers the note's service code are offered (T3).
   const buildInitialGoalData = () => {
-    const active = goals.filter(g => g.status === "Active").sort((a, b) => {
+    if (existingNote?.goal_data?.length) return existingNote.goal_data;
+    const active = goalsForService(
+      goals.filter(g => g.status === "Active"),
+      existingNote?.service_code_id
+    ).sort((a, b) => {
       const p = { High: 0, Medium: 1, Low: 2 };
       return (p[a.priority] ?? 1) - (p[b.priority] ?? 1);
     });
-    if (existingNote?.goal_data?.length) return existingNote.goal_data;
-    return active.map(g => ({
-      goal_id: g.id,
-      goal_title: g.goal_title,
-      skipped: false,
-      skip_reason: "",
-      trials_total: "",
-      trials_correct: "",
-      percentage: null,
-      prompt_level: g.prompt_level_baseline || "",
-      mastery_met: "",
-      narrative: "",
-      person_expressed_preference: null,
-      preference_detail: "",
-      person_communication: "",
-      session_highlight: "",
-      engagement: "",
-    }));
+    return active.map(blankGoalEntry);
   };
 
   const [form, setForm] = useState({
@@ -119,6 +130,23 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
   const evvLog = findEvvLog(form, evvLogs);
   const evvWarning = evvMismatch(form, evvLog, evvTolerance);
   const overlapList = overlapWarnings(form, siblingNotes, selectedCode);
+  const noteLengthMinutes = noteMinutes(form);
+
+  // Goal data must be internally valid before the note can be submitted.
+  const goalDataErrors = useMemo(() => {
+    const out = [];
+    for (const entry of form.goal_data) {
+      if (!entry.goal_id) continue;
+      const goal = goals.find(g => g.id === entry.goal_id);
+      const { errors } = validateEntry(entry, {
+        goal,
+        minutes: noteLengthMinutes,
+        serviceCodeId: form.service_code_id,
+      });
+      for (const e of errors) out.push({ key: `goal-${entry.goal_id}`, label: `${entry.goal_title}: ${e}` });
+    }
+    return out;
+  }, [form.goal_data, form.service_code_id, noteLengthMinutes, goals]);
 
   const setGoalData = (i, updated) => {
     const newGoalData = [...form.goal_data];
@@ -192,6 +220,10 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
     }
     if (codeOffPlan) {
       setSubmitError("That service code is not authorized on the active PCSP for this date. Choose an authorized code.");
+      return;
+    }
+    if (goalDataErrors.length > 0) {
+      setSubmitError(`Goal data needs attention: ${goalDataErrors[0].label}`);
       return;
     }
     if (missing.length > 0) {
@@ -488,32 +520,16 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
             {canEdit && (() => {
               const today = new Date();
               const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][today.getDay()];
-              const prnGoals = goals.filter(g => g.status === "Active" && g.charting_mode === "PRN" && !form.goal_data.some(gd => gd.goal_id === g.id));
+              const prnGoals = goalsForService(
+                goals.filter(g => g.status === "Active" && g.charting_mode === "PRN" && !form.goal_data.some(gd => gd.goal_id === g.id)),
+                form.service_code_id
+              );
               if (prnGoals.length === 0) return null;
               return (
                 <Select value="" onValueChange={(v) => {
                   const g = goals.find(x => x.id === v);
                   if (g) {
-                    setForm(f => ({
-                      ...f,
-                      goal_data: [...f.goal_data, {
-                        goal_id: g.id,
-                        goal_title: g.goal_title,
-                        skipped: false,
-                        skip_reason: "",
-                        trials_total: "",
-                        trials_correct: "",
-                        percentage: null,
-                        prompt_level: g.prompt_level_baseline || "",
-                        mastery_met: "",
-                        narrative: "",
-                        person_expressed_preference: null,
-                        preference_detail: "",
-                        person_communication: "",
-                        session_highlight: "",
-                        engagement: "",
-                      }],
-                    }));
+                    setForm(f => ({ ...f, goal_data: [...f.goal_data, blankGoalEntry(g)] }));
                   }
                 }}>
                   <SelectTrigger className="h-7 text-xs w-auto gap-1"><SelectValue placeholder="+ Add PRN Goal" /></SelectTrigger>
@@ -538,11 +554,21 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
                     key={entry.goal_id || i}
                     goalEntry={entry}
                     onChange={(updated) => setGoalData(i, updated)}
+                    goal={fullGoal}
                     clientName={client.first_name}
                     priority={fullGoal?.priority}
                     index={i}
                     chartingMode={fullGoal?.charting_mode}
                     scheduleDays={fullGoal?.schedule_days}
+                    noteContext={{
+                      date: form.date,
+                      start_time: form.start_time,
+                      end_time: form.end_time,
+                      staff_name: form.staff_name,
+                      service_code: form.service_code,
+                      service_code_id: form.service_code_id,
+                      minutes: noteLengthMinutes,
+                    }}
                   />
                 );
               })}
@@ -676,6 +702,17 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
           </div>
         )}
 
+        {canEdit && goalDataErrors.length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+            <p className="text-xs font-bold text-red-700 mb-1.5">Goal data needs attention ({goalDataErrors.length})</p>
+            <div className="space-y-1">
+              {goalDataErrors.map(e => (
+                <p key={e.key} className="text-[11px] text-red-700 leading-snug">{e.label}</p>
+              ))}
+            </div>
+          </div>
+        )}
+
         {canEdit && missing.length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-3">
             <p className="text-xs font-bold text-red-700 mb-1.5 flex items-center gap-1.5">
@@ -713,7 +750,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
               <Button variant="outline" size="sm" onClick={handleDraft} disabled={submitting || saving} className="gap-1.5">
                 <Save className="w-4 h-4" />Save Draft
               </Button>
-              <Button size="sm" onClick={handleSubmit} disabled={submitting || saving || missing.length > 0 || !!orderError || codeOffPlan || !sigChecked} className="gap-1.5">
+              <Button size="sm" onClick={handleSubmit} disabled={submitting || saving || missing.length > 0 || goalDataErrors.length > 0 || !!orderError || codeOffPlan || !sigChecked} className="gap-1.5">
                 <CheckCircle2 className="w-4 h-4" />
                 {submitting || saving ? "Submitting..." : form.status === "Returned" ? "Resubmit Note" : "Submit Session Note"}
               </Button>

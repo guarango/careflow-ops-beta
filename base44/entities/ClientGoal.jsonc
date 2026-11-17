@@ -350,17 +350,52 @@
     },
     "progress_entries": {
       "type": "array",
+      "description": "Goal data entries. An entry charted inside a service note inherits its session_note_id, date, times, staff and service code and is never edited \u2014 corrections are a new entry plus the exclusion of the old one.",
       "items": {
         "type": "object",
         "properties": {
+          "goal_id": {
+            "type": "string"
+          },
+          "session_note_id": {
+            "type": "string",
+            "description": "Service note this entry was charted inside (required for note-generated entries)"
+          },
           "date": {
             "type": "string"
           },
-          "score": {
+          "start_time": {
+            "type": "string",
+            "description": "Inherited from the note"
+          },
+          "end_time": {
+            "type": "string",
+            "description": "Inherited from the note"
+          },
+          "staff_id": {
+            "type": "string",
+            "description": "Inherited from the note"
+          },
+          "staff_name": {
+            "type": "string",
+            "description": "Inherited from the note"
+          },
+          "service_code_id": {
+            "type": "string",
+            "description": "Inherited from the note"
+          },
+          "service_code": {
             "type": "string"
           },
-          "prompt_level": {
+          "setting": {
             "type": "string"
+          },
+          "charting_mode": {
+            "type": "string",
+            "enum": [
+              "Scheduled",
+              "PRN"
+            ]
           },
           "trials_correct": {
             "type": "number"
@@ -368,7 +403,27 @@
           "trials_total": {
             "type": "number"
           },
-          "setting": {
+          "duration_minutes": {
+            "type": "number"
+          },
+          "frequency_count": {
+            "type": "number"
+          },
+          "rating": {
+            "type": "number"
+          },
+          "percentage": {
+            "type": "number"
+          },
+          "computed_score": {
+            "type": "number",
+            "description": "System-calculated \u2014 never typed by a DSP"
+          },
+          "score": {
+            "type": "string",
+            "description": "Display label of the computed score, e.g. 8/10 (80%)"
+          },
+          "prompt_level": {
             "type": "string"
           },
           "notes": {
@@ -380,15 +435,38 @@
           "shift_id": {
             "type": "string"
           },
-          "session_note_id": {
-            "type": "string"
-          },
-          "charting_mode": {
+          "status": {
             "type": "string",
             "enum": [
-              "Scheduled",
-              "PRN"
-            ]
+              "Valid",
+              "Flagged",
+              "Excluded"
+            ],
+            "default": "Valid",
+            "enumColors": [
+              "green",
+              "yellow",
+              "gray"
+            ],
+            "description": "Valid entries are evidence; Flagged await manager review; Excluded entries were corrected and never count"
+          },
+          "flagged_reason": {
+            "type": "string"
+          },
+          "flagged_by": {
+            "type": "string"
+          },
+          "flagged_at": {
+            "type": "string"
+          },
+          "exclusion_reason": {
+            "type": "string"
+          },
+          "excluded_by": {
+            "type": "string"
+          },
+          "excluded_at": {
+            "type": "string"
           },
           "missed_reason": {
             "type": "string",
@@ -435,6 +513,11 @@
         },
         {
           "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
             "role": "admin"
           }
         }
@@ -445,6 +528,11 @@
         {
           "data.client_id": {
             "$in": "{{user.data.assigned_client_ids}}"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
           }
         },
         {

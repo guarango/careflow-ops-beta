@@ -7,9 +7,15 @@ import { CheckCircle2, Circle, Clock, Edit2, PlusCircle, Target, ChevronDown, Ch
 import GoalAlerts from "./GoalAlerts";
 import ProgressLogDialog from "./ProgressLogDialog";
 import GoalTrendChart from "./GoalTrendChart";
+import GoalProgressEntryRow from "./GoalProgressEntryRow";
+import GoalEntryReviewDialog from "./GoalEntryReviewDialog";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/AuthContext";
+import { useRole } from "@/hooks/useRole";
+import { logAudit } from "@/lib/auditLog";
+import { entryStatus, isCountedEntry } from "@/lib/goalData";
 
 const DOMAIN_COLORS = {
   "Communication": "bg-blue-100 text-blue-700 border-blue-200",
@@ -64,7 +70,12 @@ export default function GoalDetailView({ goal, onEdit, onUpdated }) {
   const [showLog, setShowLog] = useState(false);
   const [aiSummary, setAiSummary] = useState(null);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [review, setReview] = useState(null);
+  const [reviewSaving, setReviewSaving] = useState(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { can } = useRole();
+  const canReview = can("approveSessionNotes");
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ClientGoal.update(id, data),
@@ -75,18 +86,60 @@ export default function GoalDetailView({ goal, onEdit, onUpdated }) {
     updateMutation.mutate({ id: goal.id, data: updated });
   };
 
+  // Flag, exclude or restore one entry — the numbers are never changed.
+  const handleEntryReview = async (reason) => {
+    if (!review) return;
+    const { action, index } = review;
+    const entries = [...(goal.progress_entries || [])];
+    const entry = entries[index];
+    if (!entry) return;
+    const actor = user?.full_name || "Manager";
+    const now = new Date().toISOString();
+    const before = entryStatus(entry);
+    if (action === "Flag") Object.assign(entry, { status: "Flagged", flagged_reason: reason, flagged_by: actor, flagged_at: now });
+    if (action === "Exclude") Object.assign(entry, { status: "Excluded", exclusion_reason: reason, excluded_by: actor, excluded_at: now });
+    if (action === "Restore") Object.assign(entry, {
+      status: "Valid", flagged_reason: "", flagged_by: "", flagged_at: "",
+      exclusion_reason: "", excluded_by: "", excluded_at: "",
+    });
+    setReviewSaving(true);
+    try {
+      await base44.entities.ClientGoal.update(goal.id, { progress_entries: entries });
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
+      logAudit({
+        action: `goal_data_${action.toLowerCase()}`,
+        target_type: "ClientGoal",
+        target_id: goal.id,
+        target_name: goal.goal_title,
+        field: "progress_entries",
+        old_value: before,
+        new_value: action === "Restore" ? "Valid" : action === "Flag" ? "Flagged" : "Excluded",
+        details: `${entry.date || ""} · ${entry.score || "no score"}${reason ? ` · Reason: ${reason}` : ""}`,
+      });
+      onUpdated?.();
+      setReview(null);
+    } finally {
+      setReviewSaving(false);
+    }
+  };
+
+  // Summaries read only Valid entries; flagged data is listed as needing review.
+  const allEntries = goal.progress_entries || [];
+  const countedEntries = allEntries.filter(isCountedEntry);
+  const flaggedEntries = allEntries.filter((e) => entryStatus(e) === "Flagged");
+
   const generateSummary = async () => {
     setLoadingAI(true);
-    const entries = goal.progress_entries || [];
-    const recent = entries.slice(-5);
+    const recent = countedEntries.slice(-5);
     const prompt = `You are writing a progress summary for an ISP/PCP review meeting.
 Goal: "${goal.goal_title}"
 Domain: ${goal.domain}
 Baseline: ${goal.baseline_description || goal.baseline || "Not specified"}
 Mastery Criteria: ${goal.mastery_criteria || goal.target || "Not specified"}
 Recent Progress Entries (last 5):
-${recent.map(e => `- ${e.date}: ${e.score}${e.prompt_level ? ` | Prompt: ${e.prompt_level}` : ""}${e.notes ? ` | Notes: ${e.notes}` : ""}`).join("\n") || "No data entered yet."}
-Write a 2-3 sentence plain-language progress summary suitable for reading aloud at a care team meeting. Be specific, strength-based, and professional. Do not use clinical jargon.`;
+${recent.map(e => `- ${e.date}: ${e.score}${e.prompt_level ? ` | Prompt: ${e.prompt_level}` : ""}${e.notes ? ` | Notes: ${e.notes}` : ""}`).join("\n") || "No valid data entered yet."}
+${flaggedEntries.length ? `\nData needing review (do NOT report as progress): ${flaggedEntries.length} entr${flaggedEntries.length === 1 ? "y" : "ies"} flagged by a manager.` : ""}
+Write a 2-3 sentence plain-language progress summary suitable for reading aloud at a care team meeting. Use only the valid entries above. Be specific, strength-based, and professional. Do not use clinical jargon.`;
 
     const result = await base44.integrations.Core.InvokeLLM({ prompt });
     setAiSummary(result);
@@ -102,7 +155,7 @@ Write a 2-3 sentence plain-language progress summary suitable for reading aloud 
     const pctMatch = goal.mastery_criteria.match(/(\d+)%/);
     if (!pctMatch) return null;
     const target = parseInt(pctMatch[1]);
-    const scored = entries.filter(e => {
+    const scored = countedEntries.filter(e => {
       const m = e.score?.match(/(\d+)%/) || e.score?.match(/(\d+)\/(\d+)/);
       return !!m;
     });
@@ -232,17 +285,21 @@ Write a 2-3 sentence plain-language progress summary suitable for reading aloud 
             </div>
           ) : (
             <div className="space-y-1.5 max-h-72 overflow-y-auto">
-              {[...entries].reverse().map((e, i) => (
-                <div key={i} className="flex flex-wrap items-start gap-x-3 gap-y-0.5 text-xs bg-muted/40 rounded-lg px-3 py-2">
-                  <span className="text-muted-foreground font-medium w-20 shrink-0">{e.date}</span>
-                  <span className="font-semibold text-foreground">{e.score}</span>
-                  {e.prompt_level && <span className="text-muted-foreground">Prompt: {e.prompt_level}</span>}
-                  {e.setting && <span className="text-muted-foreground">📍 {e.setting}</span>}
-                  {e.notes && <span className="text-muted-foreground italic col-span-full ml-20">{e.notes}</span>}
-                  {e.recorded_by && <span className="text-muted-foreground ml-auto shrink-0">— {e.recorded_by}</span>}
-                </div>
+              {entries.map((e, i) => ({ e, i })).reverse().map(({ e, i }) => (
+                <GoalProgressEntryRow
+                  key={i}
+                  entry={e}
+                  index={i}
+                  canReview={canReview}
+                  onReview={(action, index) => setReview({ action, index })}
+                />
               ))}
             </div>
+          )}
+          {flaggedEntries.length > 0 && (
+            <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
+              {flaggedEntries.length} entr{flaggedEntries.length === 1 ? "y" : "ies"} flagged — data needing review, not counted as progress.
+            </p>
           )}
         </TabsContent>
 
@@ -320,6 +377,16 @@ Write a 2-3 sentence plain-language progress summary suitable for reading aloud 
           goal={goal}
           onClose={() => setShowLog(false)}
           onSave={handleLogSave}
+        />
+      )}
+
+      {review && (
+        <GoalEntryReviewDialog
+          action={review.action}
+          entry={(goal.progress_entries || [])[review.index]}
+          saving={reviewSaving}
+          onClose={() => setReview(null)}
+          onConfirm={handleEntryReview}
         />
       )}
     </div>

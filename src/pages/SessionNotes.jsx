@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { buildNoteVersionEntry, initialNoteVersion, isNoteLocked } from "@/lib/noteVersioning";
 import { todayISO } from "@/lib/dateUtils";
 import { logAudit } from "@/lib/auditLog";
+import { syncNoteProgressEntries } from "@/lib/goalData";
 import {
   DEFAULT_LATE_HOURS,
   DEFAULT_EVV_TOLERANCE_MINUTES,
@@ -231,6 +232,19 @@ export default function SessionNotes() {
         details: `${timing}${late ? " · Late entry" : ""}`,
       });
     }
+    // Submitted notes carry their goal data onto the goals as Valid entries.
+    if (data.status === "Submitted" && savedId) {
+      try {
+        await syncNoteProgressEntries(
+          { ...payload, id: savedId },
+          goals.filter(g => g.client_id === data.client_id)
+        );
+        queryClient.invalidateQueries({ queryKey: ["goals"] });
+      } catch (e) {
+        toast.error("Note saved, but goal data could not be linked: " + (e?.message || "Unknown error"));
+      }
+    }
+
     clearDeepLink();
     setView("list"); setSelectedClient(null); setEditingNote(null);
   };

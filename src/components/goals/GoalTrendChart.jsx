@@ -2,12 +2,14 @@ import React from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { TrendingUp, Calendar, Target } from "lucide-react";
 import { format, parseISO, subMonths, isSameMonth } from "date-fns";
+import { isCountedEntry } from "@/lib/goalData";
 
 /**
  * GoalTrendChart — shows a trend chart and monthly summary for a goal's progress entries.
  */
 export default function GoalTrendChart({ goal }) {
-  const entries = (goal.progress_entries || []).filter(e => !e.missed_reason);
+  // Only Valid entries are evidence — flagged and excluded data stays out of the trend.
+  const entries = (goal.progress_entries || []).filter(isCountedEntry);
 
   if (entries.length === 0) {
     return (

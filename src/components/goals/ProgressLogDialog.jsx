@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { todayISO } from "@/lib/dateUtils";
+import { useAuth } from "@/lib/AuthContext";
 
 const PROMPT_LEVELS = ["Full Physical Assist", "Hand-Over-Hand", "Physical Prompt", "Gestural Prompt", "Verbal Prompt", "Indirect Verbal Cue", "Independent"];
 
 export default function ProgressLogDialog({ goal, onClose, onSave }) {
+  const { user } = useAuth();
   const [entry, setEntry] = useState({
     date: todayISO(),
     score: "",
@@ -18,19 +20,26 @@ export default function ProgressLogDialog({ goal, onClose, onSave }) {
     trials_total: "",
     setting: "",
     notes: "",
-    recorded_by: "",
+    recorded_by: user?.full_name || "",
     charting_mode: goal?.charting_mode || "Scheduled",
   });
 
   const e = entry;
   const set = (k, v) => setEntry(prev => ({ ...prev, [k]: v }));
 
+  // Correct can never exceed total: the score is computed, never typed.
+  const trialsInvalid = e.trials_correct !== "" && e.trials_total !== "" &&
+    (Number(e.trials_total) < 1 || Number(e.trials_correct) < 0 || Number(e.trials_correct) > Number(e.trials_total));
+
   const handleSave = () => {
-    const finalEntry = { ...e };
+    if (trialsInvalid) return;
+    const finalEntry = { ...e, status: "Valid", recorded_by: user?.full_name || e.recorded_by };
     // Auto-calculate score from trials if provided
     if (e.trials_correct !== "" && e.trials_total !== "") {
       const pct = Math.round((Number(e.trials_correct) / Number(e.trials_total)) * 100);
       finalEntry.score = `${e.trials_correct}/${e.trials_total} (${pct}%)`;
+      finalEntry.percentage = pct;
+      finalEntry.computed_score = pct;
     }
     const updated = { ...goal, progress_entries: [...(goal.progress_entries || []), finalEntry] };
     onSave(updated);
@@ -78,7 +87,10 @@ export default function ProgressLogDialog({ goal, onClose, onSave }) {
               {e.trials_correct !== "" && e.trials_total !== "" && Number(e.trials_total) > 0 && (
                 <p className="text-xs text-primary mt-1">= {Math.round((Number(e.trials_correct) / Number(e.trials_total)) * 100)}%</p>
               )}
-              {goal?.minimum_trials_per_session && Number(e.trials_total) > 0 && Number(e.trials_total) < goal.minimum_trials_per_session && (
+              {trialsInvalid && (
+                <p className="text-xs text-red-600 mt-1">Correct tries can't be more than total tries. Total tries must be at least 1.</p>
+              )}
+              {!trialsInvalid && goal?.minimum_trials_per_session && Number(e.trials_total) > 0 && Number(e.trials_total) < goal.minimum_trials_per_session && (
                 <p className="text-xs text-amber-600 mt-1">⚠ Minimum {goal.minimum_trials_per_session} trials required for valid data.</p>
               )}
             </div>
@@ -101,7 +113,7 @@ export default function ProgressLogDialog({ goal, onClose, onSave }) {
 
           <div>
             <Label className="text-xs">Recorded By</Label>
-            <Input value={e.recorded_by} onChange={el => set("recorded_by", el.target.value)} placeholder="Your name" className="h-8 text-sm" />
+            <Input value={e.recorded_by} readOnly disabled className="h-8 text-sm bg-muted/50" />
           </div>
 
           <div>
@@ -112,7 +124,7 @@ export default function ProgressLogDialog({ goal, onClose, onSave }) {
 
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleSave} disabled={!e.date || (!e.score && e.trials_correct === "")}>
+          <Button size="sm" onClick={handleSave} disabled={!e.date || trialsInvalid || (!e.score && e.trials_correct === "")}>
             Log Progress
           </Button>
         </DialogFooter>
