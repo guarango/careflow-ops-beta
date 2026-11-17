@@ -65,12 +65,60 @@
     "is_evv_required": {
       "type": "boolean",
       "default": false,
-      "description": "True for EVV-required services: Companion, Homemaker, Respite (except RP4, RP5, RPS), Supported Living, Personal Assistance"
+      "description": "EVV required for this service (DHHS91172 SOW 1.12)"
     },
-    "is_exempt_support_strategies": {
+    "summary_cadence": {
+      "type": "string",
+      "enum": [
+        "Quarterly",
+        "Monthly",
+        "Monthly Financial Statement",
+        "None"
+      ],
+      "default": "Quarterly",
+      "description": "How often a summary is required for this service (SOW 1.25)"
+    },
+    "support_strategy_required": {
+      "type": "boolean",
+      "default": true,
+      "description": "True when a Support Strategy must be documented (SOW 1.24(5)). Replaces is_exempt_support_strategies (inverse)."
+    },
+    "support_strategy_type": {
+      "type": "string",
+      "enum": [
+        "Standard",
+        "Behavior Support Plan",
+        "Medical Care Plan"
+      ],
+      "description": "Which plan type carries the support strategy. Empty when no strategy is required."
+    },
+    "goal_progress_required_in_summary": {
+      "type": "boolean",
+      "default": true,
+      "description": "True when quarterly/long-term summaries must show goal progress (SOW 1.25(5))"
+    },
+    "daily_note_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "annual_report_required": {
       "type": "boolean",
       "default": false,
-      "description": "True for ELS, MTP, PBA, Professional Medication Monitoring, Respite - exempt from support strategies and quarterly goal progress"
+      "description": "True when a fiscal-year annual report is required for this service"
+    },
+    "state": {
+      "type": "string",
+      "default": "UT",
+      "description": "US state code the rule set comes from"
+    },
+    "rule_source": {
+      "type": "string",
+      "description": "Citation for these requirements, e.g. DHHS91172 SOW 1.25"
+    },
+    "rule_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "False when the state rule behind these settings has not been verified yet"
     },
     "active": {
       "type": "boolean",
