@@ -21,13 +21,8 @@ Deno.serve(async (req) => {
     // Fetch all quarterly summaries that are not yet sent to SC
     const allSummaries = await base44.asServiceRole.entities.QuarterlySummary.list('-due_date', 500);
 
-    const pending = allSummaries.filter(s =>
-      s.status !== 'Sent to SC' && s.status !== 'Signed' || s.status === 'Signed'
-    );
-    // We care about: Draft, Pending Review, Signed (not yet sent), Overdue
-    const active = allSummaries.filter(s =>
-      s.status === 'Draft' || s.status === 'Pending Review' || s.status === 'Signed' || s.status === 'Overdue'
-    );
+    // We care about every summary that has not gone to the support coordinator yet
+    const active = allSummaries.filter(s => s.status !== 'Sent' && s.status !== 'Sent to SC');
 
     // Fetch managers and admins
     const allUsers = await base44.asServiceRole.entities.User.list().catch(() => []);
@@ -103,17 +98,29 @@ Deno.serve(async (req) => {
         reminders2Day++;
       }
 
-      // Past due — escalate to Admin
-      if (daysUntilDue <= 0 && summary.status !== 'Sent to SC' && !summary.escalated_to_admin) {
-        // Mark as overdue if still in draft/review
-        if (summary.status === 'Draft' || summary.status === 'Pending Review') {
+      // Past due — an unsent summary is Late (SOW 1.25)
+      if (daysUntilDue <= 0 && summary.status !== 'Sent' && summary.status !== 'Sent to SC') {
+        if (summary.status !== 'Late') {
           await base44.asServiceRole.entities.QuarterlySummary.update(summary.id, {
-            status: 'Overdue',
+            status: 'Late',
+            late_flagged_at: now.toISOString(),
             escalated_to_admin: true,
             escalated_at: now.toISOString(),
           });
           overdueMarked++;
-        } else {
+          await base44.asServiceRole.entities.AuditLog.create({
+            action: 'quarterly_summary_late',
+            event_type: 'generic',
+            actor_id: 'system',
+            actor_name: 'System',
+            actor_role: 'admin',
+            target_type: 'QuarterlySummary',
+            target_id: summary.id,
+            target_name: `${summary.client_name} — ${summary.quarter}`,
+            details: `Not sent to the support coordinator by the due date ${summary.due_date}; status set to Late.`,
+            timestamp: now.toISOString(),
+          }).catch(() => {});
+        } else if (!summary.escalated_to_admin) {
           await base44.asServiceRole.entities.QuarterlySummary.update(summary.id, {
             escalated_to_admin: true,
             escalated_at: now.toISOString(),

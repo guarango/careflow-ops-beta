@@ -32,7 +32,7 @@ export const NAV_ACCESS = {
   "/bsp":                   ["dsp", "manager", "admin"],
   "/isp":                   ["manager", "admin"],
   "/summaries/monthly":     ["manager", "admin"],
-  "/summaries/quarterly":   ["dsp", "manager", "admin"],
+  "/summaries/quarterly":   ["manager", "admin"],
   "/session-notes":         ["dsp", "manager", "admin"],
   "/emar":                  ["dsp", "manager", "admin"],
   "/incidents":             ["dsp", "manager", "admin"],

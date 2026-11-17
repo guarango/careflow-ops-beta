@@ -29,24 +29,136 @@
     "due_date": {
       "type": "string",
       "format": "date",
-      "description": "15 calendar days after quarter ends"
+      "description": "15 calendar days after the quarter ends (SOW 1.25)"
     },
-    "status": {
+    "format": {
       "type": "string",
       "enum": [
-        "Draft",
-        "Pending Review",
-        "Signed",
-        "Sent to SC",
-        "Overdue"
+        "Combined",
+        "Per service"
       ],
-      "default": "Draft"
+      "default": "Combined",
+      "description": "One summary covering all services, or one section per service"
+    },
+    "services_provided": {
+      "type": "array",
+      "description": "Element 2 \u2014 each service provided to the person this quarter",
+      "items": {
+        "type": "object",
+        "properties": {
+          "service_code_id": {
+            "type": "string"
+          },
+          "service_code": {
+            "type": "string"
+          },
+          "service_name": {
+            "type": "string"
+          },
+          "units_delivered": {
+            "type": "number",
+            "description": "15-minute units delivered"
+          },
+          "notes_count": {
+            "type": "number"
+          },
+          "staff_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "services_summary": {
+      "type": "string",
+      "description": "Element 4 \u2014 what was provided across the quarter"
+    },
+    "status_and_response": {
+      "type": "string",
+      "description": "Element 4 \u2014 the person's status, health, mood, engagement and response to supports"
+    },
+    "notable_events": {
+      "type": "string",
+      "description": "Element 4 \u2014 prefilled from incidents and significant notes this quarter"
+    },
+    "goal_progress": {
+      "type": "array",
+      "description": "Element 5 \u2014 one row per goal. Exempt services (ELS, MTP, PBA, Professional Medication Monitoring, Respite) carry no rows.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "goal_id": {
+            "type": "string"
+          },
+          "goal_title": {
+            "type": "string"
+          },
+          "pcsp_goal_text": {
+            "type": "string",
+            "description": "The goal as written on the PCSP"
+          },
+          "service_code_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "data_points_count": {
+            "type": "number"
+          },
+          "baseline": {
+            "type": "string"
+          },
+          "current_level": {
+            "type": "string"
+          },
+          "trend": {
+            "type": "string",
+            "enum": [
+              "Improving",
+              "Stable",
+              "Declining",
+              "Insufficient data"
+            ],
+            "default": "Insufficient data"
+          },
+          "prompt_level_trend": {
+            "type": "string"
+          },
+          "narrative": {
+            "type": "string",
+            "description": "Required before signing \u2014 explains progress, or why data is insufficient"
+          },
+          "mastery_met": {
+            "type": "boolean",
+            "default": false
+          },
+          "series": {
+            "type": "array",
+            "description": "Chart points for the quarter",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "monthly_summary_ids": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Monthly summaries used as source data"
     },
     "monthly_summary_dates": {
       "type": "array",
@@ -54,47 +166,12 @@
         "type": "string"
       }
     },
-    "services_provided": {
-      "type": "array",
-      "description": "Each service with date range, general summary, response, notable events, goal progress",
-      "items": {
-        "type": "object",
-        "properties": {
-          "service_type": {
-            "type": "string"
-          },
-          "service_code": {
-            "type": "string"
-          },
-          "date_range_start": {
-            "type": "string"
-          },
-          "date_range_end": {
-            "type": "string"
-          },
-          "general_summary": {
-            "type": "string"
-          },
-          "response_to_services": {
-            "type": "string"
-          },
-          "notable_events": {
-            "type": "string"
-          },
-          "goal_progress": {
-            "type": "string"
-          },
-          "goal_progress_exempt": {
-            "type": "boolean",
-            "default": false,
-            "description": "True for ELS, MTP, PBA, Professional Medication Monitoring, Respite"
-          }
-        }
-      }
-    },
-    "overall_status_summary": {
+    "writer_name": {
       "type": "string",
-      "description": "General summary of client's status across the quarter"
+      "description": "Element 6 \u2014 staff member who wrote it"
+    },
+    "writer_id": {
+      "type": "string"
     },
     "signed_by": {
       "type": "string",
@@ -112,19 +189,43 @@
     "signature_timestamp": {
       "type": "string"
     },
-    "sent_to_support_coordinator": {
-      "type": "boolean",
-      "default": false
-    },
-    "sent_to_sc_at": {
-      "type": "string"
-    },
-    "sent_to_sc_method": {
+    "sent_to": {
       "type": "string",
-      "description": "e.g. 'Email', 'Portal', 'Fax'"
+      "description": "Support coordinator the summary went to"
     },
-    "sent_to_sc_by": {
+    "sent_method": {
+      "type": "string",
+      "enum": [
+        "UPI",
+        "Email",
+        "Other"
+      ],
+      "description": "How it was sent to the support coordinator"
+    },
+    "sent_to_sc_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "sent_by_name": {
       "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Ready",
+        "Signed",
+        "Sent",
+        "Late"
+      ],
+      "default": "Draft",
+      "enumColors": [
+        "gray",
+        "yellow",
+        "blue",
+        "green",
+        "red"
+      ]
     },
     "reminder_7day_sent": {
       "type": "boolean",
@@ -141,6 +242,9 @@
     "escalated_at": {
       "type": "string"
     },
+    "late_flagged_at": {
+      "type": "string"
+    },
     "returned_note": {
       "type": "string"
     },
@@ -154,10 +258,8 @@
   "required": [
     "client_id",
     "client_name",
-    "quarter",
     "period_start",
     "period_end",
-    "due_date",
     "status"
   ],
   "rls": {
@@ -177,11 +279,6 @@
     },
     "read": {
       "$or": [
-        {
-          "data.client_id": {
-            "$in": "{{user.data.assigned_client_ids}}"
-          }
-        },
         {
           "user_condition": {
             "role": "admin"
