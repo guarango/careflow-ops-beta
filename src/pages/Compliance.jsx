@@ -13,10 +13,12 @@ import ChartingDashboard, { computeChartingAvg } from "@/components/compliance/C
 import AgencyScoreDashboard from "@/components/compliance/AgencyScoreDashboard";
 import AgencyFileSettings from "@/components/compliance/AgencyFileSettings";
 import AuditReportDialog from "@/components/compliance/AuditReportDialog";
+import ComplianceDeadlineSection from "@/components/dashboard/ComplianceDeadlineSection";
 
 export default function Compliance() {
   const { user } = useAuth();
-  const { can } = useRole();
+  const { can, role } = useRole();
+  const canDeadlines = role === "admin" || role === "manager" || role === "super_admin";
   const [showAuditReport, setShowAuditReport] = useState(false);
   // Each tab is its own feature; the route opens when any of them is viewable.
   const canStaffFiles = can("staffFilesView");
@@ -25,6 +27,7 @@ export default function Compliance() {
   const isAdmin = can("viewAgencyCompliance");
 
   const tabs = [
+    canDeadlines && { value: "deadlines", label: "Deadlines" },
     canStaffFiles && { value: "staff", label: "Staff Files" },
     canClientFiles && { value: "client", label: "Client Files" },
     canClientFiles && { value: "charting", label: "Charting" },
@@ -61,6 +64,11 @@ export default function Compliance() {
           ))}
         </TabsList>
 
+        {shows("deadlines") && (
+          <TabsContent value="deadlines">
+            <ComplianceDeadlineSection role={role} />
+          </TabsContent>
+        )}
         {shows("staff") && (
           <TabsContent value="staff">
             <StaffFilesDashboard />

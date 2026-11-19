@@ -4,7 +4,6 @@ import { useAuth } from "@/lib/AuthContext";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import HRDashboard from "@/components/dashboard/HRDashboard";
 import DSPDashboard from "@/components/dashboard/DSPDashboard";
-import ComplianceDeadlineSection from "@/components/dashboard/ComplianceDeadlineSection";
 
 export default function Dashboard() {
   const { role, effectiveUser } = useRole();
@@ -25,7 +24,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5 md:space-y-6">
-      <ComplianceDeadlineSection role={role} />
       {panel}
     </div>
   );
