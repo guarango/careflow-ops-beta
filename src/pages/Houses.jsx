@@ -16,6 +16,7 @@ import { Home, Plus, Pencil, MapPin, Users, Download } from "lucide-react";
 import { useFormFields } from "@/hooks/useFormFields";
 import CustomFieldsForm from "@/components/customfields/CustomFieldsForm";
 import CustomFieldsView from "@/components/customfields/CustomFieldsView";
+import HouseStaffAssignment from "@/components/houses/HouseStaffAssignment";
 import {
   activeFields, splitAnswers, valuesFromRecord, missingRequired,
   withRetiredAnswers, saveRestrictedValues, loadRestrictedValues, downloadCsv,
@@ -313,6 +314,7 @@ export default function Houses() {
               isAdmin={isAdmin}
               onChange={(id, v) => setCustomValues((prev) => ({ ...prev, [id]: v }))}
             />
+            {editing && <HouseStaffAssignment house={editing} />}
             {editing && <CustomFieldsView record={editing} definitions={fieldDefinitions} mode="retired" />}
           </div>
           <DialogFooter>
