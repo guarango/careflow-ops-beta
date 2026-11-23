@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, Plus, Search, ArrowLeft, ChevronRight, AlertTriangle, Clock, CalendarDays, LayoutGrid, List } from "lucide-react";
+import { Target, Plus, Search, ArrowLeft, ChevronRight, AlertTriangle, Clock, CalendarDays, LayoutGrid, List, CheckCircle2 } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import { useRole } from "@/hooks/useRole";
 import { useViewMode } from "@/hooks/useViewMode";
@@ -19,6 +19,8 @@ import GoalDetailView from "@/components/goals/GoalDetailView";
 import GoalAlerts from "@/components/goals/GoalAlerts";
 import GoalListView from "@/components/goals/GoalListView";
 import GoalsScheduledView from "@/components/goals/GoalsScheduledView";
+import GoalSignOffView from "@/components/goals/GoalSignOffView";
+import { todayISO } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import { differenceInDays, parseISO, isValid } from "date-fns";
 
@@ -92,6 +94,7 @@ export default function Goals() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
+  const [signOff, setSignOff] = useState(null); // { client, date }
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useViewMode("goals");
 
@@ -177,6 +180,19 @@ export default function Goals() {
     );
   }
 
+  // ── GOAL SIGN-OFF (staff, eMAR-style) ────────────
+  if (signOff) {
+    const signOffClient = clients.find(c => c.id === signOff.client.id) || signOff.client;
+    return (
+      <GoalSignOffView
+        client={signOffClient}
+        goals={visibleGoals.filter(g => g.client_id === signOffClient.id)}
+        date={signOff.date}
+        onBack={() => setSignOff(null)}
+      />
+    );
+  }
+
   // ── CLIENT GOAL LIST ─────────────────────────────
   if (selectedClient) {
     return (
@@ -200,9 +216,14 @@ export default function Goals() {
               <p className="text-xs text-muted-foreground">{clientGoals.length} goal{clientGoals.length !== 1 ? "s" : ""} · {activeGoals.length} active</p>
             </div>
           </div>
-          {canEditGoals && <Button size="sm" onClick={() => openNew(currentClient)} className="gap-1.5">
-            <Plus className="w-4 h-4" />Add Goal
-          </Button>}
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setSignOff({ client: currentClient, date: todayISO() })}>
+              <CheckCircle2 className="w-4 h-4" />Sign Off Goals
+            </Button>
+            {canEditGoals && <Button size="sm" onClick={() => openNew(currentClient)} className="gap-1.5">
+              <Plus className="w-4 h-4" />Add Goal
+            </Button>}
+          </div>
         </div>
 
         {clientGoals.length === 0 ? (
@@ -267,6 +288,7 @@ export default function Goals() {
         <GoalsScheduledView
           goals={visibleGoals}
           clients={activeClients}
+          onOpenSignOff={(client, date) => setSignOff({ client, date })}
           onSelectGoal={openGoalFromSchedule}
         />
       ) : filteredClients.length === 0 ? (
