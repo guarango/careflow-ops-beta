@@ -70,12 +70,26 @@ function getGoalDot(goal) {
   return "green";
 }
 
+const DAY_SHORT = {
+  Monday: "Mon", Tuesday: "Tue", Wednesday: "Wed", Thursday: "Thu",
+  Friday: "Fri", Saturday: "Sat", Sunday: "Sun",
+};
+
+function isScheduled(goal) {
+  return (goal.charting_mode || "Scheduled") === "Scheduled";
+}
+
 export default function ClientGoalCard({ client, goals, onClick }) {
   const initials = `${client.first_name[0]}${client.last_name[0]}`.toUpperCase();
   const colorClass = getColorForClient(client.id);
   const programType = getProgramType(client);
   const activeGoals = goals.filter(g => g.status === "Active");
-  const dots = activeGoals.map(getGoalDot);
+  // Scheduled goals first so the open charting work reads at a glance
+  const listed = [...activeGoals].sort(
+    (a, b) => (isScheduled(b) ? 1 : 0) - (isScheduled(a) ? 1 : 0)
+  );
+  const shown = listed.slice(0, 4);
+  const remaining = listed.length - shown.length;
 
   return (
     <EntityCard
@@ -87,7 +101,7 @@ export default function ClientGoalCard({ client, goals, onClick }) {
       subtitle={
         activeGoals.length === 0
           ? "No active goals"
-          : `${activeGoals.length} active goal${activeGoals.length !== 1 ? "s" : ""}`
+          : `${activeGoals.length} active · ${activeGoals.filter(isScheduled).length} scheduled`
       }
       badge={programType && (
         <span className="inline-flex max-w-full truncate rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
@@ -95,19 +109,43 @@ export default function ClientGoalCard({ client, goals, onClick }) {
         </span>
       )}
       footer={
-        <div className="flex flex-wrap gap-1">
-          {dots.map((color, i) => (
-            <span
-              key={i}
-              className={cn(
-                "h-2.5 w-2.5 flex-shrink-0 rounded-full",
-                color === "green" && "bg-green-500",
-                color === "yellow" && "bg-yellow-400",
-                color === "red" && "bg-red-500"
-              )}
-            />
-          ))}
-        </div>
+        listed.length === 0 ? (
+          <p className="text-[11px] text-muted-foreground">No open goals</p>
+        ) : (
+          <div className="w-full space-y-1">
+            {shown.map(goal => {
+              const dot = getGoalDot(goal);
+              const days = (goal.schedule_days || []).map(d => DAY_SHORT[d] || d);
+              return (
+                <div
+                  key={goal.id}
+                  className="flex items-center gap-1.5"
+                  title={days.length ? days.join(", ") : isScheduled(goal) ? "Scheduled" : "PRN"}
+                >
+                  <span
+                    className={cn(
+                      "h-2 w-2 flex-shrink-0 rounded-full",
+                      dot === "green" && "bg-green-500",
+                      dot === "yellow" && "bg-yellow-400",
+                      dot === "red" && "bg-red-500"
+                    )}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-[11px] leading-tight text-foreground">
+                    {goal.goal_title}
+                  </span>
+                  {!isScheduled(goal) ? (
+                    <span className="shrink-0 text-[9px] font-medium text-amber-600">PRN</span>
+                  ) : days.length > 0 ? (
+                    <span className="shrink-0 text-[9px] text-muted-foreground">{days.join(" ")}</span>
+                  ) : null}
+                </div>
+              );
+            })}
+            {remaining > 0 && (
+              <p className="text-[10px] text-muted-foreground">+{remaining} more</p>
+            )}
+          </div>
+        )
       }
     />
   );
