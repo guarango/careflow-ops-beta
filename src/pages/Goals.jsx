@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, Plus, Search, ArrowLeft, ChevronRight, AlertTriangle, Clock } from "lucide-react";
+import { Target, Plus, Search, ArrowLeft, ChevronRight, AlertTriangle, Clock, CalendarDays, LayoutGrid, List } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import { useRole } from "@/hooks/useRole";
 import { useViewMode } from "@/hooks/useViewMode";
@@ -18,6 +18,7 @@ import GoalFormDialog from "@/components/goals/GoalFormDialog";
 import GoalDetailView from "@/components/goals/GoalDetailView";
 import GoalAlerts from "@/components/goals/GoalAlerts";
 import GoalListView from "@/components/goals/GoalListView";
+import GoalsScheduledView from "@/components/goals/GoalsScheduledView";
 import { cn } from "@/lib/utils";
 import { differenceInDays, parseISO, isValid } from "date-fns";
 
@@ -43,6 +44,12 @@ const STATUS_COLORS = {
 };
 
 const PRIORITY_DOT = { High: "bg-red-500", Medium: "bg-amber-400", Low: "bg-slate-300" };
+
+const GOAL_VIEW_OPTIONS = [
+  { value: "grid", label: "Card view", Icon: LayoutGrid },
+  { value: "list", label: "List view", Icon: List },
+  { value: "scheduled", label: "Scheduled view", Icon: CalendarDays },
+];
 
 function hasAlerts(goal) {
   const entries = goal.progress_entries || [];
@@ -110,6 +117,11 @@ export default function Goals() {
     setForm(f); setEditing(null); setShowDialog(true);
   };
   const openEdit = (g) => { setForm({ ...EMPTY_FORM, ...g }); setEditing(g); setShowDialog(true); setSelectedGoal(null); };
+  const openGoalFromSchedule = (goal) => {
+    const owner = clients.find(c => c.id === goal.client_id);
+    if (owner) setSelectedClient(owner);
+    setSelectedGoal(goal);
+  };
 
   const handleSave = () => {
     if (editing) updateMutation.mutate({ id: editing.id, data: form });
@@ -238,16 +250,26 @@ export default function Goals() {
       <Card className="mb-4">
         <CardContent className="py-3">
           <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
-            </div>
-            <ViewToggle value={viewMode} onChange={setViewMode} />
+            {viewMode !== "scheduled" ? (
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 border-0 bg-transparent focus-visible:ring-0" />
+              </div>
+            ) : (
+              <p className="flex-1 text-xs text-muted-foreground">Pick a day to see each client's scheduled goals.</p>
+            )}
+            <ViewToggle value={viewMode} onChange={setViewMode} options={GOAL_VIEW_OPTIONS} />
           </div>
         </CardContent>
       </Card>
 
-      {filteredClients.length === 0 ? (
+      {viewMode === "scheduled" ? (
+        <GoalsScheduledView
+          goals={visibleGoals}
+          clients={activeClients}
+          onSelectGoal={openGoalFromSchedule}
+        />
+      ) : filteredClients.length === 0 ? (
         <EmptyState icon={Target} title="No clients found" description="Add ISP goals to start tracking client progress." action={<Button onClick={() => openNew()} size="sm"><Plus className="w-4 h-4 mr-1" />Add Goal</Button>} />
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

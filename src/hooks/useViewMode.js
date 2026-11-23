@@ -10,7 +10,7 @@ export function useViewMode(storageKey, defaultMode = "grid") {
   const [viewMode, setViewMode] = useState(() => {
     try {
       const saved = window.localStorage.getItem(key);
-      return saved === "grid" || saved === "list" ? saved : defaultMode;
+      return ["grid", "list", "scheduled"].includes(saved) ? saved : defaultMode;
     } catch {
       return defaultMode;
     }

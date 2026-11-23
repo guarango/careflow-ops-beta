@@ -7,10 +7,10 @@ const OPTIONS = [
   { value: "list", label: "List view", Icon: List },
 ];
 
-export default function ViewToggle({ value, onChange }) {
+export default function ViewToggle({ value, onChange, options = OPTIONS }) {
   return (
     <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border p-1">
-      {OPTIONS.map(({ value: optionValue, label, Icon }) => {
+      {options.map(({ value: optionValue, label, Icon }) => {
         const active = value === optionValue;
         return (
           <button
