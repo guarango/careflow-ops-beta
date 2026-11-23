@@ -7,8 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Info } from "lucide-react";
+import { Plus, Trash2, Info, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 const DOMAINS = ["Communication", "Activities of Daily Living", "Community Integration", "Social Skills", "Vocational/Employment", "Health & Wellness", "Behavioral Support", "Self-Advocacy", "Mobility & Motor Skills", "Leisure & Recreation", "Other"];
 const GOAL_TYPES = ["Acquisition", "Maintenance", "Generalization", "Reduction"];
@@ -37,6 +39,14 @@ export default function GoalFormDialog({ open, onClose, editing, form, setForm, 
 
   const f = form;
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const { data: plans = [] } = useQuery({
+    queryKey: ["isp-plans", f.client_id],
+    queryFn: () => base44.entities.ISPlan.filter({ client_id: f.client_id }),
+    enabled: !!f.client_id,
+  });
+  const linkedPlan = plans.find(p => p.id === f.pcsp_id) || null;
+  const planGoals = linkedPlan?.pcsp_goals || [];
 
   const addObjective = () => {
     const objs = [...(f.objectives || []), { title: "", target_date: "", status: "Not Started" }];
@@ -86,6 +96,48 @@ export default function GoalFormDialog({ open, onClose, editing, form, setForm, 
                   <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
+
+              {f.client_id && (
+                <div className="bg-muted/40 border border-border rounded-lg p-3 space-y-3">
+                  <div className="flex items-center gap-1.5">
+                    <Link2 className="w-3.5 h-3.5 text-primary" />
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Plan link</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs">PCSP this goal serves</Label>
+                    <Select value={f.pcsp_id || ""} onValueChange={v => setForm(prev => ({ ...prev, pcsp_id: v, pcsp_goal_id: "" }))}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder={plans.length ? "Select plan" : "No plans on file"} /></SelectTrigger>
+                      <SelectContent>
+                        {plans.map(p => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {(p.plan_type || "PCSP")} v{p.version || 1} · {p.status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldHint>Linking ties this goal to the exact plan version it supports.</FieldHint>
+                  </div>
+                  {linkedPlan && (
+                    <div>
+                      <Label className="text-xs">Goal as written on the plan</Label>
+                      <Select value={f.pcsp_goal_id || ""} onValueChange={v => set("pcsp_goal_id", v)}>
+                        <SelectTrigger className="h-8 text-sm"><SelectValue placeholder={planGoals.length ? "Select plan goal" : "No goals on this plan"} /></SelectTrigger>
+                        <SelectContent>
+                          {planGoals.map((g, i) => {
+                            const key = g.goal_id || `text:${g.goal_text_as_written}`;
+                            return <SelectItem key={key || i} value={key}>{g.goal_text_as_written || `Goal ${i + 1}`}</SelectItem>;
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {linkedPlan?.important_to && (
+                    <div className="text-[11px] text-muted-foreground">
+                      <span className="font-semibold text-foreground">Important to {linkedPlan.client_name}:</span> {linkedPlan.important_to}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div>
                 <Label>Goal Title * <span className="text-muted-foreground font-normal">(observable, measurable)</span></Label>

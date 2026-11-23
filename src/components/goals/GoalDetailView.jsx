@@ -3,14 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, Circle, Clock, Edit2, PlusCircle, Target, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Edit2, PlusCircle, Target, ChevronDown, ChevronRight, Sparkles, Link2 } from "lucide-react";
 import GoalAlerts from "./GoalAlerts";
 import ProgressLogDialog from "./ProgressLogDialog";
 import GoalTrendChart from "./GoalTrendChart";
 import GoalProgressEntryRow from "./GoalProgressEntryRow";
 import GoalEntryReviewDialog from "./GoalEntryReviewDialog";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { useRole } from "@/hooks/useRole";
@@ -76,6 +76,15 @@ export default function GoalDetailView({ goal, onEdit, onUpdated }) {
   const { user } = useAuth();
   const { can } = useRole();
   const canReview = can("approveSessionNotes");
+
+  const { data: linkedPlan } = useQuery({
+    queryKey: ["isp-plan", goal.pcsp_id],
+    queryFn: () => base44.entities.ISPlan.get(goal.pcsp_id),
+    enabled: !!goal.pcsp_id,
+  });
+  const planGoal = (linkedPlan?.pcsp_goals || []).find(
+    (g) => (g.goal_id || `text:${g.goal_text_as_written}`) === goal.pcsp_goal_id
+  );
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ClientGoal.update(id, data),
@@ -203,6 +212,21 @@ Write a 2-3 sentence plain-language progress summary suitable for reading aloud 
       </div>
 
       <GoalAlerts goal={goal} />
+
+      {linkedPlan && (
+        <div className="bg-violet-50 border border-violet-200 rounded-lg px-3 py-2 text-xs space-y-1">
+          <p className="font-semibold text-violet-900 flex items-center gap-1.5">
+            <Link2 className="w-3.5 h-3.5" />
+            Linked to {linkedPlan.plan_type || "PCSP"} v{linkedPlan.version || 1}
+          </p>
+          {planGoal?.goal_text_as_written && (
+            <p className="text-violet-800"><span className="font-medium">Plan goal:</span> {planGoal.goal_text_as_written}</p>
+          )}
+          {linkedPlan.important_to && (
+            <p className="text-violet-800"><span className="font-medium">Important to:</span> {linkedPlan.important_to}</p>
+          )}
+        </div>
+      )}
 
       {/* Compliance meter */}
       {compliancePct && (

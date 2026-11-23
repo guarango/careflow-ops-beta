@@ -30,7 +30,24 @@
     },
     "time": {
       "type": "string",
-      "description": "Auto-recorded administration time (HH:mm)"
+      "description": "Time the entry was made (HH:mm) \u2014 kept for existing records"
+    },
+    "event_time": {
+      "type": "string",
+      "description": "When the medication was actually given (HH:mm) \u2014 never overwritten by a late entry"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the medication was actually given, when it differs from the entry date"
+    },
+    "recorded_at": {
+      "type": "string",
+      "description": "Timestamp the entry was saved (ISO)"
+    },
+    "entered_by_name": {
+      "type": "string",
+      "description": "Person who entered the record"
     },
     "status": {
       "type": "string",
@@ -45,7 +62,7 @@
     },
     "reason": {
       "type": "string",
-      "description": "Required when status is not Administered"
+      "description": "Required for every outcome other than Administered"
     },
     "prn_reason_given": {
       "type": "string",
@@ -112,6 +129,46 @@
     "converted_to_incident_id": {
       "type": "string",
       "description": "IncidentReport ID if converted"
+    },
+    "corrections": {
+      "type": "array",
+      "description": "Append-only correction chain \u2014 the original entry is never overwritten",
+      "items": {
+        "type": "object",
+        "properties": {
+          "corrected_at": {
+            "type": "string"
+          },
+          "corrected_by": {
+            "type": "string"
+          },
+          "corrected_by_name": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "previous_status": {
+            "type": "string"
+          },
+          "previous_event_time": {
+            "type": "string"
+          },
+          "new_status": {
+            "type": "string"
+          },
+          "new_event_time": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "corrected_at",
+          "reason"
+        ]
+      }
     }
   },
   "required": [

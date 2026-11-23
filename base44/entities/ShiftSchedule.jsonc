@@ -99,6 +99,29 @@
     },
     "notes": {
       "type": "string"
+    },
+    "handoff_summary": {
+      "type": "string",
+      "description": "End-of-shift summary handed to the next staff member"
+    },
+    "handoff_by": {
+      "type": "string"
+    },
+    "handoff_by_name": {
+      "type": "string"
+    },
+    "handoff_at": {
+      "type": "string"
+    },
+    "closeout_missing": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Documentation items that were missing when the shift was closed out"
+    },
+    "closeout_checked_at": {
+      "type": "string"
     }
   },
   "required": [

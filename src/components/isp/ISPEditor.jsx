@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Wand2, ArrowLeft, Save, Plus, Trash2, Heart, Shield } from "lucide-react";
 import { assembleISPDraft, DOMAINS } from "./ISPAssembler";
 import SupportStrategiesEditor from "./SupportStrategiesEditor";
+import PCSPGoalsEditor from "@/components/pcsp/PCSPGoalsEditor";
 import { cn } from "@/lib/utils";
 
 const SUPPORT_LEVELS = ["No Support", "Intermittent", "Limited", "Extensive", "Pervasive"];
@@ -61,6 +62,10 @@ export default function ISPEditor({ plan, clients, onSave, onCancel, saving }) {
     queryFn: () => selectedClientId ? base44.entities.Authorization.filter({ client_id: selectedClientId }) : Promise.resolve([]),
     enabled: !!selectedClientId,
   });
+  const { data: serviceCodes = [] } = useQuery({
+    queryKey: ["service-codes"],
+    queryFn: () => base44.entities.ServiceCode.list(),
+  });
 
   const handleAssemble = () => {
     const client = clients.find(c => c.id === selectedClientId);
@@ -107,6 +112,7 @@ export default function ISPEditor({ plan, clients, onSave, onCancel, saving }) {
           <TabsTrigger value="voice" className="text-violet-700">Person's Voice ★</TabsTrigger>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="domains">Life Domains</TabsTrigger>
+          <TabsTrigger value="goals">Goals</TabsTrigger>
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="strategies">Support Strategies</TabsTrigger>
@@ -267,6 +273,27 @@ export default function ISPEditor({ plan, clients, onSave, onCancel, saving }) {
         </TabsContent>
 
         {/* ── HEALTH ── */}
+        {/* ── GOALS ── */}
+        <TabsContent value="goals" className="space-y-4">
+          <div className="bg-sky-50 border border-sky-200 rounded-xl px-4 py-3 text-xs text-sky-800">
+            Goals as written on the plan come first. Support Strategies and progress data hang off them.
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="What is important TO the person" hint="Their priorities, relationships and routines — what matters first">
+              <Textarea rows={3} value={form.important_to || ""} onChange={e => set("important_to", e.target.value)} className="text-sm" />
+            </Field>
+            <Field label="What is important FOR the person" hint="Health and safety needs the team must protect">
+              <Textarea rows={3} value={form.important_for || ""} onChange={e => set("important_for", e.target.value)} className="text-sm" />
+            </Field>
+          </div>
+          <PCSPGoalsEditor
+            goals={form.pcsp_goals || []}
+            setGoals={(next) => set("pcsp_goals", next)}
+            clientGoals={goals}
+            codes={serviceCodes}
+          />
+        </TabsContent>
+
         <TabsContent value="health" className="space-y-4">
           <p className="text-xs text-muted-foreground">Auto-assembled from health records and MAR. Review and supplement.</p>
           {[

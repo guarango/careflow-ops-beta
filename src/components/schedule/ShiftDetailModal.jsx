@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import DictationButton from "@/components/shared/DictationButton";
 import MissedGoalsDialog from "@/components/goals/MissedGoalsDialog";
+import ShiftHandoffSection from "./ShiftHandoffSection";
+import { shiftMissingDocs } from "@/lib/shiftCloseout";
 
 const STATUSES = ["Scheduled", "In Progress", "Completed", "Missed", "Cancelled"];
 const STATUS_COLORS = {
@@ -44,7 +46,24 @@ export default function ShiftDetailModal({ shift, conflictInfo, canEdit, onClose
   const [showExceptionReason, setShowExceptionReason] = useState(false);
   const [exceptionReason, setExceptionReason] = useState("");
   const [pendingClockAction, setPendingClockAction] = useState(null);
+  const [closeoutError, setCloseoutError] = useState("");
   const queryClient = useQueryClient();
+
+  const { data: linkedNotes = [] } = useQuery({
+    queryKey: ["shift-linked-notes", shift?.id],
+    queryFn: () => base44.entities.SessionNote.filter({ shift_id: shift.id }),
+    enabled: !!shift?.id,
+  });
+  const { data: shiftMeds = [] } = useQuery({
+    queryKey: ["shift-client-meds", shift?.client_id],
+    queryFn: () => base44.entities.Medication.filter({ client_id: shift.client_id }),
+    enabled: !!shift?.client_id,
+  });
+  const { data: shiftMedLogs = [] } = useQuery({
+    queryKey: ["shift-client-med-logs", shift?.client_id, shift?.date],
+    queryFn: () => base44.entities.MedicationLog.filter({ client_id: shift.client_id, date: shift.date }),
+    enabled: !!shift?.client_id && !!shift?.date,
+  });
 
   const { data: clientGoals = [] } = useQuery({
     queryKey: ["client-goals", shift?.client_id],
@@ -261,6 +280,23 @@ export default function ShiftDetailModal({ shift, conflictInfo, canEdit, onClose
   };
 
   const handleStatusUpdate = () => {
+    if (status === "Completed") {
+      const missing = shiftMissingDocs({
+        shift,
+        notes: linkedNotes,
+        medLogs: shiftMedLogs,
+        medications: shiftMeds,
+      });
+      if (missing.length > 0) {
+        setCloseoutError(`Cannot complete this shift: ${missing.map(m => m.label.toLowerCase()).join(", ")}.`);
+        return;
+      }
+      if (!(shift.handoff_summary || "").trim()) {
+        setCloseoutError("Add the end-of-shift summary before completing this shift.");
+        return;
+      }
+    }
+    setCloseoutError("");
     updateMutation.mutate({ id: shift.id, data: { status } });
   };
 
@@ -395,7 +431,22 @@ export default function ShiftDetailModal({ shift, conflictInfo, canEdit, onClose
             <Badge className={cn("mt-2 text-xs", STATUS_COLORS[shift.status] || STATUS_COLORS.Scheduled)}>
               Current: {shift.status}
             </Badge>
+            {closeoutError && (
+              <p className="text-[11px] text-red-600 mt-2 flex items-start gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />{closeoutError}
+              </p>
+            )}
           </div>
+
+          <ShiftHandoffSection
+            shift={shift}
+            notes={linkedNotes}
+            medLogs={shiftMedLogs}
+            medications={shiftMeds}
+            canEdit={canEdit}
+            saving={updateMutation.isPending}
+            onUpdate={(data) => { setCloseoutError(""); updateMutation.mutate({ id: shift.id, data }); }}
+          />
         </div>
 
         {canEdit && (

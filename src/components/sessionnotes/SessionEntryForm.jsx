@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, CheckCircle2, Save, Wifi, WifiOff, Heart, Lock, Clock, History, AlertTriangle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Save, Wifi, WifiOff, Heart, Lock, Clock, History, AlertTriangle, BookOpen } from "lucide-react";
 import HealthSafetyFlags, { FLAGS } from "./HealthSafetyFlags";
 import GoalDataCard from "./GoalDataCard";
 import AddendumDialog from "./AddendumDialog";
@@ -30,6 +30,9 @@ import {
   noteMinutes,
 } from "@/lib/serviceNote";
 import { goalsForService, hasMeasurement, validateEntry } from "@/lib/goalData";
+import { useAuth } from "@/lib/AuthContext";
+import { useMyStaffRecord } from "@/hooks/useMyStaffRecord";
+import { needsAcknowledgment, planVersionLabel } from "@/lib/planAcknowledgment";
 import { SL_CODES, supportedLivingWarnings } from "@/lib/supportedLivingValidations";
 import SupportedLivingChecks from "./SupportedLivingChecks";
 import { useQuery } from "@tanstack/react-query";
@@ -118,6 +121,45 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
 
   // A submitted note is locked — only Draft and Returned notes stay editable
   const isLocked = isNoteLocked(form.status);
+
+  // Plan acknowledgment — a staff member records reading this exact plan version
+  // before charting for this client. Asked once per version, never again.
+  const { user } = useAuth();
+  const { data: myStaff } = useMyStaffRecord();
+  const [ackRecorded, setAckRecorded] = useState(false);
+  const [ackSaving, setAckSaving] = useState(false);
+  const { data: planAcks = [], refetch: refetchAcks } = useQuery({
+    queryKey: ["plan-acks", pcsp?.id],
+    queryFn: () => base44.entities.PlanAcknowledgment.filter({ plan_id: pcsp.id }),
+    enabled: !!pcsp?.id,
+  });
+  const needsPlanAck =
+    !isLocked && !!pcsp?.id && !!myStaff?.id &&
+    needsAcknowledgment(planAcks, pcsp, myStaff.id) && !ackRecorded;
+
+  const acknowledgePlan = async () => {
+    if (!myStaff?.id) return;
+    setAckSaving(true);
+    try {
+      await base44.entities.PlanAcknowledgment.create({
+        client_id: client.id,
+        client_name: `${client.first_name} ${client.last_name}`,
+        plan_id: pcsp.id,
+        plan_version: Number(pcsp.version || 1),
+        plan_label: planVersionLabel(pcsp),
+        staff_id: myStaff.id,
+        staff_name: `${myStaff.first_name} ${myStaff.last_name}`,
+        staff_email: myStaff.email || user?.email || "",
+        acknowledged_at: new Date().toISOString(),
+      });
+      setAckRecorded(true);
+      refetchAcks();
+    } catch (err) {
+      setSubmitError("Could not record the plan acknowledgment. Please try again.");
+    } finally {
+      setAckSaving(false);
+    }
+  };
   const canEdit = !isLocked;
 
   // Service codes come from the active PCSP; codes with no daily note are skipped.
@@ -245,6 +287,10 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
     }
     if (codeOffPlan) {
       setSubmitError("That service code is not authorized on the active PCSP for this date. Choose an authorized code.");
+      return;
+    }
+    if (needsPlanAck) {
+      setSubmitError("Acknowledge the current plan version before submitting this note.");
       return;
     }
     if (goalDataErrors.length > 0) {
@@ -747,6 +793,27 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
           </div>
         )}
 
+        {canEdit && needsPlanAck && (
+          <div className="bg-amber-50 border border-amber-300 rounded-xl p-3">
+            <p className="text-xs font-bold text-amber-900 flex items-center gap-1.5 mb-1">
+              <BookOpen className="w-3.5 h-3.5" />Read this plan before charting
+            </p>
+            <p className="text-[11px] text-amber-800 mb-2">
+              Acknowledge {planVersionLabel(pcsp)} for this client. You will not be asked again for this version.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1.5 border-amber-400 text-amber-900 hover:bg-amber-100"
+              onClick={acknowledgePlan}
+              disabled={ackSaving}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              {ackSaving ? "Recording…" : "I have read this plan"}
+            </Button>
+          </div>
+        )}
+
         {canEdit && goalDataErrors.length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-3">
             <p className="text-xs font-bold text-red-700 mb-1.5">Goal data needs attention ({goalDataErrors.length})</p>
@@ -795,7 +862,7 @@ export default function SessionEntryForm({ client, goals, existingNote, staffId,
               <Button variant="outline" size="sm" onClick={handleDraft} disabled={submitting || saving} className="gap-1.5">
                 <Save className="w-4 h-4" />Save Draft
               </Button>
-              <Button size="sm" onClick={handleSubmit} disabled={submitting || saving || missing.length > 0 || goalDataErrors.length > 0 || !!orderError || codeOffPlan || !sigChecked} className="gap-1.5">
+              <Button size="sm" onClick={handleSubmit} disabled={submitting || saving || missing.length > 0 || goalDataErrors.length > 0 || !!orderError || codeOffPlan || !sigChecked || needsPlanAck} className="gap-1.5">
                 <CheckCircle2 className="w-4 h-4" />
                 {submitting || saving ? "Submitting..." : form.status === "Returned" ? "Resubmit Note" : "Submit Session Note"}
               </Button>

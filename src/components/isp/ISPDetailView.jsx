@@ -8,6 +8,7 @@ import { ArrowLeft, Edit, AlertTriangle, CheckCircle2, Pen, Heart } from "lucide
 import ISPGoalsSummary from "./ISPGoalsSummary";
 import ISPSignaturePanel from "./ISPSignaturePanel";
 import ISPPDFExport from "./ISPPDFExport";
+import PlanAcknowledgmentCard from "./PlanAcknowledgmentCard";
 import { validateSupportStrategies } from "./SupportStrategiesEditor";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -149,6 +150,12 @@ export default function ISPDetailView({ plan, onEdit, onBack, onUpdate, updating
         <div className="mb-4 bg-slate-50 border border-border rounded-xl px-4 py-3 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">{sigSigned}/{sigTotal} signatures collected</p>
           <Button size="sm" variant="outline" onClick={() => onUpdate({ ...plan, status: "Pending Signatures" })} disabled={updating}><Pen className="w-4 h-4 mr-1" />Send for Signatures</Button>
+        </div>
+      )}
+
+      {plan.status === "Active" && (
+        <div className="mb-4">
+          <PlanAcknowledgmentCard plan={plan} clientName={plan.client_name} />
         </div>
       )}
 

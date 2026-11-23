@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { getAgencyId } from "@/lib/agency";
 
 /**
  * Single writer for audit entries created from the app.
@@ -29,7 +30,9 @@ export async function logAudit({
 }) {
   try {
     const me = await currentActor();
+    const agencyId = await getAgencyId();
     await base44.entities.AuditLog.create({
+      agency_id: agencyId,
       action,
       event_type,
       actor_id: me?.id || "",

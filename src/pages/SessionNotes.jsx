@@ -443,7 +443,18 @@ export default function SessionNotes() {
                             </div>
                           </TableCell>
                           <TableCell className="text-sm">{n.date}</TableCell>
-                          <TableCell className="hidden md:table-cell text-sm">{n.service_code || "—"}</TableCell>
+                          <TableCell className="hidden md:table-cell text-sm">
+                            <div className="flex flex-col">
+                              <span>{n.service_code || "—"}</span>
+                              {(n.shift_id || n.evv_log_id) && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  {n.shift_id ? "Shift linked" : ""}
+                                  {n.shift_id && n.evv_log_id ? " · " : ""}
+                                  {n.evv_log_id ? "EVV visit" : ""}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell className="hidden md:table-cell text-sm">{n.staff_name || "—"}</TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-0.5">

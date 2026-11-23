@@ -44,6 +44,11 @@ export default function MedTabContent({ client, medications, canEdit, onAdd, onE
                   {med.is_controlled && (
                     <span className="ml-2 text-[10px] font-bold text-red-600 bg-red-100 px-1 rounded">C2</span>
                   )}
+                  {med.verification_status !== "Verified" && (
+                    <span className="ml-2 text-[10px] font-semibold text-amber-700 bg-amber-100 px-1 rounded">
+                      {med.verification_status || "Unverified"}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">{med.dosage}</TableCell>
                 <TableCell className="text-sm hidden sm:table-cell">{med.frequency}</TableCell>

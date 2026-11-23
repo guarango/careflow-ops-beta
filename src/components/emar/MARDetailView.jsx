@@ -23,6 +23,7 @@ function MedRow({ med, log, onLogChange, isControlled, isPRN, isMissed, schedule
   const [status, setStatus] = useState(log?.status || "Administered");
   const [reason, setReason] = useState(log?.reason || "");
   const [prnReasonGiven, setPrnReasonGiven] = useState(log?.prn_reason_given || "");
+  const [eventTime, setEventTime] = useState(log?.event_time || "");
   const { user } = useAuth();
 
   const needsReason = status !== "Administered";
@@ -59,6 +60,9 @@ function MedRow({ med, log, onLogChange, isControlled, isPRN, isMissed, schedule
         signed_at: now.toISOString(),
         staff_initials: initials,
         time: recordedTime,
+        event_time: eventTime || recordedTime,
+        recorded_at: now.toISOString(),
+        entered_by_name: fullName,
         date: recordedDate,
         is_late: isLate,
         review_status: needsReason ? "pending_review" : (isLate ? "pending_review" : null),
@@ -129,6 +133,23 @@ function MedRow({ med, log, onLogChange, isControlled, isPRN, isMissed, schedule
             <div>
               <p className="text-gray-400 mb-1">Diagnosis</p>
               <p className="font-medium text-gray-700 pt-1 truncate">{med.diagnosis || "—"}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div>
+              <p className="text-gray-400 mb-1 text-xs">Time Given (actual)</p>
+              <Input
+                type="time"
+                value={eventTime}
+                onChange={e => { setEventTime(e.target.value); onLogChange(med.id, { event_time: e.target.value }); }}
+                className="h-7 text-xs px-2 border-gray-200"
+              />
+              <p className="text-[9px] text-gray-400 mt-0.5">Leave blank to use the time you sign.</p>
+            </div>
+            <div>
+              <p className="text-gray-400 mb-1 text-xs">Entry time</p>
+              <p className="text-xs text-gray-600 pt-1">Recorded automatically when you sign</p>
             </div>
           </div>
 
@@ -205,6 +226,7 @@ function isMissedWindow(timeLabel) {
 export default function MARDetailView({ client, time, meds, date, allMeds, logs, onBack, onSave }) {
   const queryClient = useQueryClient();
   const [logMap, setLogMap] = useState({});
+  const [saveError, setSaveError] = useState("");
 
   const prnMeds = allMeds?.filter(m => m.client_id === client.id && m.is_prn && m.status === "Active") || [];
   const scheduledMeds = meds || [];
@@ -222,6 +244,15 @@ export default function MARDetailView({ client, time, meds, date, allMeds, logs,
   });
 
   const handleSave = async () => {
+    // Every outcome other than Administered needs a documented reason.
+    const missingReasons = Object.values(logMap).filter(
+      (d) => (d.status || "Administered") !== "Administered" && !(d.reason || "").trim()
+    );
+    if (missingReasons.length > 0) {
+      setSaveError("A reason is required for every outcome other than Administered.");
+      return;
+    }
+    setSaveError("");
     for (const [medId, data] of Object.entries(logMap)) {
       if (!data.signed && !data.status) continue;
       const med = [...scheduledMeds, ...prnMeds].find(m => m.id === medId);
@@ -233,6 +264,9 @@ export default function MARDetailView({ client, time, meds, date, allMeds, logs,
         medication_name: med.medication_name,
         date: data.date || date,
         time: data.time || new Date().toTimeString().slice(0, 5),
+        event_time: data.event_time || data.time || new Date().toTimeString().slice(0, 5),
+        recorded_at: data.recorded_at || new Date().toISOString(),
+        entered_by_name: data.signed_by || "",
         status: data.status || "Administered",
         notes: data.notes || "",
         reason: data.reason || "",
@@ -363,7 +397,14 @@ export default function MARDetailView({ client, time, meds, date, allMeds, logs,
                   <TableRow key={l.id} className="hover:bg-gray-50">
                     <TableCell className="text-xs text-gray-500">{time}</TableCell>
                     <TableCell className="text-xs font-medium">{l.medication_name}</TableCell>
-                    <TableCell className="text-xs">{l.time || "—"}</TableCell>
+                    <TableCell className="text-xs">
+                      {l.event_time || l.time || "—"}
+                      {l.recorded_at && (
+                        <span className="block text-[10px] text-gray-400">
+                          entered {(() => { try { return format(new Date(l.recorded_at), "h:mm a"); } catch { return ""; } })()}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs">
                       {l.status !== "Administered" ? (
                         <span className="text-red-600 font-medium">{l.status}</span>
@@ -386,6 +427,9 @@ export default function MARDetailView({ client, time, meds, date, allMeds, logs,
       )}
 
       {/* Action buttons */}
+      {saveError && (
+        <p className="text-xs text-red-600 font-medium pt-2">{saveError}</p>
+      )}
       <div className="flex flex-wrap gap-3 pt-2 border-t border-gray-200">
         <Button onClick={handleSave} disabled={createLogMutation.isPending} className="px-6">
           {createLogMutation.isPending ? "Saving…" : "Save"}

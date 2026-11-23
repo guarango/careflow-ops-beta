@@ -103,6 +103,33 @@
         "On Hold"
       ],
       "default": "Active"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "Unverified",
+        "Verified",
+        "Needs Correction"
+      ],
+      "default": "Unverified",
+      "enumColors": [
+        "red",
+        "green",
+        "amber"
+      ],
+      "description": "Order verification against the prescriber's order"
+    },
+    "verified_by": {
+      "type": "string"
+    },
+    "verified_by_name": {
+      "type": "string"
+    },
+    "verified_at": {
+      "type": "string"
+    },
+    "verification_notes": {
+      "type": "string"
     }
   },
   "required": [

@@ -17,6 +17,7 @@ import { Pill, Plus, Search, LayoutGrid, List, ArrowLeft } from "lucide-react";
 import { useAssignedClients } from "@/hooks/useAssignedClients";
 import NoDSPClientsState from "@/components/shared/NoDSPClientsState";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/lib/AuthContext";
 import { format } from "date-fns";
 import ClientGridCard from "@/components/emar/ClientGridCard";
 import MedTabContent from "@/components/emar/MedTabContent";
@@ -26,6 +27,8 @@ import MARScheduledView from "@/components/emar/MARScheduledView";
 import MARDetailView from "@/components/emar/MARDetailView";
 import MARAdminSummary from "@/components/emar/MARAdminSummary";
 import MedErrorReviewQueue from "@/components/emar/MedErrorReviewQueue";
+import MedLogCorrectionDialog from "@/components/emar/MedLogCorrectionDialog";
+import MedOrderVerification from "@/components/emar/MedOrderVerification";
 import { cn } from "@/lib/utils";
 import { todayISO } from "@/lib/dateUtils";
 
@@ -41,14 +44,16 @@ const emptyMed = {
 };
 const emptyLog = {
   medication_id: "", client_id: "", client_name: "", medication_name: "",
-  administered_by: "", administered_by_name: "", date: "", time: "", status: "Administered", notes: "",
+  administered_by: "", administered_by_name: "", date: "", event_time: "", time: "",
+  status: "Administered", reason: "", notes: "",
   signature_timestamp: "",
 };
 
 export default function EMAR() {
   const { isDSPMode, assignedClientIds } = useAssignedClients();
-  const { can } = useRole();
+  const { can, isManager, isAdmin } = useRole();
   const canEdit = can("emarEdit");
+  const canCorrect = isManager || isAdmin;
 
   const [tab, setTab] = useState("mar");       // "mar" | "medications" | "logs"
   const [viewMode, setViewMode] = useState("grid");
@@ -62,9 +67,11 @@ export default function EMAR() {
   const [logClientId, setLogClientId] = useState("");
   const [logSigChecked, setLogSigChecked] = useState(false);
   const [logSigTimestamp, setLogSigTimestamp] = useState("");
+  const [correctionLog, setCorrectionLog] = useState(null);
   const [search, setSearch] = useState("");
 
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: medications = [] } = useQuery({ queryKey: ["medications"], queryFn: () => base44.entities.Medication.list() });
   const { data: logs = [] } = useQuery({ queryKey: ["med-logs"], queryFn: () => base44.entities.MedicationLog.list("-created_date") });
@@ -90,6 +97,31 @@ export default function EMAR() {
       setLogSigTimestamp("");
     },
   });
+
+  const verifyMedMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Medication.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["medications"] }),
+  });
+  const correctionMutation = useMutation({
+    mutationFn: ({ id, corrections }) => base44.entities.MedicationLog.update(id, { corrections }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["med-logs"] });
+      setCorrectionLog(null);
+    },
+  });
+
+  const verifyMed = (patch) => {
+    if (!editingMed) return;
+    const data = {
+      ...patch,
+      verified_by: user?.id || "",
+      verified_by_name: user?.full_name || user?.email || "Staff",
+      verified_at: new Date().toISOString(),
+    };
+    setEditingMed((m) => ({ ...m, ...data }));
+    setMedForm((f) => ({ ...f, ...data }));
+    verifyMedMutation.mutate({ id: editingMed.id, data });
+  };
 
   const closeMedDialog = () => { setShowMedDialog(false); setEditingMed(null); setMedForm(emptyMed); };
 
@@ -288,9 +320,11 @@ export default function EMAR() {
                       <TableHead>Client</TableHead>
                       <TableHead>Medication</TableHead>
                       <TableHead>Date</TableHead>
-                      <TableHead>Time</TableHead>
+                      <TableHead>Given</TableHead>
+                      <TableHead>Recorded</TableHead>
                       <TableHead>By</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Corrections</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -299,9 +333,25 @@ export default function EMAR() {
                         <TableCell className="font-medium">{l.client_name || "—"}</TableCell>
                         <TableCell>{l.medication_name}</TableCell>
                         <TableCell className="text-sm">{l.date}</TableCell>
-                        <TableCell className="text-sm">{l.time || "—"}</TableCell>
+                        <TableCell className="text-sm font-medium">{l.event_time || l.time || "—"}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {l.recorded_at ? format(new Date(l.recorded_at), "h:mm a") : l.time || "—"}
+                        </TableCell>
                         <TableCell className="text-sm">{l.administered_by_name || "—"}</TableCell>
-                        <TableCell><StatusBadge status={l.status} /></TableCell>
+                        <TableCell>
+                          <StatusBadge status={l.status} />
+                          {l.reason && <p className="text-[10px] text-muted-foreground mt-0.5 max-w-[160px] truncate">{l.reason}</p>}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {(l.corrections || []).length > 0 && (
+                            <p className="text-[10px] text-amber-700 mb-1">{l.corrections.length} correction{l.corrections.length === 1 ? "" : "s"}</p>
+                          )}
+                          {canCorrect && (
+                            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setCorrectionLog(l)}>
+                              Correct
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -385,6 +435,12 @@ export default function EMAR() {
                   <Textarea value={medForm.prn_instructions || ""} onChange={e => setMedForm(f => ({ ...f, prn_instructions: e.target.value }))} rows={3} placeholder="When to give, max doses per day, minimum time between doses..." />
                 </div>
               )}
+              <MedOrderVerification
+                med={medForm}
+                canVerify={!!editingMed && canEdit}
+                saving={verifyMedMutation.isPending}
+                onVerify={verifyMed}
+              />
               <MedScheduleSection form={medForm} setForm={setMedForm} />
             </div>
             <DialogFooter className="mt-4">
@@ -462,11 +518,14 @@ export default function EMAR() {
               </Select>
             </div>
 
-            {/* 3. Date & Time */}
+            {/* 3. When it happened */}
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>Date *</Label><Input type="date" value={logForm.date} onChange={e => setLogForm(f => ({ ...f, date: e.target.value }))} /></div>
-              <div><Label>Time</Label><Input type="time" value={logForm.time} onChange={e => setLogForm(f => ({ ...f, time: e.target.value }))} /></div>
+              <div><Label>Date given *</Label><Input type="date" value={logForm.date} onChange={e => setLogForm(f => ({ ...f, date: e.target.value }))} /></div>
+              <div><Label>Time given *</Label><Input type="time" value={logForm.event_time} onChange={e => setLogForm(f => ({ ...f, event_time: e.target.value }))} /></div>
             </div>
+            <p className="text-[11px] text-muted-foreground -mt-2">
+              This is when the medication was actually given. The entry time is recorded automatically, so a late entry never overwrites the real event time.
+            </p>
 
             {/* 4. Administered By — staff dropdown */}
             <div>
@@ -533,6 +592,18 @@ export default function EMAR() {
               </Select>
             </div>
 
+            {logForm.status !== "Administered" && (
+              <div>
+                <Label>Reason for {logForm.status} *</Label>
+                <Textarea
+                  value={logForm.reason || ""}
+                  onChange={e => setLogForm(f => ({ ...f, reason: e.target.value }))}
+                  rows={2}
+                  placeholder={`Explain why this medication was ${logForm.status.toLowerCase()}…`}
+                />
+              </div>
+            )}
+
             {/* 7. Notes */}
             <div><Label>Notes</Label><Textarea value={logForm.notes} onChange={e => setLogForm(f => ({ ...f, notes: e.target.value }))} rows={2} /></div>
           </div>
@@ -540,14 +611,32 @@ export default function EMAR() {
           <DialogFooter>
             <Button variant="outline" onClick={closeLogDialog}>Cancel</Button>
             <Button
-              onClick={() => createLogMutation.mutate(logForm)}
-              disabled={!logClientId || !logForm.medication_id || !logForm.date || !logForm.administered_by || !logSigChecked}
+              onClick={() => createLogMutation.mutate({
+                ...logForm,
+                time: logForm.event_time,
+                recorded_at: new Date().toISOString(),
+                entered_by_name: logForm.administered_by_name,
+              })}
+              disabled={
+                !logClientId || !logForm.medication_id || !logForm.date || !logForm.event_time ||
+                !logForm.administered_by || !logSigChecked ||
+                (logForm.status !== "Administered" && !(logForm.reason || "").trim())
+              }
             >
               Log
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {correctionLog && (
+        <MedLogCorrectionDialog
+          log={correctionLog}
+          saving={correctionMutation.isPending}
+          onClose={() => setCorrectionLog(null)}
+          onSave={(corrections) => correctionMutation.mutate({ id: correctionLog.id, corrections })}
+        />
+      )}
     </div>
   );
 }

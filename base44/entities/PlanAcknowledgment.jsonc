@@ -1,0 +1,91 @@
+{
+  "name": "PlanAcknowledgment",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "plan_id": {
+      "type": "string",
+      "description": "ISPlan (PCSP) record that was read"
+    },
+    "plan_version": {
+      "type": "number",
+      "description": "Exact plan version acknowledged \u2014 a new version requires a new acknowledgment"
+    },
+    "plan_label": {
+      "type": "string",
+      "description": "Display label of the plan and version acknowledged"
+    },
+    "staff_id": {
+      "type": "string",
+      "description": "StaffMember who read the plan"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "staff_email": {
+      "type": "string"
+    },
+    "acknowledged_at": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "plan_id",
+    "plan_version",
+    "staff_id",
+    "acknowledged_at"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.staff_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.staff_email": "{{user.email}}"
+        },
+        {
+          "data.staff_id": "{{user.data.staff_member_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
